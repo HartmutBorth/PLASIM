@@ -1,0 +1,6 @@
+ &param
+  kiterm=8
+  ntback=360
+  ntout=3
+  ntsurf=3
+ &end

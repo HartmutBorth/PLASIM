@@ -1,0 +1,57 @@
+How to compile the postprocessor
+================================
+The postprocessor is a C++ program requiring the NetCDF C++ library
+
+The makefile is configured to look for:
+
+1) The include file "netcdfcpp.h" in directory /opt/local/include
+2) The library file "libnetcdf_c++.*" in directory /opt/local/lib
+
+If doing "make" produces errors, locate these files and adjust
+the I-path and the L-path in the makefile accordingly.
+
+If you don't find the netcdfcpp.h file, you may want to install the
+netcdf package or ask your administrator to do it.
+
+After successfull compilation copy the executable "burn7.x" to a 
+directory in your PATH. Administrators may choose
+/opt/local/bin or /usr/local/bin.
+Users may just copy it to $HOME/bin and make sure, that the 
+PATH variable includes $HOME/bin.
+
+The burn7 is backward compatible and can process data files
+produced with older versions of PUMA or PLASIM.
+PUMA and PLASIM version 16 however require burn7.
+
+New features and changes
+========================
+Burn7 now uses the C++ version of the NetCDF library.
+It uses less memory and runs faster than Burn6.
+It has a better compatibility to the CF and NetCDF standard.
+
+How to use the postprocessor
+============================
+Look into the PUMA or PLaSim User's Guide (chapter postprocessor).
+A quick reference card can be found in this directory in file "burn7qr.pdf".
+
+More diagnostic software and tools
+==================================
+It is strongly recommended to install following free software:
+
+NetCDF - common data format
+cdo - climate data operators
+grads - graphics software
+ImageMagick - graphics software & tools
+
+For MAC users:
+==============
+Use "port" for easy installation. If you don't have port,
+download it from "www.macports.org" and install it.
+Installing is then as easy as:
+
+sudo port install netcdf
+sudo port install cdo
+
+etc.
+
+Good Luck

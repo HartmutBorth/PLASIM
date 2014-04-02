@@ -1,0 +1,50 @@
+#!/bin/csh
+# Perform restart test by comparing the restart file of a two-year
+# contiguos run with a yearly restarted run
+# this version test the two instances synchronized version
+
+unset noclobber
+rm -f puma_restart*
+rm -f Abort_Message
+
+# 1. modify namelists to create a two years run
+
+sed -i -e 's/KICK.*/KICK=0/' puma_namelist_00
+sed -i -e 's/NGUI.*/NGUI=0/' puma_namelist_00
+sed -i -e 's/NYEARS.*/NYEARS=2/' puma_namelist_00
+
+sed -i -e 's/KICK.*/KICK=0/' puma_namelist_01
+sed -i -e 's/NGUI.*/NGUI=0/' puma_namelist_01
+sed -i -e 's/NYEARS.*/NYEARS=2/' puma_namelist_01
+
+# 2. start first run
+
+echo "Executing two years contiguous run"
+time openmpirun -np 2 most_puma.x
+mv puma_diag_00 00_ONE_DIAG.001
+mv puma_diag_01 01_ONE_DIAG.001
+
+mv puma_status_00 00_ONE_REST
+mv puma_status_01 01_ONE_REST
+
+# 3. modify namelist to create a year run
+
+sed -i -e 's/NYEARS.*/NYEARS=1/' puma_namelist_00
+sed -i -e 's/NYEARS.*/NYEARS=1/' puma_namelist_01
+
+echo "Executing 1st. year"
+time openmpirun -np 2 most_puma.x
+mv puma_status_00 puma_restart_00
+mv puma_status_01 puma_restart_01
+
+echo "Executing 2nd. year from restart"
+time openmpirun -np 2 most_puma.x
+mv puma_status_00 00_TWO_REST
+mv puma_status_01 01_TWO_REST
+
+# 4. compare restart files - should be identical
+
+diff 00_ONE_REST 00_TWO_REST
+if ($? == 0) echo "Restart test instance 0 passed OK"
+diff 01_ONE_REST 01_TWO_REST
+if ($? == 0) echo "Restart test instance 1 passed OK"

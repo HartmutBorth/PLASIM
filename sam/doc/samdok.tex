@@ -1,0 +1,520 @@
+\documentstyle[12pt,german,fleqn]{article}
+\newfont{\fett}{cmssbx10 at 12pt}
+\setlength{\unitlength}{1cm}
+\setlength{\textwidth}{6.0in}
+\setlength{\textheight}{9.6in}
+\setlength{\topmargin}{-0.5in}
+\setlength{\oddsidemargin}{0.25in}
+\setlength{\intextsep}{0.0in}
+\tolerance10000
+\renewcommand{\baselinestretch}{1} 
+\renewcommand{\topfraction}{.9} 
+\renewcommand{\bottomfraction}{.9} 
+\renewcommand{\textfraction}{.05} 
+\renewcommand{\floatpagefraction}{.5} 
+\setlength{\parskip}{\bigskipamount}
+\setlength{\parindent}{0em} 
+%\setlength{\mathindent}{0em} 
+\setcounter{topnumber}{2} 
+\setcounter{bottomnumber}{2} 
+\renewcommand{\theequation}{%
+              \mbox{\arabic{num}.\arabic{equation}\alph{alpheqn}}}%
+\newcounter{num} 
+\newcounter{alpheqn} 
+\newcounter{alpheqn2} 
+\newcounter{alpheqn3} 
+\newcounter{saveeqn} 
+\begin{document}  
+{\pagestyle{empty}
+\begin{center}
+
+{\LARGE \bf Shallow water model SAM}
+
+\vspace{1.in}
+
+{\LARGE \bf Reference Manual}
+
+\vspace{1.in}
+
+{\LARGE \bf Version 1.0}
+
+\vspace{1.in}
+
+{\large ~T. Frisius, K. Fraedrich, E. Kirk and F. Lunkeit}
+
+
+
+\end{center}
+
+
+\newpage
+}
+\setcounter{page}{1}
+\setcounter{num}{1}
+\setcounter{alpheqn}{0}
+\setcounter{equation}{0}
+
+{\bf 1 Model equations}
+
+The shallow water model SAM solves the shallow water equations on a
+spherical planet with shallow orography. The model equations and the
+numerical solution procedure will be described in the following subsections.
+
+1.1 Continuity equation
+
+\nopagebreak[4]
+
+In a shallow water model it is assumed 
+that the density $\rho$ is constant. Consequently, the continuity equation reduces to the
+condition that the threedimensional flow is nondivergent.
+In spherical coordinates the nondivergence condition reads
+\begin{equation}
+\left ( \frac  1 {r \cos \varphi}  \frac {\partial u} {\partial \lambda}
+            +\frac  1 {r \cos \varphi}  \frac {\partial } {\partial \varphi} (\cos \varphi v)
+                    +  \frac {\partial w} {\partial r}   + \frac {2 w} r      \right ) =0,
+\end{equation}
+In this equation $\lambda$, $\varphi$ and $r$ are the spherical coordinates longitude, latitude and 
+radius, respectively and $u$, $v$ and $w$ denote the zonal, meridional and vertical velocity components, respectively. The last term on the left hand side of this equation can be neglected since it is assumed that
+the shallow water system is contained within a thin spherical shell. Furthermore, the radius $r$ can be approximately
+replaced be the mean planet radius $a$ where it appears in a factor.
+Therefore, the continuity equation will be simplified to give
+\begin{equation}
+\left ( \frac  1 {a \cos \varphi}  \frac {\partial u} {\partial \lambda}
+            +\frac  1 {a \cos \varphi}  \frac {\partial } {\partial \varphi} (\cos \varphi v)
+                    +  \frac {\partial w} {\partial z}       \right ) =0,
+\end{equation}
+where $z=r-a$ denotes the height above the spherical surface having the radius $r=a$.
+
+In a shallow water model it is assumed that the horizontal velocity components are vertically
+independent. Therefore, the continuity equation can be vertically integrated over the whole
+shallow water fluid. This gives
+\begin{equation}
+\frac {D h} {Dt} - \frac {D h_s} {Dt} + (h-h_s) \nabla_h \cdot {\bf v}_h = 0~,
+\end{equation}
+where $\nabla_h \cdot {\bf v}_h$ denotes the divergence of the horizontal flow, $h$
+the height of the shallow water surface, $h_s$ the height of the shallow water bottom
+and 
+\[
+\frac {D} {Dt}=\frac {\partial } {\partial t} + \frac u {a \cos {\varphi}} 
+\frac {\partial} {\partial \lambda} + \frac v {a} 
+\frac {\partial} {\partial \varphi} 
+\]
+is the individual time derivative operator.
+
+1.2 Momentum equation
+
+\nopagebreak[4]
+
+The fluid of the shallow water model is treated as a nondivergent ideal fluid. Therefore,
+the momentum equation is given by {\sc Euler}s' equation in a rotating coordinate frame:
+\begin{equation}
+\frac {\partial {\bf v}} {\partial t} + \nabla \left(\frac 1 2 {\bf v}^2 \right)
++ (\nabla \times {\bf v} + 2 \mbox{\boldmath $\Omega$}) \times {\bf v}
+= - \frac 1 {\rho} \nabla p - \nabla \phi,
+\end{equation}
+where
+$p$ is the pressure, $\phi$ the geopotential and  \mbox{\boldmath $\Omega$} the angular velocity vector of the planet rotation which is directed perpendicular to the
+equatorial plane ($\varphi=0$).
+
+The shallow water model describes 
+flow phenomena having a vertical scale that is much smaller than its horizontal
+scale. In this case the hydrostatic balance is satisfied to a high degree.
+Therefore, it is assumed that the following hydrostatic balance equation holds
+\begin{equation}
+\frac {\partial p} {\partial z} = - \rho \frac {\partial \phi} {\partial z}
+\end{equation}
+In this equation $p$ denotes the pressure and
+$\phi$ the geopotential.
+Since density is constant, this equation can easily be
+integrated in vertical direction over the whole fluid depth. This gives
+\begin{equation}
+p_s - \left . p \right |_{z=h} =  \rho ( \left . \phi \right |_{z=h} - \phi_s )~,
+\end{equation}
+where the index $s$ means that the variable is evaluated at the bottom of
+the shallow water. 
+For shallow water systems it is usally assumed that the pressure at the free upper surface vanishes. Furtheremore, for earth-like planets the gravitational attraction force in addition with the centrifugal force of the planet rotation give rise to  geopotential
+isosurfaces that are nearly spherical. Therefore, it is assumed that the geopotential only
+depends upon height $z$ and is, furthemore, proportional to height since the corresponding acceleration
+is nearly constant with in a thin 
+spherical shell. Consequently, surface pressure is related to the shallow water elevation
+and surface orography by
+\begin{equation}
+p_s  =  g \rho (h - h_s)~,
+\end{equation}
+where $g$ denotes the gravitational acceleration.
+
+Due to this equation the continuity equation (1.3) becomes a tendency equation for surface
+pressure:
+\begin{equation}
+\frac {D p_s} {Dt}  + p_s \nabla_h \cdot {\bf v}_h  
+= \frac {\partial p_s} {\partial t}  + \nabla_h \cdot ( {\bf v}_h p_s)=0 ~,
+\end{equation}
+
+The horizontal components of {\sc Euler}s equation are retained
+with little approximation.
+We obtain for the horizontal components of $(\nabla \times {\bf v} + 2 \mbox{\boldmath $\Omega$}) \times {\bf v}$:
+{\setlength{\mathindent}{1em}
+\begin{equation}
+((\nabla \times {\bf v} + 2 \mbox{\boldmath $\Omega$}) \times {\bf v})_h
+\end{equation}
+\[
+\hspace{3.cm}=\Omega (\zeta + 2 \sin \varphi) {\bf e}_z \times {\bf v}_h 
+- \nabla_h \left(\frac 1 2 w ^2 \right) + \frac {{\bf v}_h w} r
++ 2 \Omega \cos {\varphi} w {\bf e}_{\lambda}~,
+\]
+}
+where $\zeta$ is the nondimensional vertical component of the vorticity vector $\nabla \times {\bf v}$ 
+(relative vorticity) and the index $h$ denotes that the vector has only horizontal components.
+The last two terms on the right hand side can be neglected due to the small magnitude of
+vertical velocity in the shallow water model.
+
+Therefore, the  {\sc Euler}-equation for the horizontal velocity vector becomes:
+\begin{equation}
+\frac {\partial {\bf v}_h} {\partial t} + \nabla_h \left(\frac 1 2 {\bf v}_h^2 \right)
++ \Omega (\zeta + 2 \sin (\varphi)) {\bf e}_z \times {\bf v}_h
+= - \frac 1 {\rho} \nabla_h p_s - \nabla \phi_s ~.
+\end{equation}
+
+1.3 Nondimensional model equations
+
+\nopagebreak[4]
+
+Applying the operators $\Omega^{-2} {\bf e}_z \nabla_h \times$ and $\Omega^{-2} \nabla_h \cdot$ gives the nondimensional vorticity and divergence equations, respectively
+{\setlength{\mathindent}{1em}
+\begin{equation}
+ \frac {\partial \eta } {\partial \tau} 
+= - \frac 1 {1 - \mu^2} \frac {\partial } {\partial \lambda}
+\left ( \eta U \right ) - \frac {\partial } {\partial \mu}
+\left (\eta V \right)~,
+\end{equation}
+\begin{equation}
+ \frac {\partial D} {\partial \tau} 
+=  \frac 1 {1 - \mu^2} \frac {\partial } {\partial \lambda}
+\left(\eta V \right ) - \frac {\partial } {\partial \mu}
+\left (\eta U\right)
+- \Delta_h \left(\frac {U^2 + V^2} {2 (1 - \mu^2)}+ \Phi_s + {\rm Bu} P \right)  ~,
+\end{equation}
+}
+Here, we have used the following notations
+{\setlength{\mathindent}{0em}
+\begin{eqnarray}
+\nonumber \mu & =& \sin \varphi ~~~{\rm sine~ of~ latitude} \\ \nonumber
+\tau & = & \Omega t~~~{\rm nondimensional~ time} \\ \nonumber
+\eta  & = & \zeta + 2 \mu   ~~~{\rm nondimensional~absolute~vorticity} \\ \nonumber
+D & = & \Omega^{-1} \nabla_h \cdot {\bf v}_h~~~{\rm nondimensional~ divergence} \\ \nonumber  (U,V) & =& \cos\varphi (\Omega a)^{-1} (u,v)~~~{\rm nondimensional~ velocity~ components~multiplied~by~} \cos{\varphi}  \\ \nonumber 
+P & = & \frac  {p_s-p_0} {p_0}~~~{\rm nondimensional~ surface~ pressure~ anomaly} \\ \nonumber  
+\Phi_s & = & \frac {\phi_s} {\Omega^2 a^2}~~~{\rm nondimensional~surface~geopotential}\\ \nonumber
+{\rm Bu} & = & \frac {p_0} {\Omega^2 a^2  \rho}~~~{\rm {\sc Burger} ~ number} \\ \nonumber
+\Delta_h & = &  \displaystyle \frac 1 {1- \mu^2}  \frac {\partial^2 } {\partial \lambda^2} + \frac {\partial } {\partial \mu} (1 - \mu^2) 
+\frac {\partial } {\partial \mu} ~~~{\rm nondimensional~{\sc Laplace}-operator}
+\end{eqnarray}
+} 
+
+Similarly, we obtain for the nondimensional surface pressure equation:
+\begin{equation}
+ \frac {\partial P} {\partial \tau} 
+= - \frac 1 {1 - \mu^2} \frac {\partial } {\partial \lambda}
+\left(U P \right ) - \frac {\partial } {\partial \mu}
+\left (V P \right)  - D~,
+\end{equation}
+
+It remains to compute the horizontal velocity components from vorticity and
+divergence fields. This can be done with the {\sc Helmholtz} decomposition of the velocity vector field:
+\begin{equation}
+{\bf v}_h=\Omega a^ 2 \left ( \nabla \chi +  \nabla \times {\bf A} \right)~.
+\end{equation}
+where $\chi$ is a nondimensional velocity potential and ${\bf A}$ a nondimensional vector stream potential. Because only
+the horizontal velocity field is related to vorticity and divergence, it is sufficient to
+restrict the vector potential  to a single vertical component, the so called streamfunction $\psi$.
+Therefore:
+\begin{equation}
+U  = \displaystyle  - ( 1 - \mu^2) \frac {\partial \psi} {\partial \mu} +  \frac {\partial \chi} {\partial \lambda}~,~~~~
+V  = \displaystyle \frac {\partial \psi} {\partial \lambda} +  ( 1 - \mu^2) \frac {\partial \chi} {\partial \mu}~.
+\end{equation}
+Streamfunction and velocity potential are related to vorticity and divergence via 
+{\sc Poisson}-equations:
+\begin{equation}
+\eta= 2 \mu + \Delta_h \psi~,~~~~D  
+= \Delta_h \chi ~.
+\end{equation}
+
+Equation (1.11)-(1.13), (1.15) and (1.16) form the governing equations of the shallow water model.
+They are solved with a semispectral method which is described in some detail in the next subsections.
+
+{1.4 Spectral representation of the model equations}
+
+\nopagebreak[4]
+
+All fields are projected onto a new base, namely, the so-called spherical harmonics $Y_n^m(\lambda,\mu)$. This gives for a field function $Q(\lambda,\mu,\tau)$:
+\begin{equation}
+Q(\lambda, \mu,\tau)=\sum_{m=-\infty}^{\infty} \sum_{n=|m|}^{\infty} Q_n^m(\tau) Y_n^m(\lambda,\mu)~.
+\end{equation}
+The spherical harmonics are defined by
+\begin{equation}
+Y^m_n(\lambda,\mu)=
+\sqrt{\frac {2 n + 1} 2  \frac {(n-m)!} {(n+m)!}} \frac {(1- \mu^2)^{\frac m 2}} {2^n n!}
+ \frac {\partial^{m+n}} {\partial \mu^{m+n}} \left [  (\mu^2 - 1)^n \right ]
+e^{i m \lambda}~.
+\end{equation}
+Since $Q$ must be a real function we have the constraint $Q_n^m=Q_n^{-m*}$. Therefore, it is sufficient
+to calculate only the coefficients with $m \ge0$ and the following representation is equivalent to (1.19):
+\begin{equation}
+Q(\lambda, \mu,\tau)=\sum_{n=1}^{\infty} Q_n^0(\tau) Y_n^0(\mu) + 2 \sum_{m=1}^{\infty} \sum_{n=m}^{\infty} {\rm Re} \left (Q_n^m(\tau) Y_n^m(\lambda,\mu) \right )~.
+\end{equation}
+The spherical harmonics form an orthogonal base with respect to the scalar product
+\begin{equation}
+\left < Q_1 | Q_2  \right > :=  \frac 1 {2 \pi} \int_{-1}^{1} \int_{0}^{2\pi} Q_1^*(\lambda,\mu) Q_2({\lambda,\mu}) d\lambda d\mu~
+\end{equation}
+Therefore:
+\begin{equation}
+\left < Y_n^m | Y_{n^{\prime}}^{m^{\prime}}  \right > = \delta_{m,m^{\prime}} \delta_{n,n^{\prime}}
+\end{equation}
+Furthermore, the spherical harmonics are eigenfunctions of the nondimensional
+ {\sc Laplace}-operator $\Delta_h$:
+\begin{equation}
+\Delta_h Y_n^m=- n (n+1) Y_n^m~.
+\end{equation}
+Further useful relations are:
+\begin{equation}
+\frac {\partial Y^m_n} {\partial \lambda} 
+=  i m   Y^m_n~,
+\end{equation}
+\begin{equation}
+(1 - \mu^2) \frac {\partial } {\partial \mu} Y^m_n
+=  n  d_{m,n+1} Y^m_{n+1} -  (n+1) d_{m,n} Y^m_{n-1}~, 
+\end{equation}
+where
+\[
+d_{m,n}=\sqrt{ \frac {n^2 - m^2} {4 n^2 -1} }~.
+\]
+With (1.22) - (1.24) the governing model equations can be converted into component form after applying the scalar product
+$<Y^m_n|..>$:
+{\setlength{\mathindent}{1em}
+\begin{equation}
+\frac {d \eta_n^m} {d\tau}=  -\left < Y^m_n ~|~   \frac {im\eta U} {1-\mu^2}\right > 
+- \left < Y^m_n ~|~ \frac {\partial (\eta V)} {\partial \mu} \right >~,
+\end{equation}
+\begin{eqnarray}
+\frac {d D_n^m} {d\tau} & = &   \left < Y^m_n ~|~  \frac {im \eta V} {1-\mu^2} \right >
+- \left < Y^m_n ~|~ \frac {\partial (\eta U)} {\partial \mu} \right > \\ \nonumber
+& & + n(n+1)
+\left < Y^m_n ~|~ \frac 1  2 \frac  {U^2+V^2}  {1-\mu^2}  \right > + n(n+1) \left [ {\rm Bu} P_n^m + {\Phi_s}^m_n \right ]~,
+\end{eqnarray}
+\begin{equation}
+\frac {d P_n^m} {d\tau}=  -\left < Y^m_n ~|~  \frac {im P U} {1-\mu^2} \right > 
+- \left < Y^m_n ~|~ \frac {\partial (P V)} {\partial \mu} \right  > - D_n^m~,
+\end{equation}
+\begin{equation}
+ U^m_n   =    (n - 1) d_{m,n}  \psi^m_n - (n+2) d_{m,n+1}  \psi^m_{n+1} + i m~ \chi^m_n~,
+\end{equation}
+\begin{equation}
+  V^m_n  =   i m ~ \psi^m_n - (q - 1) d_{m,n}  \chi^m_{n-1}
+  + (n+2) d_{m,n+1}  \chi^m_{n+1}~, 
+\end{equation}
+\begin{equation}
+ \psi^m_n   =  - \frac 1 {n(n+1)} \left(\eta^m_n - \sqrt {\frac 8 3}~
+ \delta_{m,0}\delta_{n,1}\right) ~, 
+\end{equation}
+\begin{equation}
+ \chi^m_n   =  - \frac 1 {n(n+1)} D^m_n~.
+\end{equation}
+}
+
+1.4 Numerical solution technique
+
+\nopagebreak[4]
+
+An approximative solution of the model is determined by 
+time integration of the truncated spectral equations. In the truncated model
+the first summation operator
+in (1.17) runs only from $-M$ to $M$. This gives a triangular truncation
+T$M$.
+
+The terms in brackets of Eqs.(1.25)-(1.27) are nonlinear. The computation of these scalar products is very complicated and
+consumes a lot of computer time.
+Therefore, these terms are evaluated in the numerical model
+ with the so-called spectral transform method [Orszag (1970)
+and Eliasen et al. (1970)]. This method uses an auxiliary grid in the physical space where point values of the
+dependent variables are computed. The auxiliary grid in the physical space ({\sc Gauss}ian grid) is defined
+by $M_g$ equally spaced longitudes and $J_g$ {\sc Gauss}ian latitudes.
+For the transformation from gridpoint space into spectral space the spectral coefficients are obtained by
+{\sc Gauss}ian quadrature of the {\sc Fourier} coefficients. With this method bilinear products are
+calculated without error when $M_g \ge 3M+1$ and $J_g \ge (3M+1)/2$. Since only bilinear products
+appear as nonlinearities in the equations the spectral transform method is equivalent to the analytical
+determination of the nonlinear products using interaction coefficients.
+
+Time integration is done with the  semi-implicit time stepping procedure. This has the advantage that for a stable integration 
+the time-step $\Delta \tau$ can be larger than the period of high-frequency inertial gravity modes. 
+The time derivatives are approximated by a centered difference so that 
+\begin{equation}
+\frac {d Q} {d \tau} \approx \delta_t Q := \frac {Q(\tau+\Delta \tau) - Q(\tau+\Delta \tau)} {2 \Delta \tau}~.
+\end{equation}
+The tendency is splitted into an explicit and an implicit part. The explicit part is related to the sum of all nonlinear terms
+and is evaluated at the present time  $\tau$. The linear terms form the implicit part. They only occur in the divergence and pressure
+equation and enter the equations as a time mean of time step $\tau +\Delta \tau$ and $\tau - \Delta \tau$. Altogether, the finite-difference form of the prognostic model equations reads:
+{\setlength{\mathindent}{1em}
+\begin{equation}
+\delta_t \eta_n^m = 
+{\cal N}_{\eta}(\tau)~,
+\end{equation}
+\begin{equation}
+\delta_t D_n^m  = {\cal N}_{D}(\tau) 
++ {\rm Bu}\frac {n(n+1)} {2} [P_n^m(\tau-\Delta \tau) + P_n^m(\tau+\Delta \tau)
++ 2 {\Phi_s}^m_n]
+\end{equation}
+\begin{equation}
+\delta_t P_n^m =  {\cal N}_{P}(\tau) 
+- \frac 1 2 [D_n^m(\tau-\Delta \tau) + D_n^m(\tau+\Delta \tau)]~,
+\end{equation}
+where ${\cal N}_{\eta}$, ${\cal N}_{D}$ and  ${\cal N}_{P}$ denote the
+respective nonlinear tendency terms. Eliminating $P_n^m(\tau+\Delta \tau)$ in (1.35) gives
+\begin{equation}
+\left [1 + \Delta \tau^2 {\rm Bu}~{n(n+1)}  \right ] \overline{D_n^m}^{\tau} 
+\end{equation}
+\[ \hspace{0.1in}
+= 
+ D_n^m(\tau - \Delta \tau) 
++  \Delta \tau \left \{ {\cal N}_{D}(\tau) 
++ {\rm Bu}~{n(n+1)}   \left [ 
+P_n^m(\tau - \Delta \tau) + {\Phi_s}^m_n + \Delta \tau {\cal N}_P(\tau) \right ] \right \}~,
+\]
+}
+where $\overline{D_n^m}^{\tau}= [D_n^m(\tau +� \Delta \tau)+D_n^m(\tau - \Delta \tau)]/2$.
+
+The time averaged value $\overline{D_n^m}^{\tau}$ can be easily calculated from equation (1.36).
+With this value it is straightforward to determine the future values $D^m_n(\tau + \Delta \tau)$
+and $P^m_n(\tau + \Delta \tau)$.
+
+For noise reduction a {\sc Robert}/{\sc Asselin}-Filter [Haltiner and Williams
+(1982)]  is applied 
+at every timestep to a spectral coefficient $Q_n^m$ as follows:
+\begin{equation}
+Q^m_n(\tau)=(1-2 \gamma)Q^m_n(\tau) 
++ \gamma [Q^m_n(\tau+\Delta \tau)+Q^m_n(\tau-\Delta \tau)]~.
+\end{equation}
+In the model SAM $\gamma$ takes the value 0.02 by default.
+
+1.5 Hyperdiffusion
+
+In a turbulent flow regime a cascade from large scales to the dissipative range 
+of the wavenumber spectrum  takes place. The model cannot resolve such small scales.
+Therefore, kinetic energy dissipation must occur at resolvable scales in the model without
+affecting the large scale too much. This is achieved by introducing hyperdiffusion by
+adding the terms
+\begin{equation}
+{\cal H}_{\eta~n}^m= K \left [ - n(n+1) \right ]^{n_h}    \left(\eta^m_n - \sqrt {\frac 8 3}~
+ \delta_{m,0}\delta_{n,1}\right)
+\end{equation}
+and
+\begin{equation}
+{\cal H}_{D~n}^m= K \left [ - n(n+1) \right ]^{n_h}   D^m_n
+\end{equation}
+to the vorticity and divergence equations, respectively. $n_h$ denotes the order of 
+hyperdiffusion. Without additional terms the corresponding vorticity or divergence component
+is damped with the dimensional $e$-folding timescale
+\begin{equation}
+\tau_H= \left \{ \Omega K [n (n+1)]^{n_h} \right \}^{-1} ~.
+\end{equation}
+In the model $\tau_H$ at the wavenumber where the expansion is truncated will be prescribed.
+Therefore, the coefficient $K$ becomes:
+\begin{equation}
+K= \left \{ \Omega \tau_H [M (M+1)]^{n_h} \right \}^{-1}~.
+\end{equation}
+
+1.6 Parameterization of baroclinic and dissipative processes
+
+To perform simulations with baroclinic forcing and dissipative damping additional terms must
+be added to the spectral vorticity and divergence equations.
+These are given by
+\begin{eqnarray}
+\left . \frac {d \eta_n^m} {d\tau} \right |^P  & = & \frac {\eta_{ne}^m -\eta_n^m } {\tau^m_{nR}} 
++ S^m_n (\tau)
+- \frac {\eta_n^m - \sqrt{8/3} \delta_{m,0} \delta_{n,1} } {\tau_F} \\ \nonumber
+& & - A_{h} \left ( n^2 + n  - 2 \right )  
+\left (\eta_n^m - \sqrt{8/3} \delta_{m,0} \delta_{n,1} \right ) ~, 
+\end{eqnarray}
+\begin{equation}
+\left . \frac {d D_n^m} {d\tau}\right |^P  =  - \frac {D_n^m  } {\tau_F} -  A_{h}   { n (n+1)}  D^m_n ~,
+\end{equation}
+where $\eta_{ne}^m$ is the equilibrium state of the climatological baroclinic forcing, $\tau^m_{nR}$ the timescale of the
+climatological forcing (depends upon wavenumbers), $S^m_n(\tau)$ the time dependent baroclinic forcing (stochastic),
+$\tau_F$ the timescale of Rayleigh friction and $A_h$ the horizontal  momentum exchange coefficient.
+
+
+{\bf 2 User guide}
+
+\nopagebreak[4]
+
+SAM can like PUMA and PlaSim be compiled and started with the model starter program most.x.
+SAM also supports the Graphical User Interface (GUI) developed for PUMA and PlaSim.
+In the code several initial conditions are specified with the integer parameter iexp (1-13).
+The various experiments are documented in the initialization subroutine initfd. Further
+initial conditions can be added at discretion. The model resolution has to be specified with the
+namelist {\it resolution\_namelist}. It contains the parameter NLAT that denotes the number of
+latitudes. NLAT should be represented by $2^{n}$ with $n$ being an integer to ensure
+optimal parallelization and consistency with the fast Fourier transform.
+
+The namelist for SAM {\it somnamelist} contains the following parameters
+
+\begin{tabular}{|l|c|l|}
+\hline
+Parameter & Default & Meaning\\
+\hline
+KICK     & 1        & Initial noise (not implemented in the current version)\\
+NAFTER   & 12       & Output after intervals of NAFTER timesteps\\
+NCOEFF   & 0        & Number of spectral modes to be print in wrspam\\ 
+NDEL     & 6        & Order of hyperdiffusion\\
+NDIAG    & 12       & Parameter to determine that ASCII diagnostics \\ 
+         &          & are written after intervals of NDIAG timesteps\\
+NKITS    &  3       & Number of initial timesteps\\
+NRUN     &  0       & Number of timesteps to run - 0: use nyears and\\
+NWSPINI  &  1       & 1: Write initial sp(:) to file puma\_sp\_ini\\
+NOUTPUT  &  1       & 1: Write model output to file sam\_output\\
+NSTEP    &  0       & Current timestep\\
+NSTOP    &  0       & Stop step - 0: compute from nyears and nmonths\\
+NTSPD    &  1       & Number of timesteps per day\\
+NCU      &  0       & Check unit (for debug output only)\\
+NGUI     &  0       & 1: Run with GUI\\
+NGUIDBG  &  0       & 1: Switch on GUI debug output\\
+NYEARS   &  0       & Simulation time in years\\
+DISS     &  0.25    & Hyper diffusion time scale [days]\\
+NRUIDO   &  0       & 1: Add noise on every time step\\
+DISP     &  0.0     & Noise amplitude for nruido = 1\\
+AH       &  0.0     & Horizontal momentum exchange coefficient [m$^2$/s]\\
+RESTIM   &  0.0     & Timescale for climatological forcing [days] (0.0$\rightarrow$ no forcing)\\
+NDL      &  0       & 1: Print spectral vorticity and divergence modes\\
+ROTSPD   &  0.      & Rotations per day  (should be set as in PlaSim)\\
+TFRC     &  0.      & Rayleigh friction timescale in days (0.0 $\rightarrow$  no friction)\\
+LLID     & .false.  & Switch for introducing a rigid lid\\
+LEQUIV   & .false.  & Switch for equivalent barotropic model\\
+LBAL     & .false.  & Switch for balanced initial state\\
+IEXP     & 4        & Number of experiment (1-13, see initfd)\\
+MMAX     & 0        & Maximum zonal waven. for climat. forcing     \\
+NMAX     & 42       & Maximum total waven. for climat. forcing     \\
+\hline
+\end{tabular}
+
+Other parameters can be set in the module pumamod of the code. These are:
+\begin{tabular}{|l|c|l|}
+\hline
+Parameter & Default & Meaning\\
+\hline
+GA       & 9.81       & Gravity acceleration [m/s$^2$]\\
+PLARAD   & 6371000.0  & Radius of the sphere [m]\\
+WW       & 0.00007292 & Angular velocity of the rotating sphere [1/s]\\
+RHO0     & 1.         & Density of the shallow water [kg/m$^3$]\\ 
+HS       & 12000.     & Height of the shallow water [m]\\
+F0       & 1.e-4      & Mean Coriolis parameter [1/s] (only LEQUIV=.true.)\\
+\hline
+\end{tabular}
+
+SAM writes output into the file {\it sam\_output}. It contains
+spectral coefficients of i) surface geopotential 
+(code 129), ii) logarithm of surface pressue (code 152),
+iii) divergence (code 155) and iv) relative vorticity (code 138). 
+The pumaburner 
+can process the file  {\it sam\_output} for further diagnostics.
+
+\end{document} 
+
+

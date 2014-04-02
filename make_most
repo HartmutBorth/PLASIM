@@ -1,0 +1,4 @@
+most.x:	most.c
+	cc -o most.x most.c -lm ${MOST_XLIB} -lX11
+clean:
+	rm -f *.o *.x

@@ -1,0 +1,54 @@
+#!/bin/tcsh
+# Perform restart test by comparing the restart file of a two-month
+# continuos run with a monthly restarted run (argument = executable)
+
+if ("$1" == "") then
+   echo
+   echo "Usage for single core executables:"
+   echo "plasim_restart_test <executable>   e.g.:"
+   echo "plasim_restart_test most_plasim_t21_l10.x"
+   echo
+   echo "Usage for MPI executables:"
+   echo "plasim_restart_test <MPI exec string>   e.g.:"
+   echo 'plasim_restart_test "mpiexec -np 2 most_plasim_t21_l10_p2.x"'
+   exit
+endif
+
+unset noclobber
+rm -f plasim_restart
+rm -f Abort_Message
+
+# 1. modify namelist to create a two month run
+
+sed -i -e 's/KICK.*/KICK=0/' plasim_namelist
+sed -i -e 's/NGUI.*/NGUI=0/' plasim_namelist
+sed -i -e 's/N_RUN_YEARS.*/N_RUN_YEARS=0/' plasim_namelist
+sed -i -e 's/N_RUN_MONTHS.*/N_RUN_MONTHS=2/' plasim_namelist
+sed -i -e 's&/END&SEED=1&' plasim_namelist
+echo " /END" >> plasim_namelist
+
+# 2. start first run
+
+echo "Executing two month continuous run"
+time $1
+mv plasim_status ONE_REST
+mv plasim_diag ONE_DIAG
+
+# 3. modify namelist to create a month run
+
+sed -i -e 's/N_RUN_MONTHS.*/N_RUN_MONTHS=1/' plasim_namelist
+
+echo "Executing 1st. month"
+time $1
+mv plasim_status plasim_restart
+mv plasim_diag TWO_DIAG.001
+echo "Executing 2nd. month from restart"
+time $1
+mv plasim_status TWO_REST
+mv plasim_diag TWO_DIAG.002
+
+# 4. compare restart files - should be identical
+
+diff ONE_REST TWO_REST
+
+if ($? == 0) echo "Restart test passed OK"

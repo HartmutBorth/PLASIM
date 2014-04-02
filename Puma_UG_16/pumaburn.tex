@@ -1,0 +1,356 @@
+\section{Introduction}
+
+The {\bf Pumaburner} is a postprocessor for the {\bf Planet Simulator}
+and the {\bf PUMA} model family.
+It is the only interface between the {\it raw} model output data
+and the diagnostics, graphics, and user software.
+
+The output data of {\bf PUMA} is stored as
+packed binary (16 bit) values using the model representation.
+Prognostic variables such as temperature, divergence, vorticity,
+pressure and humidity are stored as coefficients of spherical harmonics
+on $\sigma$ levels. Variables like radiation,
+precipitation, evaporation, clouds and other fields of the
+parameterization package are stored on Gaussian grids.
+
+The tasks of the {\bf Pumaburner} are:
+\begin{itemize}
+\item Unpack the {\it raw} data to full real representation.
+\item Transform variables from the model's representation
+      to a user selectable format, e.g. grids,
+      zonal mean cross sections, and Fourier coefficients.
+\item Calculate diagnostic variables, such as vertical velocity,
+      geopotential height, wind components, etc.
+\item Transfrom variables from $\sigma$ levels to user
+      selectable pressure levels.
+\item Compute monthly means and standard deviations.
+\item Write selected data either in SERVICE or NetCDF format
+      for further processing.
+\end{itemize}
+
+\section{Installation / Compilation}
+
+The Pumaburner doesn't have to be installed, in most cases a compilation
+of the source code and the storage of the executable in a "bin" directory
+is sufficient. E.g.:
+
+\begin{verbatim}
+c++ -O2 -o burn6 burn6.cpp -lm -lnetcdf_c++ -lnetcdf
+\end{verbatim}
+
+The NetCDF library version 3 or higher must be installed on the computer,
+otherwise the above command will fail with an error.
+On some computer sites NetCDF might be installed, but the include or 
+library search paths may lack the right configuration. In those cases either
+ask your administrator to update the configuration or specify the
+necessary locations on the compiler command using "-I" to specify the path
+for "Include" files and "-L" for library files. Of course other C++ compilers,
+like g++ for example may be used as well. If you're not the admin of your
+system, put the executable burn6 into your \$HOME/bin directory.
+This is normally part of your search path.
+
+\section{Usage}
+
+\begin{verbatim}
+burn6 [options] InputFile OutputFile <namelist >printout
+     option -h : help (this output)
+     option -c : print available codes and names
+     option -d : debug mode (verbose output)
+     option -g : write GRADS control file for SERVICE data file
+     option -n : NetCDF output (override namelist option)
+     option -m : Mean=1 output (override namelist option)
+     InputFile : Planet Simulator or PUMA data file
+    OutputFile : SERVICE or NetCDF format file
+      namelist : redirected <stdin>
+      printout : redirected <stdout>
+\end{verbatim}
+
+\section{Namelist}
+
+The namelist values control the selection, coordinate system
+and output format of the postprocessed variables.
+Names and values are not case sensitive.
+Values can be assigned to the following names: \vspace{0.4cm}
+
+\begin{tabular}{|l|c|l|l|l|}
+\hline
+Name   & Def. & Type & Description & Example \\
+\hline
+{\bf HTYPE    }& S & char & Horizontal type                 & HTYPE=G \\
+{\bf VTYPE    }& S & char & Vertical type                   & VTYPE=P \\
+{\bf MODLEV   }& 0 & int  & Model levels                    & MODLEV=2,3,4 \\
+{\bf hPa      }& 0 & real & Pressure levels                 & hPa=500,1000 \\
+{\bf LATS     }& 0 & int  & No. of latitudes for output grid  & LATS=40      \\
+{\bf LONS     }& 0 & int  & No. of longitudes for output grid & LONS=80      \\
+{\bf CODE     }& 0 & int  & ECMWF field code                & CODE=130,152 \\
+{\bf NETCDF   }& 0 & int  & NetCDF output selector          & NETCDF=1 \\
+{\bf CYCLICAL }& 0 & int  & Add data for longitude=360      & CYCLICAL=0 \\
+{\bf MEAN     }& 1 & int  & Compute monthly means           & MEAN=0 \\
+{\bf HHMM     }& 1 & int  & Time format in Service format   & HHMM=0 \\
+{\bf HEAD7    }& 0 & int  & User parameter                  & HEAD7=0815 \\
+{\bf MARS     }& 0 & int  & Use constants for planet Mars   & MARS=1 \\
+{\bf MULTI    }& 0 & int  & Process multiple input files    & MULTI=12 \\
+\hline
+\end{tabular}
+
+\section{HTYPE}
+
+{\bf HTYPE} accepts the first character of the following string.
+The following settings are equivalent: HTYPE = S, HTYPE=Spherical Harmonics
+HTYPE = Something. Blanks and the equals sign are optional. \\
+Possible Values are: \vspace{0.4cm}
+
+\begin{tabular}{|l|l|l|}
+\hline
+   Setting   & Description          & Dimension for T21 resolution   \\
+\hline
+   HTYPE = S & Spherical Harmonics  & (506):(22 * 23 coefficients)   \\
+   HTYPE = F & Fourier Coefficients & (32,42):(latitudes,wavenumber) \\
+   HTYPE = Z & Zonal Means          & (32,levels):(latitudes,levels) \\
+   HTYPE = G & Gaussian Grid        & (64,32):(longitudes,latitudes) \\
+\hline
+\end{tabular}
+
+\section{VTYPE}
+
+{\bf VTYPE} accepts the first character of the following string.
+The following settings are equivalent: VTYPE = S, VTYPE=Sigma,
+VTYPE = Super. Blanks and the equals sign are optional. \\
+Possible Values are: \vspace{0.4cm}
+
+\begin{tabular}{|l|l|l|}
+\hline
+   Setting   & Description          & Remark \\
+\hline
+   VTYPE = S & Sigma (model) levels & Some derived variables are not available \\
+   VTYPE = P & Pressure levels      & Interpolation to pressure levels \\
+\hline
+\end{tabular}
+
+\section{MODLEV}
+
+{\bf MODLEV} is used in combination with {\bf VTYPE = S}.
+If VTYPE is not set to ``Sigma'', the contents of MODLEV are ignored.
+MODLEV is an integer array that can have as many values as there are
+levels in the model output. The levels are numbered from the top of
+the atmosphere to the bottom. The number of levels and the 
+corresponding $\sigma$ values are listed in the Pumaburner printout.
+The levels are ordered in the output file  according to the MODLEV values.
+MODLEV=1,2,3,4,5 produces an output file of five model levels
+sorted from top to bottom, while MODLEV=5,4,3,2,1 sorts them
+from bottom to top.
+
+\section{hPa}
+
+{\bf hPa} is used in combination with {\bf VTYPE = P}.
+If VTYPE is not set to ``Pressure'', the contents of hPa are ignored.
+hPa is a real array that accepts pressure values with the
+units hectoPascal or millibar. All output variables will be
+interpolated to the selected pressure levels.
+There is no extrapolation at the top of the atmosphere.
+For pressure values, which are lower than that at the model's
+top level, the top level value of the variable is taken.
+The variables, temperature and geopotential height, are extrapolated
+if the selected pressure is higher than the surface pressure.
+All other variables are set to the value of the lowest mode level
+for this case. The outputfile contains the levels in the same order
+as they are set in hPa. For example: hpa = 100,300,500,700,850,900,1000.
+
+\section{LATS and LONS}
+
+        The Pumaburner defaults to the dimension of the model run.
+        E.g. $Lats=32$ and $Lons=64$ for a T21 resolution.
+        Note however, that this results in Gaussian grids with
+        non equidistant latitudes.
+        Selecting for Lats and Lons values, that are different from
+        the internal resolution produces equidistant lat-lon grids.
+        Lats sets the number of latitudes from north to south,
+        with the North Pole at index 1 and the South Pole at index Lats.
+        Delta Phi is therefore 180 degrees / (Lats - 1).
+        Lons sets the number of gridpoints on every latitude circle.
+        Delta Lambda is 360 / Lons.
+        Index 1 is on the Greewich Meridian (0 degrees), while the last index
+        denotes the point (360 degrees - Delta Lambda).
+        Technical note:
+           Variables that are stored as spherical harmonics
+        (Temperature, vorticity, divergence, etc.) are calculated
+        on the user grid by setting up the Legendre Transformation
+        and the FFT accordingly. Variables, that are stored on
+        Gaussian grids are interpolated with a bilinear interpolation.
+        Note: Lats $>= 8$ and Lons $>= 16$ due to technical reasons.
+
+
+\section{MEAN}
+
+{\bf MEAN} can be used to compute monthly means and/or deviations.
+The Pumaburner reads date and time information from the model file
+and handles different lengths of months and output intervals correctly. 
+\vspace{0.4cm}
+
+\begin{tabular}{|l|p{12cm}|}
+\hline
+Setting & Description \\
+\hline
+        MEAN  =  0 & Do not average - all terms are processed. \\
+
+        MEAN  =  1 & Compute and write monthly mean fields.
+                     Not for spherical harmonics, Fourier coefficients, or
+                     zonal means on sigma levels. \\
+
+        MEAN  =  2 & Compute and write monthly deviations.
+                     Not for spherical harmonics, Fourier coefficients, or
+                     zonal means on sigma levels.
+                     Deviations are not available for NetCDF output. \\
+
+        MEAN  =  3 & A combination of MEAN=1 and MEAN=2.
+                     Each mean field is followed by a deviation
+                     field with an identical header record.
+                     Not for spherical harmonics, Fourier coefficients, or
+                     zonal means on sigma levels. 
+		     Deviations are not available for NetCDF output. \\
+\hline
+\end{tabular}
+
+\section{Format of output data}
+
+The {\bf Pumaburner} supports two different output formats:
+
+\begin{itemize}
+\item {\bf NetCDF} (Network Common Data Format)
+\item {\bf Service} Format for user readable data (see below).
+\end{itemize}
+
+For more detailed descriptions see for example:
+
+{\url{http://www.nws.noaa.gov/om/ord/iob/NOAAPORT/resources/}}
+
+\begin{tabular}{|l|p{10cm}|}
+\hline
+Setting & Description \\
+\hline
+   NetCDF = 1 & The output file is written in NetCDF format. \\
+   NetCDF = 0 & The output file is written in Service format. \\
+\hline
+\end{tabular}
+
+\section{SERVICE format}
+
+     The SERVICE format uses the following structure:
+     The whole file consists of pairs of
+     header and data records.
+     The header record is an integer array of 8 elements.
+
+\begin{verbatim}
+     head(1) = ECMWF field code
+     head(2) = model level or pressure in [Pa]
+     head(3) = date  [yymmdd]  (yymm00 for monthly means)
+     head(4) = time  [hhmm]  or [hh] for HHMM=0
+     head(5) = 1. dimension of data array
+     head(6) = 2. dimension of data array
+     head(7) = may be set with the parameter HEAD7
+     head(8) = experiment number (extracted from filename)
+
+     Example for reading the SERVICE format (NETCDF=0)
+
+     INTEGER HEAD(8)
+     REAL    FIELD(64,32)     ! dimensions for T21 grids
+     READ (10,ERR=888,END=999) HEAD
+     READ (10,ERR=888,END=999) FIELD
+     ....
+ 888 STOP 'I/O ERR'
+ 999 STOP 'EOF'
+     ....
+\end{verbatim}
+
+A new command line parameter "-g" was added for users of the GRADS
+graphics software. Using -g in conjunction with SERVICE output
+creates a GRADS control file describing the contents of the SERVICE
+data file. GRADS can now be used to process the SERVICE data without
+using converters or utilities (see chapter 7).
+
+
+\section{HHMM}
+
+\begin{tabular}{|l|p{12cm}|}
+\hline
+Setting & Description \\
+\hline
+  HHMM  =  0 & head(4) shows the time in hours (HH). \\
+  HHMM  =  1 & head(4) shows the time in hours and minutes (HHMM). \\
+\hline
+\end{tabular}
+
+\section{HEAD7}
+The 7th element of the header is reserved for the user.
+It may be used for experiment numbers, flags or anything else.
+Setting HEAD7 to a number exports this number to every header record
+in the output file (SERVICE format only).
+
+\section{MARS}
+This parameter is used for processing simulations of the Martian atmosphere.
+Setting MARS=1 switches gravity, gas constant and planet radius
+to the correct values for the planet Mars.
+
+\section{MULTI}
+The parameter MULTI can be used to process a series of input data during
+ one run of the Pumaburner. Setting MULTI to a number (n)
+tells the Pumaburner to process (n) input files.
+The input files must follow one of these two rules:
+\begin{itemize}
+\item YYMM rule: The last four characters of the filename 
+                 contain the date in the form YYMM.
+\item .NNN rule: The last four characters of the filename
+                 consist of a dot followed by a three digit sequence number.
+\end{itemize}
+
+\begin{verbatim}
+Examples:
+
+Namelist contains MULTI=3
+Command: pumaburn <namelist >printout run.005 out
+Result: Pumaburn processes the files <run.005> <run.006> <run.007>
+
+Namelist contains MULTI=4
+Command: pumaburn <namelist >printout exp0211 out
+Result: Pumaburn processes the files <exp0211> <exp0212> <exp0301> <exp0302>
+\end{verbatim}
+
+\section{Namelist example}
+\begin{verbatim}
+       VTYPE  = Pressure
+       HTYPE  = Grid
+       CODE   = 130,131,132
+       hPa    = 200,500,700,850,1000
+       MEAN   = 0
+       NETCDF = 0
+\end{verbatim}
+
+    This namelist will write Temperature(130), u(131) and v(132)
+    to the pressure levels 200hPa, 500hPa, 700hPa, 850hPa and 1000hPa.
+    The output interval is the same as that found on the model data,
+    e.g. every 12 or every 6 hours (MEAN=0). The output format
+    is the SERVICE format.
+
+\section{Troubleshooting}
+If the Pumaburner reports an error or does not produce 
+the expected results, try the following:
+
+\begin{itemize}
+
+\item Check your namelist, especially for invalid codes, types and levels.
+
+\item Run the Pumaburner in debug-mode by using the option -d.
+For example:
+\begin{verbatim}
+pumaburn <namelist >printout -d data.in data.out
+\end{verbatim}
+
+This will print out details such as the parameters and the memory allocation used
+during the run. This additional information may help to diagnose the problem.
+
+\item Not all combinations of HTYPE, VTYPE, and CODE are valid.
+Try using HTYPE=Grid and VTYPE=Pressure before switching to more
+exotic parameter combinations.
+
+\end{itemize}
+

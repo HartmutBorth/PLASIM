@@ -1,0 +1,25 @@
+# Makefile for PUMA with no graphics
+
+F90=f90
+
+%.o : %.f90
+	${F90} -c -O $<
+
+MPIMOD=mpimod_stub
+GUIMOD=guimod_stub
+FFTMOD=fftmod
+
+OBJ=${MPIMOD}.o ${FFTMOD}.o ${GUIMOD}.o puma.o legsym.o restartmod.o
+
+puma.x:	$(OBJ)
+	${F90} -o puma.x $(OBJ)
+
+puma.o:		puma.f90
+${FFTMOD}.o:	${FFTMOD}.f90
+${GUIMOD}.o:	${GUIMOD}.f90 puma.o
+${MPIMOD}.o:	${MPIMOD}.f90 puma.o
+legsym.o:	legsym.f90 puma.o
+restartmod.o:	restartmod.f90
+
+clean:
+	rm -f *.o *.mod

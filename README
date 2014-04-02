@@ -1,0 +1,37 @@
+Report bugs and comments to <E.Kirk@gmx.de>, please
+or post it at "http://www.mi.uni-hamburg.de/Forum.5807.0.html"
+=======================================================================
+Requirements:
+-----------------------------------------------------------------------
+Following software components are necessary for running the models:
+
+1. C          compiler (cc, gcc, sunfc)
+2. C++        compiler (c++, g++)
+3. FORTRAN-90 compiler (gfortran, g95, f90, sunf90)
+4. make       utility  (make, gmake)
+5. X11        include  (/usr/X11/include, /usr/X11R6/include)
+6. X11        library  (/usr/X11/lib64    /usr/X11/lib)
+=======================================================================
+Optional for multi-processor (parallel) program execution:
+-----------------------------------------------------------------------
+mpi           message passing interface (mpich, openMPI)
+mpif90        compiler
+mpicc         compiler
+mpirun        execution script
+=======================================================================
+The configure script tries to locate all necessary components.
+If something is missing, you have to install these packages.
+Most Linux distributions have these packages on board and all you
+have to do is, to mark these for installation in the software manager.
+All required software is available in free open source packages.
+=======================================================================
+1. Open a terminal window and enter the most directory.
+2. Run "./configure.sh" in this directory
+3. Type "most.x" or "./most.x" to run the "Model Starter".
+4. Choose model "PUMA" or "Planet Simulator" with a mouse click.
+5. Click on the button "Save & Run" for model building and execution.
+6. For using more than 1 core you must have MPI (Message Passing Interface).
+7. Standard resolutions are: T21 (64x32 grid), T31 (96x48), and T42 (128x64).
+8. Per aspera ad astra
+
+Edilbert Kirk (E.Kirk@gmx.de)

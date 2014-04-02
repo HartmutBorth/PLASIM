@@ -1,0 +1,66 @@
+ ************************************
+ * MAC Mini - Core 2 Duo 2.0 GHz    *
+ * most_puma_t21_l10_p1.x           *
+ * GUI on                           *
+ ************************************ 
+ * Wallclock time      :     49 sec *
+ * Minutes per sim year:     10     *   
+ * Sim years per day   :    146     *   
+ ************************************
+
+
+ ************************************
+ * MAC Mini - Core 2 Duo 2.0 GHz    *
+ * most_puma_t21_l10_p1.x           *
+ * GUI off                          *
+ ************************************
+ * Wallclock time      :      8 sec *
+ * Minutes per sim year:      2     *
+ * Sim years per day   :    960     *
+ ************************************
+
+
+ ************************************
+ * MAC Mini - Core 2 Duo 2.0 GHz    *
+ * most_puma_t21_l10_p2.x           *
+ * GUI off                          *
+ ************************************
+ * Wallclock time      :      4 sec *
+ * Minutes per sim year:      1     *
+ * Sim years per day   :   1694     *
+ ************************************
+
+
+
+ ************************************
+ * Intel Xeon 2.4 GHz               *
+ * most_puma_t21_l10_p1.x           *
+ * GUI off                          *
+ ************************************
+ * Wallclock time      :     59 sec *
+ * Minutes per sim year:      1     *
+ * Sim years per day   :   1458     *
+ ************************************
+
+
+ ************************************
+ * Intel Xeon 2.4 GHz               *
+ * most_puma_t21_l10_p2.x           *
+ * GUI off                          *
+ ************************************
+ * Wallclock time      :     30 sec *
+ * Minutes per sim year:      1     *
+ * Sim years per day   :   2880     *
+ ************************************
+
+
+ ************************************
+ * Intel Xeon 2.4 GHz               *
+ * most_puma_t21_l10_p4.x           *
+ * GUI off                          *
+ ************************************
+ * Wallclock time      :     18 sec *
+ * Minutes per sim year:      0     *
+ * Sim years per day   :   4734     *
+ ************************************
+

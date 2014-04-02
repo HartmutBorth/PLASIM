@@ -1,0 +1,137 @@
+\newfont{\tensy}{cmsy10}
+\newfont{\elvsy}{cmsy10 scaled 1095}
+\newfont{\twlsy}{cmsy10 scaled 1200}
+\newcommand{\chemical}[1]{\fontdimen16\elvsy=3.3pt \fontdimen17\twlsy=3.6pt 
+\mathrm{#1}}
+
+\newtheorem{fig}{\vspace{-10pt} Figure}
+\newtheorem{tab}{\hspace{-5pt} Table}
+
+\newcommand{\rand}{\marginpar{\rule[-12.5mm]{1mm}{15mm}}}
+\newcommand{\randg}{\marginpar{\rule[-17.5mm]{1mm}{20mm}}}
+
+\def \mf{\mathsf}
+\def \dt{\Delta t}
+\def \dz{\Delta z}
+\def \eps{\varepsilon}
+\def \mm{\,\mu mol \,}
+\def \pH{{\it p}H}
+\def \degrees{^\circ}
+
+\def \ehfull{{\em Emiliania huxleyi }}
+\def \eh{{\em E. huxleyi }}
+\def \OM{{organic matter }}
+
+\def \bgf{\begin{figure} \vspace{5mm}}
+\def \bgfh{\begin{figure}[h] \vspace{5mm}}
+\def \bgft{\begin{figure}[t] \vspace{5mm}}
+\def \bgfb{\begin{figure}[b] \vspace{5mm}}
+\def \bgfht{\begin{figure}[ht] \vspace{5mm}}
+\def \bgfhb{\begin{figure}[hb] \vspace{5mm}}
+\def \ef{\end{figure} \vspace{5mm} }
+
+\def \btb{\begin{table} \vspace{5mm}}
+\def \btbh{\begin{table}[h] \vspace{5mm}}
+\def \btbt{\begin{table}[t] \vspace{5mm}}
+\def \btbb{\begin{table}[!!!!!b] \vspace{5mm}}
+\def \btbhh{\begin{table}[!!!!!h] \vspace{5mm}}
+\def \btbht{\begin{table}[ht] \vspace{5mm}}
+\def \btbhb{\begin{table}[hb] \vspace{5mm}}
+\def \btbbt{\begin{table}[bt] \vspace{5mm}}
+\def \etb{\end{table}}
+
+\def \bc{\begin{center}}
+\def \ec{\end{center}}
+\def \be{\begin{equation}}
+\def \ee{\end{equation}}
+\def \beqa{\begin{eqnarray}}
+\def \eeqa{\end{eqnarray}}
+\def \ba{\begin{array}}
+\def \ea{\end{array}}
+\def \bt{\vspace{2mm} \begin{tabular}}
+\def \et{\end{tabular}}
+\def \bd{\begin{displaymath}}
+\def \ed{\end{displaymath}}
+\def \bi{\begin{itemize}}
+\def \ei{\end{itemize}}
+\def \ben{\begin{enumerate}}
+\def \een{\end{enumerate}}
+\def \bc{\begin{center}}
+\def \ec{\end{center}}
+\def \di{\displaystyle}
+\def \bfl{\begin{flushleft}}
+\def \efl{\end{flushleft}}
+\newcommand{\e}[1]{\! \times \! 10^{#1}}
+
+%----- carbonate system ----------------%
+
+\def\cheq #1. #2. {\, {{#1 \atop\rightharpoonup}\atop
+                    {\leftharpoondown\atop #2}}\, }
+
+%----------------- SUM CO2 -------------------%
+\newcommand{\sumc}{\sum \chemical{\mathsf{CO_2}}}
+\newcommand{\sumcc}{[\sum \chemical{\mathsf{CO_2}]}}
+\newcommand{\ssumc}{\scriptsize \sum \chemical{\mathsf{CO_2}}}
+
+
+%----- chemical formulas ----------------%
+\newcommand{\cardi}{\chemical{\mathsf{CO_2}}}
+\newcommand{\cd}{\chemical{\mathsf{CO_2}}}
+\newcommand{\ch}{\chemical{\mathsf{CH_4}}}
+\newcommand{\hycar}{\chemical{\mathsf{HCO_3^-}}}
+\newcommand{\car}{\chemical{\mathsf{CO_3^{2-}}}}
+\newcommand{\water}{\chemical{\mathsf{H_2O}}}
+\newcommand{\hplus}{\chemical{\mathsf{H^+}}}
+\newcommand{\oh}{\chemical{\mathsf{OH^-}}}
+\newcommand{\both}{\chemical{\mathsf{B(OH)_3}}}
+\newcommand{\bofo}{\chemical{\mathsf{B(OH)_4^-}}}
+\newcommand{\hco}{\chemical{\mathsf{H_2CO_3}}}
+\newcommand{\ca}{\chemical{\mathsf{Ca^{2+}}}}
+\newcommand{\cacar}{\chemical{\mathsf{CaCO_3}}}
+\newcommand{\ox}{\chemical{\mathsf{O_2}}}
+\newcommand{\pc}{\chemical{\mathsf{pCO_2}}}
+\newcommand{\corg}{\chemical{\mathsf{C_{org}}}}
+
+%----------- [concentrations] -----------%
+\newcommand{\cardic}{[\chemical{\mathsf{CO_2}]}}
+\newcommand{\chc}{[\chemical{\mathsf{CH_4}]}}
+\newcommand{\hycarc}{[\chemical{\mathsf{HCO_3^-}]}}
+\newcommand{\carc}{[\chemical{\mathsf{CO_3^{2-}}]}}
+\newcommand{\waterc}{[\chemical{\mathsf{H_2O}]}}
+\newcommand{\hplusc}{[\chemical{\mathsf{H^+}]}}
+\newcommand{\ohc}{[\chemical{\mathsf{OH^-}]}}
+\newcommand{\bothc}{[\chemical{\mathsf{B(OH)_3}]}}
+\newcommand{\sofc}{[\chemical{\mathsf{SO_4^{2-}}]}}
+\newcommand{\hcoc}{[\chemical{\mathsf{H_2CO_3}]}}
+\newcommand{\cac}{[\chemical{\mathsf{Ca^{2+}}]}}
+\newcommand{\cacarc}{[\chemical{\mathsf{CaCO_3}]}}
+\newcommand{\oxc}{[\chemical{\mathsf{O_2}]}}
+
+\newcommand{\qq}{\qquad}
+\newcommand{\hf}{\hfill}
+\newcommand{\nin}{\noindent}
+\newcommand{\gsim}{\stackrel{>}{\sim}}
+
+%----------- [Chapter without Chapter]-----%
+\newcommand{\kapitel}[2]{\parindent1.75cm{\setcounter{section}{0}  \addtocounter{chapter}{1} \clearpage \addcontentsline{toc}{chapter}{\numberline{\thechapter}#1\hspace{1.5mm}#2} {\Huge\bf \noindent \thechapter\hspace{1cm} #1  \vspace{5mm} \newline \indent  #2 \vspace{2cm} \newline }}\parindent0cm\setcounter{equation}{0}\setcounter{figure}{0}\setcounter{table}{0}}
+
+%------------------------------------------%
+\def \Ä{\mathaccent"707F A}
+\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\td}[2]{\frac{d#1}{d#2}}
+\newcommand{\gl}[1]{Gleichung (\ref{#1})}
+
+%----------- [PUMA - constants]------------%
+\def \dtep{$(\Delta T_R)_{\ÄP}\;$}
+\def \dtepE{$(\Delta T_R)_{EP}\;$}
+\def \dtns{$(\Delta T_R)_{NS}\;$}
+\def \dtepk{$(\Delta T_R)_{\ÄP}$}
+\def \dtepkE{$(\Delta T_R)_{EP}$}
+\def \dtnsk{$(\Delta T_R)_{NS}$}
+
+%--------- [LEZ-Conversion terms] ----------%
+\def \azae{\langle AZ\to AE\rangle}
+\def \aeke{\langle AE\to KE\rangle}
+\def \kekz{\langle KE\to KZ\rangle}
+\def \azkz{\langle AZ\to KZ\rangle}

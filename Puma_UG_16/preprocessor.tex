@@ -1,0 +1,41 @@
+In many cases the setup of PUMA experiments can be defined
+using namelist variables either via MoSt or with editing
+the namelist file. In these cases PUMA can run without
+any startup files containing boundary conditions. \\
+
+For more complex experiments, like changes in orography
+or ground temperature, predefined vertical and horizontal
+gradients of the restoration temperature field
+and more, it is necessary to create files for boundary
+conditions. \\
+
+This is done with the PPP (short for Puma Pre-Processor).
+
+The PPP is a stand alone program, that can be called
+inside the modelstarter MoSt or explicitely by the user.
+It shares the namelist file {\bf puma\_namelist} with
+PUMA, because both programs must use the same parameters
+for consistency.
+
+The use in MoSt is currently restricted for using an orography
+in PUMA. If the orography option is checked in MoSt the 
+PPP will be run before creating the run time environment for
+the model. The PPP creates startup definitions for 
+orography, constant and time variable part of the restoration
+temperature and an initial field for surface pressure.
+
+Additionally the simple orography modifier of MoSt may be used
+to rise or lower parts of the orography. A mouseclick on the
+button {\bf Preprocess} will then call the PPP and make
+all necessary adjustions to start fields. \\
+More complex setups must be performed by either using some of
+the PPP namelist parameters or by adding code to PPP itself.
+This requires however a good knowledge of the FORTRAN-90
+programming language and of the model interna.
+The source code is in the file Most16/puma/src/ppp.f90.
+To make changes easier the PPP has two subroutines
+named {\bf modify\_orography} and {\bf modify\_ground\_temperature}.
+These are the recommended places to add user code. \\
+
+More details can be found in the FORTRAN-90 code of the PPP itself.
+

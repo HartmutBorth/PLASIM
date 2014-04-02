@@ -1,0 +1,1 @@
+c++ -O2 -o burn7.a burn.cpp -I/opt/local/include -L/opt/local/lib -lm -lnetcdf_c++

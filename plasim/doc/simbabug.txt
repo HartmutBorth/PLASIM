@@ -1,0 +1,53 @@
+Most 14 version of "landmod.f90"
+--------------------------------
+   1594       dnpp(:)            = 0.
+   1595       dgpp(:)            = 0.
+   1596       dgppl(:)           = 0.
+   1597       dgppw(:)           = 0.
+   1598       dvwmax(:)          = dwmax(:)
+   1599
+   1600       where (dls(:) > 0. .and. dglac(:) == 0.)
+
+The bug is a missing line at 1599 like:
+
+              dvfor(:) = dforest(:)
+
+The purpose was to work with local copies of the arrays
+"dwmax" and "dforest". So the original arrays would be 
+unaffected if NBIOME was set to 0 (no interaction).
+The bug had the effect that "dvfor" started with the
+initialized values of zero after every restart,
+because "dforest" was read from the restart file
+but not copied to "dvfor".
+
+The current version Most15 with the corresponding code
+fragment is now:
+
+
+Most15 version of "simba.f90"
+-----------------------------
+    113 ! Following plasim arrays are used but not modified
+    114 ! -------------------------------------------------
+    115 ! dwatc(:) = soil wetness [m]
+    116 ! dgppl(:) = GPP light limited
+    117 ! dswfl(:) = short wave radiation [W/m2]
+    118 ! devap(:) = surface evaporation (negative)
+    119
+    120 ! Make local copies of some plasim arrays
+    121 ! They are copied back if NBIOME is set to 1 (interactive)
+    122
+    123 zforest(:) = dforest(:) ! Forest cover (0.0 - 1.0)
+    124 zwmax(:)   = dwmax(:)   ! Bucket depth
+    125
+    126 dnpp(:)   = 0.0  ! Net   primary production [kg C m-2 s-1]
+    127 dgpp(:)   = 0.0  ! Gross primary production [kg C m-2 s-1]
+    128 dgppw(:)  = 0.0  ! GPP water limited
+    129
+    130 where (dls(:) > 0.0 .and. dglac(:) == 0.0) ! land cell with no glacier
+
+
+"dvwmax" was renamed to "zwmax" and
+"dvfor" to "zforest" following the coding rules for the Planet Simulator.
+This and the new comments should clarify the roles of these arrays.
+
+

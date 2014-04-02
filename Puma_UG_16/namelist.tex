@@ -1,0 +1,133 @@
+\begin{tabular}{|l|r|l|}                                  
+\hline                                                        
+Name   & Default & Description \\
+\hline
+& & \\
+{\bf nlat    } &  32 & 0: Number of latitudes \\
+{\bf nlev    } &  10 & 1: Number of levels    \\
+& & \\
+\hline                                                        
+\end{tabular}
+
+
+
+\newpage
+\begin{tabular}{|l|r|l|}                                  
+\hline                                                        
+Name   & Default & Description \\
+\hline
+& & \\
+{\bf kick    } &  1 & 0: no initial noise ($p_s$ = const.) \\
+{\bf         } &    & 1: initial random white noise        \\
+{\bf         } &    & 2: equator symmetric random white noise   \\
+{\bf         } &    & 3: mode (1,2) reproducable initialization \\
+{\bf lat1oro } &    & used in preprocessor \\
+{\bf lat1tgt } &    & used in preprocessor \\
+{\bf lat2oro } &    & used in preprocessor \\
+{\bf lat2tgr } &    & used in preprocessor \\
+{\bf lon1oro } &    & used in preprocessor \\
+{\bf lon1tgt } &    & used in preprocessor \\
+{\bf lon2oro } &    & used in preprocessor \\
+{\bf lon2tgr } &    & used in preprocessor \\
+{\bf nafter  } & 24 & outputinterval: obsolete, replaced by nwpd \\
+{\bf ncoeff  } &  0 & number of coefficients to print in {\bf wrspam} \\  
+{\bf ncorrect} &    & used in preprocessor \\
+{\bf ncu     } &  0 & $ncu > 0$ : write debug info to file unit (ncu) \\
+{\bf ndel    } &  6 & order of hyperdiffusion for each level (2*h) \\
+{\bf ndiag   } & 12 & output interval for diagnostics [timesteps] \\   
+{\bf nextout } &  0 & extended output: ps at t-1 and t-2 \\
+{\bf nfls    } &    & used in preprocessor \\
+{\bf ngui    } &  0 & 1: run with GUI \\
+{\bf nguidbg } &  0 & 1: switch on GUI debug output \\
+{\bf nhz     } &  0 & $nhz > 0$: Held \& Suarez setups \\
+{\bf nkits   } &  3 & number of short initial timesteps \\       
+{\bf nlevt   } &  0 & number of tropospheric levels (if nvg = 1) \\
+{\bf nextout } &  0 & 1:extended output (entropy production) \\
+{\bf nmonths } &  0 & simulation time in months \\
+{\bf noro    } &    & used in preprocessor \\
+{\bf norox   } &    & used in preprocessor \\
+{\bf noutput } &  1 & 1:write model output to file {\bf puma\_output} \\
+{\bf nreverse} &    & used in preprocessor \\
+{\bf nruido  } &  0 & 1:add noise on every time step \\
+{\bf nrun    } &  0 & number of timesteps to run - 0: use nyears and nmonths \\
+{\bf nsponge } &  0 & 1:use sponge layer at top \\
+{\bf nsrv    } &    & used in preprocessor \\
+{\bf nstep   } &  0 & current timestep \\
+{\bf nstop   } &  0 & stop step - 0: compute from nyears 6 nmonths \\
+{\bf nstrato } &    & used in preprocessor \\
+{\bf ntgr    } &    & used in preprocessor \\
+{\bf ntspd   } & 24 & number of time steps per day  \\         
+{\bf nvg     } &  0 & vertical grid type 0:linear 1:Scinocca 2:Polvani \\
+{\bf nwpd    } &  1 & number of writes per day (to {\bf puma\_output}) \\
+{\bf nwspini } &  1 & 1: Write initial sp(:) to file {\bf puma\_sp\_ini}\\
+{\bf nyears  } &  1 & simulation time in years  \\
+{\bf nyoden  } &    & used in preprocessor \\
+& & \\
+\hline                                                        
+\end{tabular}
+\newpage
+
+\begin{tabular}{|l|r||l|}                                  
+\hline
+Name   & Default & Description \\
+\hline
+& & \\
+{\bf alrpv  } &      & used in preprocessor \\
+{\bf alrs   } &      & used in preprocessor \\
+{\bf disp   } &  0.0 & noise amplitude for nruido = 1 \\
+{\bf dorox  } &      & used in preprocessor \\
+{\bf doroxs } &      & used in preprocessor \\
+{\bf doroy  } &      & used in preprocessor \\
+{\bf doroys } &      & used in preprocessor \\
+{\bf dt     } &      & used in preprocessor \\
+{\bf dtep   } & 60.0 & temperature difference at surface for $T_R$ \\
+{\bf        } &      & equator - pole (forcing) \\
+{\bf dtns   } &  0.0 & temperature difference at surface for $T_R$  \\ 
+{\bf        } &      & North pole - South pole (season simulation) \\
+{\bf dtrop  } & 12000.0 & height of tropopause [m] \\ 
+{\bf dttrp  } &  2.0 & temperature increment controlling the sharpness \\ 
+{\bf        } &      & of the tropopause in $T_R$ \\
+{\bf dtzz   } &      & used in preprocessor \\
+{\bf dvdiff } & 0.0  & vertical diffusion coefficient \\
+{\bf edgepv } &      & used in preprocessor \\
+{\bf flsamp } &      & used in preprocessor \\
+{\bf flsdp  } &      & used in preprocessor \\
+{\bf flsp0  } &      & used in preprocessor \\
+{\bf flsoff } &      & used in preprocessor \\
+{\bf horo   } &      & used in preprocessor \\
+{\bf oroano } &      & used in preprocessor \\
+{\bf orofac } &      & used in preprocessor \\
+{\bf pac    } &  0.0 & phase  of annual cycle in [days] \\
+{\bf pmaxpv } &      & used in preprocessor \\
+{\bf pspon  } & 50.0 & sponge layer limit \\
+{\bf psurf  } & 101100.0 & global mean sea level pressure [Pa] \\
+{\bf radpv  } &      & used in preprocessor \\
+{\bf rotspd } &  1.0 & Earth rotation speed factor \\
+{\bf sigmax } &  0.0 & sigma value of top half level \\
+{\bf sponk  } &  0.5 & max. damping coefficient in sponge layer \\
+{\bf tac    } &  0.0 & length of annual cycle in [days] \\
+{\bf tauta  } & 40.0 & far surface heating time scale $nhz > 0$ \\
+{\bf tauts  } &  0.0 & near surface heating time scale $nhz > 0$ \\
+{\bf tdiss  } &  0.2 & diffusion time scale for divergence [days] \\
+{\bf tgr    } & 288.0 & global mean temperature of ground used to set $T_R$ \\ 
+{\bf tgrano } & 0.0  & used in preprocessor \\
+{\bf ttp    } &      & used in preprocessor \\
+& & \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|l|l|r|r||l|}                                  
+\hline
+Name   & Type & Dimension & Default & Description \\
+\hline
+& & & & \\
+{\bf ndl      } & integer & NLEV & 0 & 1: activate spectral printouts for this level \\
+{\bf restim   } & real    & NLEV & 15.0 & restoration timescale for each level \\ 
+{\bf sigmah   } & real    & NLEV &  0.0 & define your own half-level layout \\
+{\bf t0k      } & real    & NLEV & 250.0 & reference $T_R$-temperature profile \\ 
+{\bf tfrc     } & real    & NLEV & 0,0,0,.. ,1 & Rayleigh friction timescale $\tau_F$ in days \\
+{\bf nselect  } & integer & NTP1 &  1 & enable (1) or disable (0) zonal waves \\
+{\bf nspecsel } & integer & NCSP &  1 & enable (1) or disable (0) modes \\
+& & & & \\
+\hline                                                        
+\end{tabular}

@@ -1,0 +1,19 @@
+The UBUNTU Linux distribution needs following components
+to be installed.
+
+- gfortran - a FORTRAN 90 compiler
+- Xlib     - a graphical library
+
+Make sure, that the computer is connected to the internet.
+Open a terminal window and type:
+
+sudo apt-get install gfortran
+sudo apt-get install libx11-dev
+
+For parallel execution you should further type:
+
+sudo apt-get install libopenmpi-dev
+sudo apt-get install openmpi-bin
+
+Then proceed as listed in the file README
+

@@ -1,0 +1,31 @@
+Coupling PLASIM and PUMA requires some handwork currently.
+This is a quick introduction:
+
+ 1) Start most.x and select:
+    PUMA, CPU's=1, Instances=2, Orography, Annual Cycle, NSYNC=1, SYNCSTR=0.1
+ 2) Click on "Save and Exit"
+ 3) Copy the contents of puma/run to a new directory, say $WORK/run
+ 4) PUMA will get the instance number #1, so files ending with _01
+    are necessary for PUMA
+
+ 5) Start most.x and select:
+    PLASIM, CPU's=1, Instances=2, NSYNC=1, SYNCSTR=0.1
+ 6) Click on "Save & Exit"
+ 7) Change to plasim/run
+ 8) Copy the plasim executable to $WORK/run
+ 9) Copy all *.sra files to $WORK/run
+10) Copy all *_00 files to $WORK/run
+11) Change to $WORK/run
+12) Edit puma_namelist_00 (for PLASIM)
+13) Insert NEQSIG=1
+14) Insert N_DAYS_PER_YEAR=360
+15) If you want to run with (two!) GUI's then copy
+    from puma/dat/GUI.cfg to $WORK/run/GUI_01.cfg
+    from plasim/dat/GUI.cfg to $WORK/run/GUI_00.cfg
+16) Write a new run script for organizing output from both models,
+    plasim files have the appendix "_00" and puma files "_01".
+17) Or try it out b directly calling:
+    openmpiexec -np 1 most_plasim_t21_l10_p1.x : -np 1 most_puma.x 32 10
+18) Any help, e.g. a new runscript for coupled runs is appreciated.
+    
+

@@ -1,0 +1,17 @@
+# Makefile template for MoSt
+# Compiler names and options are inserted by MoSt
+
+%.o : %.f90
+	$(MOST_F90) -c $(MOST_F90_OPTS) $<
+
+# MOST_F90=f90      # name of the FORTRAN compiler
+# MOST_F90_OPTS=-O  # FORTRAN options
+
+OBJ=ppp.o legsym.o fftmod.o gaussmod.o
+ppp.x:	$(OBJ)
+	$(MOST_F90) -o ppp.x $(MOST_F90_OPTS) $(OBJ)
+
+gaussmod.o:	gaussmod.f90
+legsym.o:	legsym.f90 ppp.o
+fftmod.o:	fftmod.f90
+ppp.o:	ppp.f90

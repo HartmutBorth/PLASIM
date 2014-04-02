@@ -1,0 +1,69 @@
+# Makefile template for MoSt
+# Compiler names and options are inserted by MoSt
+
+%.o : %.c
+	$(MOST_CC) -c $(MOST_CC_OPTS) $<
+
+%.o : %.f90
+	$(MOST_F90) -c $(MOST_F90_OPTS) $(MOST_PREC) $<
+
+%.o : %.f
+	$(MOST_F90) -c $(MOST_F90_OPTS) $<
+
+# MPIMOD=mpimod     # single (mpimod_stub) or parallel (mpimod)
+# GUIMOD=guimod     # with GUI or without (guimod_stub)
+# PUMAX=pumax       # with GUI module or without (pumax_stub
+# GUILIB=${MOST_XLIB} -lX11
+# MOST_F90=f90      # name of the FORTRAN compiler
+# MOST_F90_OPTS=-O  # FORTRAN options
+# MOST_CC=cc        # name of the C compiler for GUI
+# MOST_CC_OPTS=-O   # C options
+# MOST_XLIB="-L/usr/lib64" # path to Xlib
+
+# fftmod is faster than fft991mod, but fft991mod supports
+# more resolutions, e.g. T63 and T106
+
+FFTMOD=fftmod
+RAINMOD=rainmod
+VEGMOD=simba
+PLAMOD=p_earth
+LANDMOD=landmod
+OCEAN=lsgmod
+OCEANCOUP=cpl
+
+OBJ=${MPIMOD}.o ${FFTMOD}.o ${GUIMOD}.o ${RAINMOD}.o ${VEGMOD}.o ${PLAMOD}.o resmod.o plasim.o plasimmod.o calmod.o gaussmod.o legmod.o outmod.o miscmod.o fluxmod.o radmod.o surfmod.o ${LANDMOD}.o seamod.o icemod.o oceanmod.o restartmod.o tracermod.o tpcore.o trc_routines.o ${PUMAX}.o ${OCEAN}.o ${OCEANCOUP}.o
+
+plasim.x:	$(OBJ)
+	$(MOST_F90) -o plasim.x $(MOST_F90_OPTS) $(OBJ) ${GUILIB}
+
+resmod.o:	resmod.f90
+plasimmod.o:	plasimmod.f90 resmod.o
+plasim.o:	plasim.f90 plasimmod.o
+${FFTMOD}.o:	${FFTMOD}.f90
+${MPIMOD}.o:	${MPIMOD}.f90 plasimmod.o
+${GUIMOD}.o:	${GUIMOD}.f90 plasimmod.o radmod.o ${OCEANCOUP}.o
+${RAINMOD}.o:	${RAINMOD}.f90 plasimmod.o
+${VEGMOD}.o:	${VEGMOD}.f90 ${LANDMOD}.o
+${LANDMOD}.o:	${LANDMOD}.f90 plasimmod.o
+${PLAMOD}.o:	${PLAMOD}.f90 radmod.o
+calmod.o:	calmod.f90 plasimmod.o
+gaussmod.o:	gaussmod.f90
+legmod.o:	legmod.f90 plasimmod.o
+outmod.o:	outmod.f90 plasimmod.o
+miscmod.o:	miscmod.f90 plasimmod.o
+fluxmod.o:	fluxmod.f90 plasimmod.o
+radmod.o:	radmod.f90 plasimmod.o
+surfmod.o:	surfmod.f90 plasimmod.o
+seamod.o:	seamod.f90 plasimmod.o
+icemod.o:	icemod.f90 plasimmod.o
+oceanmod.o:	oceanmod.f90 plasimmod.o
+restartmod.o:	restartmod.f90
+tracermod.o:	tracermod.f90 plasimmod.o
+tpcore.o:	tpcore.f90
+trc_routines.o:	trc_routines.f90
+${OCEANCOUP}.o:	${OCEANCOUP}.f90 plasimmod.o oceanmod.o icemod.o seamod.o
+${OCEAN}.o:	${OCEAN}.f90 ${OCEANCOUP}.o
+${PUMAX}.o:	${PUMAX}.c
+
+clean:
+	rm -f *.o *.mod

@@ -1,0 +1,854 @@
+!     =================
+!     SUBROUTINE PACKGP
+!     =================
+
+      subroutine packgp(pu,pmin,psca,kp)
+      use pumamod
+      real         :: pu(2,NPGP)   ! in:  array to pack
+      real(kind=4) :: pmin         ! out: minimum
+      real(kind=4) :: psca         ! out: scaling factor
+      integer(kind=4) :: kp(NPGP)  ! out: array for packed data
+      integer(kind=4) :: ir,ii
+      
+      zmax = maxval(pu(:,:))
+      pmin = minval(pu(:,:))
+      zran = zmax - pmin           ! range of values
+      if (zran > 1.0e-25) then
+         psca = 64000.0 / zran
+      else
+         psca = 1.0
+      endif
+
+      do j = 1 , NPGP
+         ir = ishft(nint((pu(1,j) - pmin) * psca),  16)
+         ii = ibits(nint((pu(2,j) - pmin) * psca),0,16)
+         kp(j) = ior(ir,ii)
+      enddo
+
+      return
+      end
+
+!     ===================
+!     SUBROUTINE UNPACKGP
+!     ===================
+
+      subroutine unpackgp(pu,pmin,psca,kp)
+      use pumamod
+      real            :: pu(2,NPGP)
+      integer(kind=4) :: pmin
+      integer(kind=4) :: psca
+      integer(kind=4) :: kp(NPGP)
+
+      do j = 1 , NPGP
+         ir = iand(ishft(kp(j),-16),65535)
+         ii = iand(kp(j),65535)
+         pu(1,j) = ir / psca + pmin
+         pu(2,j) = ii / psca + pmin
+      enddo
+
+      return
+      end
+
+!     =================
+!     SUBROUTINE PACKSP
+!     =================
+
+      subroutine packsp(pu,pp,kp)
+      use pumamod
+      real(kind=4)    :: pu(2,NCSP)       ! in:  array to pack
+      real(kind=4)    :: pp(NTP1+1)       ! out: modes for m=0
+      integer(kind=4) :: kp(NTP1+1:NCSP)  ! out: array for packed data
+      integer(kind=4) :: ir,ii
+
+      pp(1:NTP1) = pu(1,1:NTP1) ! store first modes unpacked
+
+      zmax = maxval(pu(:,NTP1+1:NCSP))
+      zmin = minval(pu(:,NTP1+1:NCSP))
+      zabs = max(abs(zmax),abs(zmin))
+      if (zabs > 1.0e-25) then
+         zsca = 32000.0 / zabs
+      else
+         zsca = 1.0
+      endif
+      pp(NTP1+1) = zsca
+
+      do j = NTP1+1 , NCSP
+         ir = ishft(32768+nint(pu(1,j) * zsca),  16)
+         ii = ibits(32768+nint(pu(2,j) * zsca),0,16)
+         kp(j) = ior(ir,ii)
+      enddo
+
+      return
+      end
+
+!     ===================
+!     SUBROUTINE UNPACKSP
+!     ===================
+
+      subroutine unpacksp(pu,pp,kp)
+      use pumamod
+      real :: pu(2,NCSP)
+      real(kind=4) :: pp(NTP1+1)
+      integer(kind=4) :: kp(NTP1+1:NCSP)
+
+      pu(1,1:NTP1) = pp(1:NTP1) ! first modes unpacked
+      zsca = pp(NTP1+1)
+
+      do j = NTP1+1 , NCSP
+         ir = iand(ishft(kp(j),-16),65535) - 32768
+         ii = iand(kp(j),65535) - 32768
+         pu(1,j) = ir / zsca
+         pu(2,j) = ii / zsca
+      enddo
+
+      return
+      end
+
+!     =================
+!     SUBROUTINE OUTINI
+!     =================
+
+      subroutine outini
+      use pumamod
+
+!     If PLASIM runs as 64 bit version truncate output variables 32 bit
+
+      real(kind=4) :: zsigmah(NLEV)
+      integer(kind=4) :: itru,ilat,ilev
+!
+      character(len=8) ypuma
+      data ypuma/'PUMA-II '/
+
+      itru = NTRU
+      ilat = NLAT
+      ilev = NLEV
+      open  (40,file=plasim_output,form='unformatted')
+      write (40) ypuma
+      write (40) itru
+      write (40) ilat
+      write (40) ilev
+      zsigmah(:)=sigmah(:)
+      write (40) zsigmah
+
+      return
+      end
+
+!     ==================
+!     SUBROUTINE WRITEGP
+!     ==================
+
+      subroutine writegp(kunit,pf,kcode,klev)
+      use pumamod
+      real :: pf(NHOR)
+      real :: zf(NUGP)
+      integer(kind=4) :: ihead(8)
+      integer(kind=4) :: la(NPGP)
+      real(kind=4) :: zmin
+      real(kind=4) :: zsca
+      real(kind=4) :: zzf(NUGP)
+
+      istep = nstep
+      call ntomin(istep,nmin,nhour,nday,nmonth,nyear)
+
+      ihead(1) = kcode
+      ihead(2) = klev
+      ihead(3) = nday + 100 * nmonth + 10000 * nyear
+      ihead(4) = nmin + 100 * nhour
+      ihead(5) = NLON
+      ihead(6) = NLAT
+      ihead(7) = 1
+      ihead(8) = n_days_per_year
+
+      call mpgagp(zf,pf,1)
+
+      if (mypid == NROOT) then
+         write (kunit) ihead
+         if (npackgp == 1) then
+            call packgp(zf,zmin,zsca,la)
+            write (kunit) zmin,zsca
+            write (kunit) la
+         else
+            zzf(:) = zf(:)
+            write (kunit) zzf
+         endif
+      endif
+
+      return
+      end
+
+!     ==================
+!     SUBROUTINE WRITESP
+!     ==================
+
+      subroutine writesp(kunit,pf,kcode,klev,pscale,poff)
+      use pumamod
+      real :: pf(NRSP)
+      integer(kind=4) :: ihead(8)
+      integer(kind=4) :: la(NTP1+1:NCSP)
+      real(kind=4) :: zf(NRSP)
+      real(kind=4) :: za(NTP1+1)
+
+      istep = nstep
+      call ntomin(istep,nmin,nhour,nday,nmonth,nyear)
+
+      ihead(1) = kcode
+      ihead(2) = klev
+      ihead(3) = nday + 100 * nmonth + 10000 * nyear
+      ihead(4) = nmin + 100 * nhour
+      ihead(5) = NRSP
+      ihead(6) = 1
+      ihead(7) = 1
+      ihead(8) = n_days_per_year
+
+!     normalize ECHAM compatible and scale to physical dimensions
+
+      zf(:) = pf(:) * spnorm(1:NRSP) * pscale
+      zf(1) = zf(1) + poff ! Add offset if necessary
+      write (kunit) ihead
+      if (npacksp == 1) then
+         call packsp(zf,za,la)
+         write (kunit) za
+         write (kunit) la
+      else
+         write (kunit) zf
+      endif
+
+      return
+      end
+
+!     ================
+!     SUBROUTINE OUTSP
+!     ================
+
+      subroutine outsp
+      use pumamod
+
+!     ************
+!     * orograpy *
+!     ************
+
+      call writesp(40,so,129,0,CV*CV,0.)
+
+!     ************
+!     * pressure *
+!     ************
+
+      call writesp(40,sp,152,0,1.0,log(psurf))
+
+!     ***************
+!     * temperature *
+!     ***************
+
+      do jlev = 1 , NLEV
+         call writesp(40,st(1,jlev),130,jlev,ct,t0(jlev) * ct)
+      enddo
+
+!     *********************
+!     * specific humidity *
+!     *********************
+
+      if (nqspec == 1) then
+         do jlev = 1 , NLEV
+            call writesp(40,sqout(1,jlev),133,jlev,1.0,0.0)
+         enddo
+      endif
+
+!     **************
+!     * divergence *
+!     **************
+
+      do jlev = 1 , NLEV
+         call writesp(40,sd(1,jlev),155,jlev,ww,0.0)
+      enddo
+
+!     *************
+!     * vorticity *
+!     *************
+
+      do jlev = 1 , NLEV
+         zsave = sz(3,jlev)
+         sz(3,jlev) = sz(3,jlev) - plavor
+         call writesp(40,sz(1,jlev),138,jlev,ww,0.0)
+         sz(3,jlev) = zsave
+      enddo
+
+      return
+      end
+
+
+!     ================
+!     SUBROUTINE OUTGP
+!     ================
+
+      subroutine outgp
+      use pumamod
+
+!     *********************
+!     * specific humidity *
+!     *********************
+
+      if (nqspec == 0) then ! Semi Langrangian advection active
+         do jlev = 1 , NLEV
+            call writegp(40,dq(1,jlev),133,jlev)
+         enddo
+      endif
+
+!     **********************************
+!     * mixed-layer depth (from ocean) *
+!     **********************************
+
+      call writegp(40,dmld,110,0)
+
+!     ***********************
+!     * surface temperature *
+!     ***********************
+
+      call writegp(40,dt(1,NLEP),139,0)
+
+!     ****************
+!     * soil wetness *
+!     ****************
+
+      call writegp(40,dwatc,140,0)
+
+!     **************
+!     * snow depth *
+!     **************
+
+      call writegp(40,dsnow,141,0)
+
+!     **********************
+!     * large scale precip *
+!     **********************
+
+      aprl(:)=aprl(:)/real(naccuout)
+      call writegp(40,aprl,142,0)
+
+!     *********************
+!     * convective precip *
+!     *********************
+
+      aprc(:)=aprc(:)/real(naccuout)
+      call writegp(40,aprc,143,0)
+
+!     *************
+!     * snow fall *
+!     *************
+
+      aprs(:)=aprs(:)/real(naccuout)
+      call writegp(40,aprs,144,0)
+
+!     **********************
+!     * sensible heat flux *
+!     **********************
+
+      ashfl(:)=ashfl(:)/real(naccuout)
+      call writegp(40,ashfl,146,0)
+
+!     ********************
+!     * latent heat flux *
+!     ********************
+
+      alhfl(:)=alhfl(:)/real(naccuout)
+      call writegp(40,alhfl,147,0)
+
+!     ************************
+!     * liquid water content *
+!     ************************
+
+      do jlev = 1 , NLEV
+         call writegp(40,dql(:,jlev),161,jlev)
+      enddo
+
+!     *************
+!     * u-star**3 *
+!     *************
+
+      call writegp(40,dust3,159,0)
+
+!     **********
+!     * runoff *
+!     **********
+
+      aroff(:)=aroff(:)/real(naccuout)
+      call writegp(40,aroff,160,0)
+
+!     ***************
+!     * cloud cover *
+!     ***************
+
+      do jlev = 1 , NLEV
+        call writegp(40,dcc(1,jlev),162,jlev)
+      enddo
+      acc(:)=acc(:)/real(naccuout)
+      call writegp(40,acc,164,0)
+
+!     ***************************
+!     * surface air temperature *
+!     ***************************
+
+      atsa(:)=atsa(:)/real(naccuout)
+      call writegp(40,atsa,167,0)
+
+!     ******************************
+!     * surface temperature (accu) *
+!     ******************************
+
+      ats0(:)=ats0(:)/real(naccuout)
+      call writegp(40,ats0,169,0)
+
+!     *************************
+!     * deep soil temperature *
+!     *************************
+
+      call writegp(40,dtd5,170,0)
+
+!     *****************
+!     * land sea mask *
+!     *****************
+
+      call writegp(40,dls,172,0)
+
+!     *********************
+!     * surface roughness *
+!     *********************
+
+      call writegp(40,dz0,173,0)
+
+!     **********
+!     * albedo *
+!     **********
+
+      call writegp(40,dalb,175,0)
+
+!     ***************************
+!     * surface solar radiation *
+!     ***************************
+
+      assol(:)=assol(:)/real(naccuout)
+      call writegp(40,assol,176,0)
+
+!     *****************************
+!     * surface thermal radiation *
+!     *****************************
+
+      asthr(:)=asthr(:)/real(naccuout)
+      call writegp(40,asthr,177,0)
+
+!     ***********************
+!     * top solar radiation *
+!     ***********************
+
+      atsol(:)=atsol(:)/real(naccuout)
+      call writegp(40,atsol,178,0)
+
+!     *************************
+!     * top thermal radiation *
+!     *************************
+
+      atthr(:)=atthr(:)/real(naccuout)
+      call writegp(40,atthr,179,0)
+
+!     ************
+!     * u-stress *
+!     ************
+
+      ataux(:)=ataux(:)/real(naccuout)
+      call writegp(40,ataux,180,0)
+
+!     *************
+!     * v- stress *
+!     *************
+
+      atauy(:)=atauy(:)/real(naccuout)
+      call writegp(40,atauy,181,0)
+
+!     ***************
+!     * evaporation *
+!     ***************
+
+      aevap(:)=aevap(:)/real(naccuout)
+      call writegp(40,aevap,182,0)
+
+!     *********************
+!     * soil temperature *
+!     *********************
+
+      call writegp(40,dtsoil,183,0)
+
+!     ********************
+!     * vegetation cover *
+!     ********************
+
+      call writegp(40,dveg,199,0)
+
+!     *******************
+!     * leaf area index *
+!     *******************
+
+      call writegp(40,dlai,200,0)
+
+!     ***********************************
+!     * maximum surface air temperature *
+!     ***********************************
+
+      call writegp(40,atsama,201,0)
+
+!     ***********************************
+!     * minimum surface air temperature *
+!     ***********************************
+
+      call writegp(40,atsami,202,0)
+
+!     ********************
+!     * top solar upward *
+!     ********************
+
+      atsolu(:)=atsolu(:)/real(naccuout)
+      call writegp(40,atsolu,203,0)
+
+!     ************************
+!     * surface solar upward *
+!     ************************
+
+      assolu(:)=assolu(:)/real(naccuout)
+      call writegp(40,assolu,204,0)
+
+!     **************************
+!     * surface thermal upward *
+!     **************************
+
+      asthru(:)=asthru(:)/real(naccuout)
+      call writegp(40,asthru,205,0)
+
+!     *******************************
+!     * soil temperatures level 2-4 *
+!     *******************************
+
+      call writegp(40,dtd2,207,0)
+      call writegp(40,dtd3,208,0)
+      call writegp(40,dtd4,209,0)
+
+!     *****************
+!     * sea ice cover *
+!     *****************
+
+      call writegp(40,dicec,210,0)
+
+!     *********************
+!     * sea ice thickness *
+!     *********************
+
+      call writegp(40,diced,211,0)
+
+!     ****************
+!     * forest cover *
+!     ****************
+
+      call writegp(40,dforest,212,0)
+
+!     *************
+!     * snow melt *
+!     *************
+
+      asmelt(:)=asmelt(:)/real(naccuout)
+      call writegp(40,asmelt,218,0)
+
+!     *********************
+!     * snow depth change *
+!     *********************
+
+      asndch(:)=asndch(:)/real(naccuout)
+      call writegp(40,asndch,221,0)
+
+!     ******************
+!     * field capacity *
+!     ******************
+
+      call writegp(40,dwmax,229,0)
+
+!     *****************************************
+!     * vertical integrated specific humidity *
+!     *****************************************
+
+      aqvi(:)=aqvi(:)/real(naccuout)
+      call writegp(40,aqvi,230,0)
+
+!     ****************
+!     * glacier mask *
+!     ****************
+
+      call writegp(40,dglac,232,0)
+
+!     *********************
+!     ***   S I M B A   ***
+!     *********************
+
+!     ****************************
+!     * gross primary production *
+!     ****************************
+
+      agpp(:)=agpp(:)/real(naccuout)
+      call writegp(40,agpp,300,0)
+
+!     **************************
+!     * net primary production *
+!     **************************
+
+      anpp(:)=anpp(:)/real(naccuout)
+      call writegp(40,anpp,301,0)
+
+!     *********************
+!     * light limited GPP *
+!     *********************
+
+      agppl(:)=agppl(:)/real(naccuout)
+      call writegp(40,agppl,302,0)
+
+!     *********************
+!     * water limited GPP *
+!     *********************
+
+      agppw(:)=agppw(:)/real(naccuout)
+      call writegp(40,agppw,303,0)
+
+!     *********************
+!     * vegetation carbon *
+!     *********************
+
+      call writegp(40,dcveg,304,0)
+
+!     ***************
+!     * soil carbon *
+!     ***************
+
+      call writegp(40,dcsoil,305,0)
+
+!     ************************
+!     * no growth allocation *
+!     ************************
+
+      anogrow(:)=anogrow(:)/real(naccuout)
+      call writegp(40,anogrow,306,0)
+
+!     *****************************
+!     * heterotrophic respiration *
+!     *****************************
+
+      aresh(:)=aresh(:)/real(naccuout)
+      call writegp(40,aresh,307,0)
+
+!     *********************
+!     * litter production *
+!     *********************
+
+      alitter(:)=alitter(:)/real(naccuout)
+      call writegp(40,alitter,308,0)
+
+!     **************
+!     * water loss *
+!     **************
+
+      awloss(:)=awloss(:)/real(naccuout)
+      call writegp(40,awloss,309,0)
+!
+      return
+      end
+
+!     ==================
+!     SUBROUTINE OUTDIAG
+!     ==================
+
+      subroutine outdiag
+      use pumamod
+
+!     *****************************************
+!     * 2-D diagnostic arrays, if switched on *
+!     *****************************************
+
+      if(ndiagsp2d > 0 .and. mypid == NROOT) then
+       do jdiag=1,ndiagsp2d
+        jcode=50+jdiag
+        call writesp(40,dsp2d(1,jdiag),jcode,0,1.,0.0)
+       enddo
+      end if
+
+!     *****************************************
+!     * 3-D diagnostic arrays, if switched on *
+!     *****************************************
+
+      if(ndiagsp3d > 0 .and. mypid == NROOT) then
+       do jdiag=1,ndiagsp3d
+        jcode=60+jdiag
+        do jlev=1,NLEV
+         call writesp(40,dsp3d(1,jlev,jdiag),jcode,jlev,1.,0.0)
+        enddo
+       enddo
+      end if
+
+!     *****************************************
+!     * 2-D diagnostic arrays, if switched on *
+!     *****************************************
+
+      if(ndiaggp2d > 0) then
+       do jdiag=1,ndiaggp2d
+        jcode=jdiag
+        call writegp(40,dgp2d(1,jdiag),jcode,0)
+       enddo
+      end if
+
+!     *****************************************
+!     * 3-D diagnostic arrays, if switched on *
+!     *****************************************
+
+      if(ndiaggp3d > 0) then
+       do jdiag=1,ndiaggp3d
+        jcode=20+jdiag
+        do jlev=1,NLEV
+         call writegp(40,dgp3d(1,jlev,jdiag),jcode,jlev)
+        enddo
+       enddo
+      end if
+
+!     ************************************************
+!     * cloud forcing (clear sky fluxes) diagnostics *
+!     ************************************************
+
+      if(ndiagcf > 0) then
+       call writegp(40,dclforc(1,1),101,0)
+       call writegp(40,dclforc(1,2),102,0)
+       call writegp(40,dclforc(1,3),103,0)
+       call writegp(40,dclforc(1,4),104,0)
+       call writegp(40,dclforc(1,5),105,0)
+       call writegp(40,dclforc(1,6),106,0)
+       call writegp(40,dclforc(1,7),107,0)
+      end if
+
+!     **************************************
+!     * entropy diagnostics if switched on *
+!     **************************************
+
+      if(nentropy > 0) then
+       do jdiag=1,33
+        jcode=319+jdiag
+        call writegp(40,dentropy(1,jdiag),jcode,0)
+       enddo
+      end if
+
+!     *************************************
+!     * energy diagnostics if switched on *
+!     *************************************
+
+      if(nenergy > 0) then
+       do jdiag=1,28
+        jcode=359+jdiag
+        call writegp(40,denergy(1,jdiag),jcode,0)
+       enddo
+      end if
+!
+      return
+      end
+
+!     ===================
+!     SUBROUTINE OUTRESET
+!     ===================
+
+      subroutine outreset
+      use pumamod
+!
+!     reset accumulated arrays and counter
+!
+      aprl(:)=0.
+      aprc(:)=0.
+      aprs(:)=0.
+      aevap(:)=0.
+      ashfl(:)=0.
+      alhfl(:)=0.
+      acc(:)=0.
+      assol(:)=0.
+      asthr(:)=0.
+      atsol(:)=0.
+      atthr(:)=0.
+      assolu(:)=0.
+      asthru(:)=0.
+      atsolu(:)=0.
+      ataux(:)=0.
+      atauy(:)=0.
+      aroff(:)=0.
+      asmelt(:)=0.
+      asndch(:)=0.
+      aqvi(:)=0.
+      atsa(:)=0.
+      ats0(:)=0.
+      atsami(:)=1.E10
+      atsama(:)=0.
+
+      anpp(:)=0.
+      alitter(:)=0.
+      awloss(:)=0.
+      anogrow(:)=0.
+      agpp(:)=0.
+      agppl(:)=0.
+      agppw(:)=0.
+      aresh(:)=0.
+
+      naccuout=0
+
+!     ************************************************
+!     * cloud forcing (clear sky fluxes) diagnostics *
+!     ************************************************
+
+      if(ndiagcf > 0) then
+       dclforc(:,:)=0.
+      end if
+!
+      return
+      end
+
+!     ==================
+!     SUBROUTINE OUTACCU
+!     ==================
+
+      subroutine outaccu
+      use pumamod
+!
+!     accumulate diagnostic arrays
+!
+      aprl(:)=aprl(:)+dprl(:)
+      aprc(:)=aprc(:)+dprc(:)
+      aprs(:)=aprs(:)+dprs(:)
+      aevap(:)=aevap(:)+devap(:)
+      ashfl(:)=ashfl(:)+dshfl(:)
+      alhfl(:)=alhfl(:)+dlhfl(:)
+      acc(:)=acc(:)+dcc(:,NLEP)
+      assol(:)=assol(:)+dswfl(:,NLEP)
+      asthr(:)=asthr(:)+dlwfl(:,NLEP)
+      atsol(:)=atsol(:)+dswfl(:,1)
+      atthr(:)=atthr(:)+dlwfl(:,1)
+      assolu(:)=assolu(:)+dfu(:,NLEP)
+      asthru(:)=asthru(:)+dftu(:,NLEP)
+      atsolu(:)=atsolu(:)+dfu(:,1)
+      ataux(:)=ataux(:)+dtaux(:)
+      atauy(:)=atauy(:)+dtauy(:)
+      aroff(:)=aroff(:)+drunoff(:)
+      asmelt(:)=asmelt(:)+dsmelt(:)
+      asndch(:)=asndch(:)+dsndch(:)
+      aqvi(:)=aqvi(:)+dqvi(:)
+      atsa(:)=atsa(:)+dtsa(:)
+      ats0(:)=ats0(:)+dt(:,NLEP)
+      atsami(:)=AMIN1(atsami(:),dtsa(:))
+      atsama(:)=AMAX1(atsama(:),dtsa(:))
+
+      anpp(:)=anpp(:)+dnpp(:)
+      alitter(:)=alitter(:)+dlitter(:)
+      awloss(:)=awloss(:)+dwloss(:)
+      anogrow(:)=anogrow(:)+dnogrow(:)
+      agpp(:)=agpp(:)+dgpp(:)
+      agppl(:)=agppl(:)+dgppl(:)
+      agppw(:)=agppw(:)+dgppw(:)
+      aresh(:)=aresh(:)+dres(:)
+
+      naccuout=naccuout+1
+!
+      return
+      end

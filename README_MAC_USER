@@ -1,0 +1,18 @@
+This version was successfully tested on MAC's running
+MAC-OS X 10.5 Leopard and MAC-OS X 10.6 Snow Leopard.
+It was necessary to install the FORTRAN-90 compiler "gfortran".
+
+Hint: Install the utility "port" (http://www.macports.org).
+
+Then you may use port to install more usefull software, like:
+
+sudo port install gcc45 +gfortran   (newest compiler suite)
+sudo port install cdo               (climate data operators)
+sudo port install grads2            (graphics software)
+sudo port install ImageMagick       (graphics software)
+sudo port install gv                (Postscript viewer)
+sudo port install openmpi           (Parallelization package)
+
+Good luck,
+
+Edilbert

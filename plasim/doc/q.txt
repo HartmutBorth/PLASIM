@@ -1,0 +1,91 @@
+Water cycle in PlaSim                                gq   gqdt dq   dqdt
+========================================= 
+GRIDPOINTA                                 
+  INVLEGA
+    gq  <- sq (sp2fc)                                
+  -----
+    gq  <- gq (fc2gp)   gq = ps * q                   gq
+  CALCGP
+    zq  <- gq / gp
+    gqm <- (gq(lev+1) - gq(lev)) * zsdotp
+    gqn <- (gqm(lev) - gqm(lev-1)) * rdsig
+  -----
+    guq <- gu * gq
+    gvq <- gv * gq
+    gqn <- gqn      (gp2fc)                           gqn
+    guq <- guq      (gp2fc)
+    gvq <- gvq      (gp2fc)
+  QTEND
+    sqf <- gqn & guq & gvq (Legendre)
+  -----
+    sqt <- sqf      (mpsumsc)
+    dq  <- gq * (psurf/dp)                            dq
+=========================================
+SPECTRALA
+  aqm <- sqm
+  sqm <- sqm & aqm    ??? sqm == aqm ???
+  sqp <- aqm + delt2 * sqt
+  sq  <- sqp        (mpgallsp)
+=========================================
+GRIDPOINTD
+  INVLEGD
+    gq  <- sq         (sp2fc)
+  -----
+    gq  <- gq         (fc2gp)                        gq = gqn ?
+    dq  <- gq * (psurf/dp)
+  TRACER_MAIN
+    gq <- gq          (SL advection)
+  -----
+    gqdt <- gq        (SL term)
+    gqdt <- dqdt * (dp/ww/psurf)
+  MISCSTEP
+    FIXER
+      gqdt
+      dq   <- fix negative values
+    .....
+  -----
+  FLUXSTEP
+    MKEVAP
+      zqn  <- dq
+      dqdt <- zqn & dqdt & dq
+    .....
+    VDIFF
+      dqdt <- zqn
+    .....
+  -----
+  RADSTEP
+  RAINSTEP
+    dqt <- sqt      (mkdqtgp)
+    KUO
+    MKDCA
+    MKLSP
+    MKRAIN
+  -----
+  SURFSTEP
+  -----
+  gqdt <- gqdt & dqdt   ??? gqdt vorher 0 ???
+  gqdt <- gqdt        (gp2fc)
+  sqf  <- gqdt        (fc2sp)
+  sqt  <- sqf         (mpsumsc)
+=========================================
+OUTSP
+  write sqout
+=========================================
+SPECTRALD
+  zsq  <- sqp         (mpgallsp)
+  sqp  <- sqp + delt2 * sqt
+  MKDQTGP
+  dqt  <- sqt
+  -----
+  sqt  <- sqp & tdiss
+  zqgp <- zsq         (sp2fc)
+  zqgp <- zqgp        (fc2gp)
+  zqgp <- zqgp * (psurf/dp)
+  sqp  <- sqp + delt2 * sqt
+  sqm  <- sqm + pnu * sqp
+  sq   <- sqp         (mügallsp)
+  MKDQTGP
+  dqt  <- sqt
+  -----
+
+OUTGP

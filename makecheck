@@ -1,0 +1,7 @@
+All:	f90check.x cc_check.x
+
+f90check.x:	f90check.f90
+	${MOST_F90} -o f90check.x f90check.f90
+
+cc_check.x:	cc_check.c
+	${MOST_CC} -o cc_check.x cc_check.c

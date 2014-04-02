@@ -1,0 +1,84 @@
+There's now a forum for users of PUMA and Planet Simulator.
+Feel free to post questions and comments there.
+"http://www.mi.uni-hamburg.de/Forum.5807.0.html"
+===========================================================
+Q: The configure script tells that the command "make" was not found
+   or FORTRAN or other important things are missing.
+
+A: Some Linux distributions do not install developer packages
+   in the default configuration. If your Linux software manager
+   offers developer packages, choose and install them.
+   You'll need at least (examples in parenthesis):
+   1. C-compiler (gcc)
+   2. C++ compiler (c++)
+   3. FORTRAN-90 compiler (gfortran)
+   4. make (make or gmake)
+   5. X11 include files (xorg-X11-devel)
+   6. tcsh
+   Optional you may install "OpenMPI" or "mpich 2.0" which are
+   necessary to run the models on multiple cores or CPU's,
+   e.g. to use both cores of a Core2Duo or AMD Opteron.
+
+Q: After running "make" in the Most directory I get a lot of error
+   messages from the C compiler. The first messages is:
+   X11R6/Xlib.h: directory or file not found
+
+A: The X11 include files, normally located in "/usr/include/X11R6"
+   are missing. You have to install the development X11 package.
+   Some Linux distributions install only X11 applications by 
+   default. E.g. in SuSE Linux you must install the package
+   "xorg-X11-devel".
+
+Q: After clicking "Save & Run" in the Most window the error message
+   "command not found" appears.
+
+A: Make sure, that the current directory "." is in your PATH.
+   C shell users insert the line: set path=( . $path )
+   into the file ".cshrc" in the home directory.
+   Bourne shell users insert the line: export PATH=.:$PATH;
+   into the file ".profile" in the home directory.
+
+Q: The model crashes with the message:
+   "invalid reference to variable in NAMELIST input ..."
+
+A: You use a variable name in the namelist file, that is not
+   defined in the model. If you use old namelists containing
+   the variable "NRESTART", look at the file "RECENT_CHANGES".
+   Otherwise check for a typo.
+
+Q: I made some changes in the source code and rerun the model
+   but the changes had no effect.
+
+A: You must edit the files in the ../src/ directories of
+   puma or plasim to make permanent changes. 
+   The sources in the ../bld directories are copied at the
+   time of building from the corresponding ../src directories.
+   The Most program maintains a cache of executables in the
+   directories ../bin. You must submit the command 
+   "cleanpuma" or "cleanplasim" in the Most15 directory.
+   This will clear the cache, delete all files in the
+   ../bld and ../run directories. After that Most will
+   create new binaries based on the contents of ../src.
+
+Q: Wat can I do with the orography  in MoST?
+
+A: These fields are prepared for a graphical preprocessor, which is
+   currently under development. There is only one working test case
+   so far. If you use PUMA with 32 latitudes, you may mark a 
+   rectangular arey with the mouse in the orography picture.
+   Then enter a value in the anomaly field in units of [gpm]
+   and click on preprocess. A new orography will be computed and
+   used in the following PUMA run. You'll not see any changes
+   after preprocessing (not yet implemented), but a following
+   GUI run should show your modifications clearly.
+
+Q: How can I compile the postprocessor
+
+A: Change to directory Most15/preprocessor.
+   Type "make -f make_suse" and hit Return.
+   The makefile in that directory will call the "C++" compiler
+   with the correct options and create the executable "burn5.x".
+   You'll need the "netcdf" library installed on your system.
+   Netcdf is available for free on
+   "http://www.unidata.ucar.edu/software/netcdf/index.html"
+

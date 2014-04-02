@@ -1,0 +1,41 @@
+#!/bin/csh
+# Perform restart test by comparing the restart file of a two-month
+# contiguous run with a monthly restarted run (argument = executable)
+
+unset noclobber
+rm -f puma_restart
+rm -f Abort_Message
+rm -f ONE*
+rm -f TWO*
+
+# 1. modify namelist to create a two months run
+
+sed -i -e 's/KICK.*/KICK=0/' puma_namelist
+sed -i -e 's/NGUI.*/NGUI=0/' puma_namelist
+sed -i -e 's/NMONTHS.*/NMONTHS=2/' puma_namelist
+
+# 2. start first run
+
+echo "Executing two months contiguous run"
+time $1 32 5
+mv puma_diag   ONE_DIAG.001
+mv puma_status ONE_REST
+
+# 3. modify namelist to create a month run
+
+sed -i -e 's/NMONTHS.*/NMONTHS=1/' puma_namelist
+
+echo "Executing 1st. month"
+time $1 32 5
+mv puma_diag TWO_DIAG.001
+mv puma_status puma_restart
+echo "Executing 2nd. month from restart"
+time $1 32 5
+mv puma_diag TWO_DIAG.002
+mv puma_status TWO_REST
+
+# 4. compare restart files - should be identical
+
+diff ONE_REST TWO_REST
+
+if ($? == 0) echo "Restart test passed OK"

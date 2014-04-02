@@ -1,0 +1,55 @@
+# Makefile template for MoSt
+# Compiler names and options are inserted by MoSt
+
+%.o : %.c
+	$(MOST_CC) -c $(MOST_CC_OPTS) $<
+
+%.o : %.f90
+	$(MOST_F90) -c $(MOST_F90_OPTS) $(MOST_PREC) $<
+
+%.o : %.s 
+	$(MOST_AS) -o $@ $<
+
+# MOST_F90=f90      # name of the FORTRAN compiler
+# MOST_F90_OPTS=-O  # FORTRAN options
+# MPIMOD=mpimod     # single (mpimod_stub) or parallel (mpimod)
+# MOST_CC=cc        # name of the C compiler for GUI
+# MOST_CC_OPTS=-O   # C options
+
+# fftmod is faster than fft991mod, but fft991mod supports
+# more resolutions, e.g. T63 and T106
+
+FFTMOD=fftmod
+# GUIMOD=guimod
+# GUILIB=-L${GUI} -lX11
+
+# legfast is the assembler version of legsym and requires currently:
+# 64-bit operating system, GNU assembler (as), AMD or Intel CPU
+# and PUMA compiled for single precision (default).
+# PUMA with legfast runs faster at the factor of 1.3 (T21), 1.7 (T42), 2.3 (T85)
+# and factor 2.6 for all higher resolutions
+
+ifdef LEGFAST
+   ifdef MOST_PREC
+      LEGFAST=legfast64.o
+   endif
+endif
+
+OBJ=${MPIMOD}.o ${FFTMOD}.o ${GUIMOD}.o sam.o gaussmod.o ${LEGMOD}.o ${LEGFAST} restartmod.o ${PUMAX}.o 
+
+sam.x:	$(OBJ)
+	$(MOST_F90) -o sam.x $(MOST_F90_OPTS) $(OBJ) ${GUILIB}
+
+sam.o:		sam.f90
+${FFTMOD}.o:	${FFTMOD}.f90
+${GUIMOD}.o:	${GUIMOD}.f90 sam.o
+${MPIMOD}.o:	${MPIMOD}.f90 sam.o
+${LEGMOD}.o:    ${LEGMOD}.f90 sam.o
+gaussmod.o:	gaussmod.f90 sam.o
+restartmod.o:	restartmod.f90
+${PUMAX}.o:	${PUMAX}.c
+legfast32.o:	legfast32.s legini.o
+legfast64.o:	legfast64.s legini.o
+
+clean:
+	rm -f *.o *.mod

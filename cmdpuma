@@ -1,0 +1,5 @@
+#!/bin/sh
+cp puma/src/*.f90 puma/cmd
+cp puma/src/resmod_def.f90 puma/cmd/resmod.f90
+cp puma/src/make_cmd puma/cmd/makefile
+echo "cd to <puma/cmd> and type make"

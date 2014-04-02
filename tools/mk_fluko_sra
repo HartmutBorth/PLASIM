@@ -1,0 +1,119 @@
+#!/bin/ksh
+#
+# script to compute a fluxcorrection (you may call it oceanic heat transport)
+# for the mixed layer and the sea ice module of the Planet Simulator
+#
+# ocean and sea ice output from a uncoupled simulation (nice=nocean=0)
+# can be used.
+#
+# service format and ascii files are generated, the latter can serve as the
+# fluxcorrection input files in the coupled run.
+#
+# to use the script, you may change the shell variable at the beginning of
+# this script according to your setup...
+#
+# at the end you may display the .srv files with GRADS using the srv2gra
+# tool
+#
+set -ex
+#
+DATA=`pwd`                          # dir. where the PlaSim data are
+ICEFILE=ice_ctl.                   # preface for ice output
+OCEANFILE=oce_ctl.                 # preface for ocean output
+FLUKOICE=${DATA}/N032_surf_0709_fl.sra # flux correction for ice
+FLUKOOCE=${DATA}/N032_surf_0903_fl.sra # flux correction for ocean
+FIRSTYEAR=31                        # first year to be used
+LASTYEAR=40                         # last year to be used
+NICE=1                              # compute ice flux correction
+NOCE=1                              # compute ocean flux correction
+#
+#     your calls for some utilities
+#
+F90=f90                           # FORTRAN
+#
+TMPDIR=${DATA}/tmpdir/FLUKO$$     # temporary dir. (will be deleted)
+#
+########################
+mkdir -p $TMPDIR
+cd $TMPDIR
+#
+#########################
+#
+cat > form.f90 << EOF
+      program form
+!
+      integer ih(8)
+      real,allocatable :: f(:,:)
+!
+      read(10) ih
+      n=ih(5)*ih(6)
+      allocate(f(n,12))
+      jm=1
+ 1000 continue
+      read(10) f(:,jm)
+      read(10,end=1001) ih
+      jm=jm+1
+      goto 1000
+ 1001 continue
+      write(20,'(8I10)') ih(1:2),0,0,ih(5:8)
+      write(20,'(4E16.6)') f(:,12)
+      do jm=1,12
+       write(20,'(8I10)') ih(1:2),jm*100,0,ih(5:8)
+       write(20,'(4E16.6)') f(:,jm)
+      enddo
+      write(20,'(8I10)') ih(1:2),1300,0,ih(5:8)
+      write(20,'(4E16.6)') f(:,1)
+!
+      stop
+      end
+EOF
+gfortran -o form.x form.f90
+#
+YY=${FIRSTYEAR}
+while [ ${YY} -le ${LASTYEAR} ]
+do
+if [ ${YY} -lt 100 ]
+then
+YY=0${YY}
+fi
+if [ ${YY} -lt 10 ]
+then
+YY=0${YY}
+fi
+#
+##
+#
+if [ ${NICE} -eq 1 ]
+then
+INFILE=${DATA}/${ICEFILE}${YY}
+cdo selcode,709 ${INFILE} ICEYEAR709
+cat ICEYEAR709 >> ICEFLUKO
+fi
+###
+if [ ${NOCE} -eq 1 ]
+then
+INFILE=${DATA}/${OCEANFILE}${YY}
+cdo selcode,903 ${INFILE} OCEANYEAR903
+cat OCEANYEAR903 >> OCEANFLUKO
+fi
+####
+YY=`expr ${YY} + 1`
+done
+####
+if [ ${NICE} -eq 1 ]
+then
+cdo ymonmean ICEFLUKO fort.10
+./form.x
+mv fort.20 ${FLUKOICE}
+fi
+####
+if [ ${NOCE} -eq 1 ]
+then
+cdo ymonmean OCEANFLUKO fort.10
+./form.x
+mv fort.20 ${FLUKOOCE}
+fi
+####
+cd ${DATA}
+rm -r $TMPDIR
+exit

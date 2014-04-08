@@ -211,6 +211,18 @@ echo >> makefile "	$MOST_CC -o most.x most.c -lm $GUILIB"
 echo >> makefile "clean:"
 echo >> makefile "	rm -f *.o *.x F90* most_*"
 
+#create directories
+
+mkdir -p puma/bld
+mkdir -p puma/bin
+mkdir -p puma/run
+mkdir -p sam/bld
+mkdir -p sam/bin
+mkdir -p sam/run
+mkdir -p plasim/bld
+mkdir -p plasim/bin
+mkdir -p plasim/run
+
 #check FORTRAN I/O
 
 export MOST_F90

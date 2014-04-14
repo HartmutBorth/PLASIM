@@ -1,0 +1,11 @@
+There are major changes and many new features in version 17 of
+the model suit. Some highlites are:
+
+Configurable planet setup in the new module planetmod.f90
+Consisting naming of namelists and namelist filenames
+Most generates bash-runscripts
+Redesigned GUI with more options
+
+New postprocessor "burn7"
+
+And many more (read the manuals !!!)

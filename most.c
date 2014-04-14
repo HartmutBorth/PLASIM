@@ -1744,16 +1744,16 @@ int WriteRunScript(int model)
    fputs("   [ -e Abort_Message ] && exit 1\n",fp);
    if (Multirun > 1)
    {
-      fputs("   INST = 0\n",fp);
-      fputs("   while ($INST -lt $INSTANCES)\n   do\n",fp);
-      fputs("      EXT = `printf '%02d' $INST`\n",fp);
+      fputs("   INST=0\n",fp);
+      fputs("   while [ $INST -lt $INSTANCES ]\n   do\n",fp);
+      fputs("      EXT=`printf '%02d' $INST`\n",fp);
       fprintf(fp,"      [ -e %s_$EXT ] && mv %s_$EXT ${EXT}_$DATANAME\n",
               outp_name,outp_name);
       fprintf(fp,"      mv %s_$EXT   ${EXT}_$DIAGNAME\n",diag_name);
       fprintf(fp,"      cp %s_status_$EXT %s_restart_$EXT\n",
               ShortModelName[model],ShortModelName[model]);
       fprintf(fp,"      mv %s_status_$EXT ${EXT}_$RESTNAME\n",ShortModelName[model]);
-      fputs("      INST = `expr $INST + 1`\n",fp);
+      fputs("      INST=`expr $INST + 1`\n",fp);
       fputs("   done\n",fp);
    }
    else

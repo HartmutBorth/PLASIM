@@ -1,49 +1,57 @@
 The whole package, containing the models ``Planet Simulator'' and ``PUMA''
-along with the {\bf mo}del {\bf st}arter ``most'' comes in a single file
-named ``Most16.tgz'' with 16 specifying the version number.
-The following subsection shows the commands to use for installation:
+along with the {\bf mo}del {\bf st}arter ``most''.
+
+The following subsection shows the commands to use for installation,
+assuming your downloadfile is named ```Most17.tgz´´´. For other
+formats like zip use unzip instead of tar.
 
 \section{Quick Installation}
 
 \begin{verbatim}
-tar -zxvf Most16.tgz
-cd Most16
+tar -zxvf Most17.tgz
+cd Most17
 ./configure.sh
 ./most.x
 \end{verbatim}
 
-If your tar command doesn't support the ``-z'' option (e.g. on Sun UNIX),
-instead type:
+If your tar command doesn't support the ``-z'' option (e.g. on SOLARIS),
+type instead:
 
 \begin{verbatim}
-gunzip Most16.tgz
-tar -xvf Most16.tar
-cd Most16
+gunzip Most17.tgz
+tar -xvf Most17.tar
+cd Most17
 ./configure.sh
 ./most.x
 \end{verbatim}
 
 If this sequence of commands produces error messages,
 consult the FAQ (Frequently Asked Questions) and the README files
-in the Most16 directory. They are in plain text files that can be read with
+in the Most17 directory. They are in plain text files that can be read with
 the more command or any other text editor.
 
-\section{Most16 directory }
+\section{Most17 directory }
 
 \begin{verbatim}
-home/Most16> ls -lg
+home/Most17> ls -lg
 
 -rw-r--r--    3730  FAQ                 <- Frequently Asked Questions
--rw-r--r--    7862  NEW_IN_VERSION_16   <- New in this version
+-rw-r--r--    7862  NEW_IN_VERSION_17   <- New in this version
+drwxr-xr-x     748  Plasim_RM_17        <- LaTeX source for RM
+drwxr-xr-x     612  Plasim_UG_17        <- LaTeX source for UG
+drwxr-xr-x    1122  Puma_UG_17          <- LaTeX source for UG
 -rw-r--r--     718  README              <- Read this first
+-rw-r--r--     617  README.md           <- File for download page
+-rw-r--r--    1226  README_COUPLING_PLASIM_PUMA <- sic
 -rw-r--r--     168  README_MAC_USER     <- Notes for MAC user
+-rw-r--r--     462  README_UBUNTU       <- Notes for UBUNTU user
 -rw-r--r--     698  README_WINDOWS_USER <- Notes for Windows user
 -rw-r--r--    1548  cc_check.c          <- Used by configure script
 -rwxr-xr-x      57  cleanplasim         <- Empty run, bld and bin for PLASIM
 -rwxr-xr-x      51  cleanpuma           <- Empty run, bld and bin for PUMA
 -rwxr-xr-x      48  cleansam            <- Empty run, bld and bin for SAM
 -rwxr-xr-x     161  cmdpuma             <- Build GUI-less PUMA
--rwxr-xr-x    5611  configure.sh        <- Configure script
+-rwxr-xr-x    5611  configure.sh        <- Configure script (for bash shell)
 -rw-r--r--     308  csub.c              <- Used by configure script
 -rw-r--r--     234  f90check.f90        <- Used by configure script
 drwxr-xr-x     102  images              <- Most images
@@ -67,7 +75,7 @@ For each model, currently ``Planet Simulator'', ``SAM'', and ``PUMA'', a directo
 (plasim or sam or puma) with the following subdirectories:
 
 \begin{verbatim}
-Most16/puma> ls -lg
+Most17/puma> ls -lg
 
 drwxr-xr-x  2   128  bin   <- model executables
 drwxr-xr-x  2  1824  bld   <- build directory
@@ -89,8 +97,7 @@ The directories of the model are used in the following manner:
 Most writes an executable shell script to the ``bld'' directory
 and then executes it.
 First, it copies all necessary source files from ``src'' to ``bld''
-and modifies
-them according to the selected parameter configuration.
+and modifies them according to the selected parameter configuration.
 Modification of source code is necessary for vertical and horizontal
 resolution changes, and when using more than one processor (parallel program
 execution). The original files in the ``src`` directory are not changed by MoSt.
@@ -147,13 +154,13 @@ You can use the ``df'' command to check file systems.
 Hint 1: Do not use your home directory if there are file quotas.
 Your run may crash due to file quota being exceeded.
 
-Hint 2: If possible use a local disk, not a NFS mounted file system.
-The model runs much faster when writing output to local disks.
+Hint 2: If possible use a local disk for long runs.
+Network attached storage runs fine, but may slow down the model.
 
 Example:
 
 \begin{itemize}
-\item cd Most16
+\item cd Most17
 \item ./most.x
 \item Select model and resolution
 \item Switch GUI off

@@ -3,7 +3,7 @@
 #define NETCDF_OUTPUT
 // #define OPEN_MP
 
-#define V0 "burn 7.4 (02-Jul-2012)"
+#define V0 "burn 7.4 (08-Aug-2012)"
 #define V1 "Edilbert Kirk - University of Hamburg"
 #define V2 "Usage: burn7 [-help|-c|-d|-m|-n|-s] <modelfile> <resultfile>"
 #define V3 "New: option <-g> writes Grads ctl for service plotting"
@@ -173,6 +173,7 @@ int    EndOfTerm     ;
 int    Fouriers      ;
 int    HumInfo       ; // Flag for humidity info issued
 double   Grav          = EARTH_GRAV;
+double   SigmaTop      = 0.0;
 int    NetCDF        ;
 int    GaussianOutput = 1;
 int    Grads         ;
@@ -5540,7 +5541,7 @@ void InitAll(void)
    All[183].Init("tso"  ,"climate_deep_soil_temperature"   ,"K"        ,1); // Not standard
    All[184].Init("wsoi" ,"climate_deep_soil_wetness"       ,"1"        ,1);
    All[199].Init("vegc" ,"vegetation_cover"                ,"1"        ,1); // Not standard
-   All[203].Init("rsdt" ,"toa_incoming_shortwave_flux"     ,"W m-2"    ,1); // Not standard
+   All[203].Init("rsut" ,"toa_outgoing_shortwave_flux"     ,"W m-2"    ,1); // Not standard
    All[204].Init("ssru" ,"surface_solar_radiation_upward"  ,"W m-2"    ,1); // Not standard
    All[205].Init("stru" ,"surface_thermal_radiation_upward","W m-2"    ,1); // Not standard
    All[207].Init("tso2" ,"soil_temperature_level_2"        ,"K"        ,1); // Not standard
@@ -5670,6 +5671,8 @@ void parini(void)
    LastMonth    = scanpar("last",12);
    PlanetRadius = scanreal("radius",EARTH_RADIUS);
    Grav         = scanreal("gravity",EARTH_GRAV);
+   SigmaTop     = scanreal("sigmatop",0.0);
+   vct[SigLevs] = SigmaTop;
    if (FirstMonth < 1) FirstMonth = 1;
    if (LastMonth > 12) LastMonth = 12;
    if (LastMonth < FirstMonth) LastMonth = FirstMonth;

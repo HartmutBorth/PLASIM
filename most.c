@@ -750,15 +750,18 @@ int ReadSettings(char *fn)
          {
             if (!strncmp(tb,Sel->text,strlen(Sel->text)))
             {
-               if (Sel->type == SEL_REAL)
+               if (!isalnum(tb[strlen(Sel->text)]))
                {
-                  Sel->fv = atof(eq+1);
-                  if (Sel->pfv) *Sel->pfv = Sel->fv;
-               }
-               else
-               {
-                  Sel->iv = atoi(eq+1);
-                  if (Sel->piv) *Sel->piv = Sel->iv;
+                  if (Sel->type == SEL_REAL)
+                  {
+                     Sel->fv = atof(eq+1);
+                     if (Sel->pfv) *Sel->pfv = Sel->fv;
+                  }
+                  else
+                  {
+                     Sel->iv = atoi(eq+1);
+                     if (Sel->piv) *Sel->piv = Sel->iv;
+                  }
                }
             }
          }

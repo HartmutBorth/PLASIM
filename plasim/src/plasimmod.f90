@@ -528,7 +528,7 @@
       real :: gascon = 0.0             ! Gas constant for dry air
       real :: plarad = 0.0             ! Planet radius
       real :: pnu    = 0.0             ! Time filter
-      real :: siderial_day = 0.0       ! Length of siderial day [sec]
+      real :: sidereal_day = 0.0       ! Length of sidereal day [sec]
       real :: solar_day    = 0.0       ! Length of solar day [sec]
       real :: ww     = 0.0             ! Omega used for scaling
       real :: oroscale = 1.0           ! Orography scaling

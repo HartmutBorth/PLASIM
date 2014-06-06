@@ -1,6 +1,6 @@
-!**********************************!
-! Mars module for Planet Simulator !
-!**********************************!
+!***********************************!
+! Earth module for Planet Simulator !
+!***********************************!
 
 subroutine planet_ini
 use radmod           ! Includes pumamod
@@ -17,66 +17,51 @@ namelist /planet_nl/ nfixorb, eccen, mvelp, obliq  &
                 , gsol0 &
                 , yplanet
 
-yplanet = "Mars"     ! Planet name
-nplanet = 4          ! Planet index
-mars    = 1          ! Switch
+yplanet = "Exo"      ! Planet name
+nplanet = 1
 
 ! *********
 ! Astronomy
 ! *********
 
-eccen         =     0.09341233 ! Eccentricity (AMIP-II value)
-mvelp         =   336.04084    ! Longitude of perihelion
-nfixorb       =     1          ! Don't use Berger orbits
-obliq         =    25.19       ! Obliquity [deg] (AMIP-II)
-rotspd        =     1.0        ! Rotation speed (factor)
-sidereal_day  = 88642.663      ! 24h 37m 22s
-solar_day     = 88775.24409    ! 24h 39m 35s
-sidereal_year = 59355072.0     ! 687d (Earth days)
-tropical_year = 59355048.3     ! 686d (Earth days)
-
+eccen         =     0.016715  ! Eccentricity (AMIP-II value)
+mvelp         =   102.7       ! Longitude of perihelion
+obliq         =    23.441     ! Obliquity [deg] (AMIP-II)
+rotspd        =     1.0       ! Rotation speed (factor)
+sidereal_day  =    86164.0916 !      23h 56m 04s
+solar_day     =    86400.0    !      24h 00m 00s
+sidereal_year = 31558149.0    ! 365d 06h 09m 09s
+tropical_year = 31556956.0    ! 365d 05h 49m 16s
 
 ! **********
 ! Atmosphere
 ! **********
 
-akap    =   0.2273    ! Kappa
-alr     =   0.0025    ! Lapse rate
-gascon  = 188.9       ! Gas constant
-psurf   = 636.0       ! Mean surface pressure [Pa]
-ra1     = 610.66      ! Parameter for Magnus-Teten-Formula
-ra2     =  21.875     ! for saturation vapor pressure
-ra4     =   7.65      ! over liquid water
-tgr     = 210.0       ! mean ground temperature
-
-! ********
-! Calendar
-! ********
-
-n_days_per_month =  55 ! Martian days - not earth days
-n_days_per_year  = 660 ! simplified calendar 12 x 55 days
+akap    =   0.286     ! Kappa (Poisson constant R/Cp)
+alr     =   0.0065    ! Lapse rate
+gascon  = 287.0       ! Gas constant
+ra1     = 610.78      ! Parameter for Magnus-Teten-Formula
+ra2     =  17.2693882 ! for saturation vapor pressure
+ra4     =  35.86      ! over liquid water
 
 ! ********
 ! Numerics
 ! ********
 
-ndivdamp = 100         ! Initial start divergence damping
-pnu      = 0.15        ! Time filter constant
-oroscale = 1.0         ! Scale orography
+pnu     = 0.1        ! Time filter constant
 
 ! *******
 ! Physics
 ! *******
 
-ga            =       3.728 ! Gravity
-plarad        = 3396200.0  ! Radius
+ga            =       9.80665 ! Gravity (mean on NN)
+plarad        = 6371220.0     ! Radius
 
 ! *********
 ! Radiation
 ! *********
 
-gsol0         =  595.0     ! Solar constant
-no3           =    0.0     ! No ozone
+gsol0         = 1365.0     ! Solar constant
 
 ! ********
 ! Namelist
@@ -103,19 +88,16 @@ end
 subroutine print_planet
 use radmod
 
-p_mass        =    0.6419  ! [10^24 kg]
-p_volume      =   16.318   ! [10^10 km3]
-p_radius_eq   = 3393.0     ! Equatorial radius
-p_radius_po   = 3373.0     ! Polar radius
-p_radius_me   = 3390.0     ! Mean radius
-p_ellipticity =    0.0065  ! Ellipticity
-p_density     = 3933.0     ! [kg/m3]
-p_albedo      =    0.16    ! Bond albedo
-p_blackt      =  216.6     ! Black body temperature
-p_sidrot      =   24.6229  ! Sidereal rotation period
-p_inclination =   23.98    ! Equatorial inclination
-p_perihelion  =  206.6     ! Perihelion [10^6 km]
-p_aphelion    =  249.2     ! Aphelion [10^6 km]
+p_mass        =    5.9736  ! [10^24 kg]
+p_volume      =  108.321   ! [10^10 km3]
+p_radius_eq   = 6378.0     ! Equatorial radius
+p_radius_po   = 6356.0     ! Polar radius
+p_ellipticity =    0.0034  ! Ellipticity
+p_density     = 5520.0     ! [kg/m3]
+p_albedo      =    0.385   ! Bond albedo
+p_blackt      =  247.3     ! Black body temperature
+p_perihelion  =  147.1     ! Perihelion [10^6 km]
+p_aphelion    =  152.1     ! Aphelion [10^6 km]
 p_sidorbit    =  sidereal_year / sidereal_day ! Sidereal orbit period
 
 write(nud,4000)
@@ -128,7 +110,7 @@ write(nud,3000) 'Mass'             ,'[10^24 kg]'  ,p_mass
 write(nud,3000) 'Volume'           ,'[10^10 km3]' ,p_volume
 write(nud,3000) 'Equatorial radius','[km]'        ,p_radius_eq
 write(nud,3000) 'Polar radius'     ,'[km]'        ,p_radius_po
-write(nud,3000) 'Mean radius'      ,'[km]'        ,p_radius_me
+write(nud,3000) 'Mean radius'      ,'[km]'        ,plarad/1000.0
 write(nud,3000) 'Ellipticity'      ,' '           ,p_ellipticity
 write(nud,3000) 'Mean density'     ,'[kg/m3]'     ,p_density
 write(nud,3000) 'Surface gravity'  ,'[m/s2]'      ,ga
@@ -136,13 +118,21 @@ write(nud,3000) 'Bond albedo'      ,' '           ,p_albedo
 write(nud,3000) 'Solar irradiance' ,'[W/m2]'      ,gsol0
 write(nud,3000) 'Black-body temperature','[K]'    ,p_blackt
 write(nud,3000) 'Sidereal orbit period' ,'[days]' ,p_sidorbit
-write(nud,3000) 'Sidereal rotation period','[hrs]',p_sidrot
-write(nud,3000) 'Equatorial inclination'  ,'[deg]',p_inclination
+write(nud,3000) 'Sidereal rotation period','[h]'  ,sidereal_day/3600.0
 write(nud,3000) 'Perihelion'       ,'[10^6 km]'   ,p_perihelion
 write(nud,3000) 'Aphelion'         ,'[10^6 km]'   ,p_aphelion
-write(nud,3000) 'Orbit eccentricity'    ,' '      ,eccen
+
+if (nfixorb /= 0) then
+   write(nud,3010) 'Using fixed orbit'       ,' '
+   write(nud,3000) 'Longitude of perihelion' ,'[deg]' ,mvelp
+   write(nud,3000) 'Equatorial inclination'  ,'[deg]' ,obliq
+   write(nud,3000) 'Orbit eccentricity'      ,' '     ,eccen
+else
+   write(nud,3010) 'Using Berger orbit' ,'nfixorb=0'
+endif
+
+write(nud,3000) 'Rotation factor'       ,' '      ,rotspd
 write(nud,3000) 'Gas constant'          ,' '      ,gascon
-write(nud,3000) 'Mean surface pressure' ,'[Pa]'   ,psurf 
 write(nud,1000)
 write(nud,4000)
 
@@ -152,6 +142,7 @@ return
  1100 format('* ',a24,1x,a21,' *')
  2000 format('* ',a24,1x,a11,a10,' *')
  3000 format('* ',a24,1x,a11,f10.4,' *')
+ 3010 format('* ',a24,1x,a11,10x  ,' *')
  4000 format(/)
       end  
 

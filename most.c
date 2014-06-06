@@ -113,12 +113,14 @@ int Model = PUMA;
 #define ALL    -1
 #define EARTH   0
 #define MARS    1
-#define PLANETS 2
+#define EXO     2
+#define PLANETS 3
 
 char *PlanetName[PLANETS] =
 {
-   "earth",
-   "mars"
+   "Earth",
+   "Mars",
+   "Exo"
 };
 
 int Planet = EARTH;
@@ -137,26 +139,23 @@ double RevGra = 1.0 / 9.81;
 
 /* Object types */
 
-#define SEL_TEXT  1
-#define SEL_CHECK 2
-#define SEL_INT   3
-#define SEL_REAL  4
-#define SEL_TEVA  5
-
-/* Dimension of greyed out options */
-
-#define NOPT 2
+#define SEL_TEXT   1
+#define SEL_CHECK  2
+#define SEL_INT    3
+#define SEL_REAL   4
+#define SEL_TEVA   5
+#define SEL_PLANET 6
 
 struct ItemStruct
 {
-   char   list[80];  // Name of namelist
-   char   name[80];  // Name of variable
-   char   text[80];  // Text    value
-   double rval;      // Real    value
-   int    ival;      // Integer value
-   int    model;     // Model
-   int    planet;    // Planet
-   int    flag;      // Flag
+   char   list[80];      // Name of namelist
+   char   name[80];      // Name of variable
+   char   text[80];      // Text    value
+   float  pvec[PLANETS]; // Planetary parameter
+   double rval;          // Real    value
+   int    ival;          // Integer value
+   int    model;         // Model
+   int    flag;          // Flag
 };
 
 struct SelStruct
@@ -169,6 +168,7 @@ struct SelStruct
    int y;                   // y coordinate of box
    int h;                   // height of box
    int w;                   // width of box
+   int xo;                  // x offset
    int xt;                  // x coordinate for text
    int yt;                  // y coordinate for text
    int lt;                  // length of text
@@ -180,6 +180,7 @@ struct SelStruct
    int hide;                // 1: don't show
    float fv;                // floating value of box content
    float dfv;               // default floating value
+   float fpl[PLANETS];      // planet dependent floats
    int   *piv;              // pointer to linked integer variable
    float *pfv;              // pointer to linked float   variable
    char text[80];           // text to display
@@ -200,8 +201,7 @@ struct SelStruct *SelLsg;
 struct SelStruct *SelIce;
 struct SelStruct *SelVeg;
 struct SelStruct *SelAnn;
-struct SelStruct *SelEarth;
-struct SelStruct *SelMars;
+struct SelStruct *SelPlanet[PLANETS];
 struct SelStruct *SelSYear;
 struct SelStruct *SelCPU;
 struct SelStruct *SelMulti;
@@ -319,7 +319,6 @@ int Oce;
 int Ice;
 int Veg;
 int Lsg;
-int Mars;
 int SimStart;
 int SimYears;
 int nreadsr;
@@ -336,7 +335,7 @@ int nac;
 int Preprocessed;
 int SAMindex;
 int ScreenHeight;
-int Expert;
+int Expert = 1;
 int LsgEnabled;
 int ModeRadiusSq;
 int ForceRebuild;
@@ -475,6 +474,8 @@ struct MapImageStruct MapHRE; // Hires (2560x1280) Earth image
 struct MapImageStruct MapHRM; // Hires (         ) Mars  image
 struct MapImageStruct MapLRE; // Lores azimuthal   Earth image
 struct MapImageStruct MapLRM; // Lores azimuthal   Mars  image
+struct MapImageStruct MapLRK; // Lores azimuthal   Kepler-16
+struct MapImageStruct MapLRL; // Lores azimuthal   Kepler-186b
 
 #define DIMX_LOGO_PLASIM 57
 #define DIMY_LOGO_PLASIM 57
@@ -652,10 +653,9 @@ void ChangeModel(int NewMo)
        SelIce->no   = 1;
        SelVeg->no   = 1;
        SelOro->no   = 0;
-       SelEarth->no = 1;
-       SelMars->no  = 1;
        SelSYear->no = 1;
        if (SelLsg) SelLsg->no   = 1;
+       for (i=0 ; i < PLANETS ; ++i) SelPlanet[i]->no = 1;
    }
    if (NewMo == PLASIM)
    {
@@ -668,9 +668,8 @@ void ChangeModel(int NewMo)
        {
           SelOce->no   = 0;
           SelIce->no   = 0;
-          SelEarth->no = 0;
-          SelMars->no  = 0;
           if (SelLsg) SelLsg->no = 0;
+          for (i=0 ; i < PLANETS ; ++i) SelPlanet[i]->no = 0;
        }
    }
    Model = NewMo;
@@ -687,7 +686,7 @@ void WriteSettings(void)
    fp = fopen("most_last_used.cfg","w");
    if (!fp) return;
 
-   fprintf(fp,"[MoSt 16 - configuration file] created %s\n",ctime(&CurrentDate));
+   fprintf(fp,"[MoSt 17 - configuration file] created %s\n",ctime(&CurrentDate));
 
    mxtl = 0;
    for (Sel = &SelStart ; Sel ; Sel = Sel->Next)
@@ -705,10 +704,12 @@ void WriteSettings(void)
          tb[mxtl] = 0;
          fprintf(fp,"%s = ",tb);
       }
-      if (Sel->type == SEL_CHECK) fprintf(fp,"%6d\n",Sel->iv);
-      if (Sel->type == SEL_INT  ) fprintf(fp,"%6d\n",Sel->iv);
-      if (Sel->type == SEL_REAL )
+           if (Sel->type == SEL_CHECK) fprintf(fp,"%6d\n",Sel->iv);
+      else if (Sel->type == SEL_INT  ) fprintf(fp,"%6d\n",Sel->iv);
+      else if (Sel->type == SEL_TEVA ) fprintf(fp,"%\n",Sel->teva);
+      else if (Sel->type == SEL_REAL || Sel->type == SEL_PLANET)
       {
+         if (Sel->type == SEL_PLANET) Sel->fv = Sel->fpl[Planet];
          if (fabs(Sel->fv) >= 1.0 && fabs(Sel->fv) < 9000.0)  fprintf(fp,"%10.4f\n",Sel->fv);
          else                                                 fprintf(fp,"%10.4e\n",Sel->fv);
       }
@@ -717,8 +718,76 @@ void WriteSettings(void)
 }
 
 
+void FormatReal(float fv, char *text)
+{
+   if (fv == 0.0                      ||
+      (fv >   0.001 && fv < 99999.0)  ||
+      (fv > -9999.0 && fv <  -0.001))
+   {
+      sprintf(text,"%11.4f",fv);
+           if (!strcmp(text+8,"000")) text[ 8] = 0;
+      else if (!strcmp(text+9,"00" )) text[ 9] = 0;
+      else if (text[10] == '0')       text[10] = 0;
+   }
+   else
+   {
+      sprintf(text,"%11.4e",fv);
+   }
+}
+
+
+void UpdateSelections(struct SelStruct *Sel)
+{
+   char text[80];
+   int selx;
+
+   selx = 0;
+
+   for (; Sel ; Sel = Sel->Next)
+   {
+      if (Sel == ComEnd->Next) selx = 1;
+      if (selx) Sel->x = nledi_x;
+      if (Sel->type == SEL_INT )
+      {
+         sprintf(text,"%10d",Sel->iv);
+         strcpy(Sel->teva,text+10-Sel->edco);
+         if (Sel->piv) *Sel->piv = Sel->iv;
+      }
+      if (Sel->type == SEL_REAL || Sel->type == SEL_PLANET)
+      {
+         if (Sel->type == SEL_PLANET) Sel->fv = Sel->fpl[Planet];
+         FormatReal(Sel->fv,text);
+         strcpy(Sel->teva,text);
+      }
+   }
+   if (SelLat2) SelLat2->no = (SelMulti->iv != 2) ;
+}
+
+
+void ChangePlanet(int NewPlanet)
+{
+   struct SelStruct *Sel;
+
+   SelPlanet[Planet]->iv = 0;
+   Planet = NewPlanet;
+   SelPlanet[Planet]->iv = 1;
+   strcpy(SelModels[PLASIM].text,PlanetName[Planet]);
+   SelModels[PLASIM].lt = strlen(PlanetName[Planet]);
+
+   for (Sel = &SelStart ; Sel ; Sel = Sel->Next)
+   {
+      if (Sel->type == SEL_PLANET)
+      {
+         Sel->fv = Sel->fpl[Planet];
+      }
+   }
+   UpdateSelections(ComEnd->Next);
+}
+
+
 int ReadSettings(char *fn)
 {
+   int pl;
    char  tb[80];
    char *eq;
    FILE *fp;
@@ -752,10 +821,11 @@ int ReadSettings(char *fn)
             {
                if (!isalnum(tb[strlen(Sel->text)]))
                {
-                  if (Sel->type == SEL_REAL)
+                  if (Sel->type == SEL_REAL || Sel->type == SEL_PLANET)
                   {
                      Sel->fv = atof(eq+1);
                      if (Sel->pfv) *Sel->pfv = Sel->fv;
+                     if (Sel->type == SEL_PLANET) Sel->fpl[Planet] = Sel->fv;
                   }
                   else
                   {
@@ -767,9 +837,18 @@ int ReadSettings(char *fn)
          }
       }
       else if (!strncmp(tb,"[Modules]",9)) ChangeModel(-1);
+      else
+      {
+         for (pl=0 ; pl < PLANETS ; ++pl)
+         {
+            if (!strncmp(tb+1,PlanetName[pl],strlen(PlanetName[pl])) && pl != Planet)
+               ChangePlanet(pl);
+         }
+      }
       fgets(tb,sizeof(tb),fp);
    }
    fclose(fp);
+   
    return 1;
 }
 
@@ -803,6 +882,7 @@ void InitNextSelection(struct SelStruct *Sel, int dy, char *t)
    Sel->y    = Sel->Prev->y + dy;
    Sel->h    = Sel->Prev->h;
    Sel->w    = Sel->Prev->w;
+   Sel->xo   = Sel->Prev->xo;
    Sel->yt   = Sel->Prev->yt + dy;
    strcpy(Sel->text,t);
    Sel->lt   = strlen(Sel->text);
@@ -838,24 +918,6 @@ void RemoveBlanks(char *p)
 }
 
       
-void FormatReal(float fv, char *text)
-{
-   if (fv == 0.0                      ||
-      (fv >   0.001 && fv < 99999.0)  ||
-      (fv > -9999.0 && fv <  -0.001))
-   {
-      sprintf(text,"%11.4f",fv);
-           if (!strcmp(text+8,"000")) text[ 8] = 0;
-      else if (!strcmp(text+9,"00" )) text[ 9] = 0;
-      else if (text[10] == '0')       text[10] = 0;
-   }
-   else
-   {
-      sprintf(text,"%11.4e",fv);
-   }
-}
-
-
 struct SelStruct *NewSel(struct SelStruct *OldSel)
 {
    struct SelStruct *Sel;
@@ -864,33 +926,6 @@ struct SelStruct *NewSel(struct SelStruct *OldSel)
    OldSel->Next = Sel;
    Sel->Prev = OldSel;
    return Sel;
-}
-
-
-void UpdateSelections(struct SelStruct *Sel)
-{
-   char text[80];
-   int selx;
-
-   selx = 0;
-
-   for (; Sel ; Sel = Sel->Next)
-   {
-      if (Sel == ComEnd->Next) selx = 1;
-      if (selx) Sel->x = nledi_x;
-      if (Sel->type == SEL_INT )
-      {
-         sprintf(text,"%10d",Sel->iv);
-         strcpy(Sel->teva,text+10-Sel->edco);
-         if (Sel->piv) *Sel->piv = Sel->iv;
-      }
-      if (Sel->type == SEL_REAL)
-      {
-         FormatReal(Sel->fv,text);
-         strcpy(Sel->teva,text);
-      }
-   }
-   if (SelLat2) SelLat2->no = (SelMulti->iv != 2) ;
 }
 
 
@@ -904,7 +939,6 @@ void NL_i(int m, int p, char *list, char *name, int i)
       exit(1);
    }
    NL_list[NL_items].model  = m;
-   NL_list[NL_items].planet = p;
    strcpy(NL_list[NL_items].list,list);
    strcpy(NL_list[NL_items].name,name);
    NL_list[NL_items].flag = SEL_INT;
@@ -925,13 +959,33 @@ void NL_r(int m, int p, char *list, char *name, double r)
       exit(1);
    }
    NL_list[NL_items].model = m;
-   NL_list[NL_items].planet = p;
    strcpy(NL_list[NL_items].list,list);
    strcpy(NL_list[NL_items].name,name);
    NL_list[NL_items].flag = SEL_REAL;
    NL_list[NL_items].ival = 0;
    NL_list[NL_items].rval = r;
    NL_list[NL_items].text[0] = 0;
+   NL_items++;
+}
+
+
+void NL_p(char *name, float r[])
+{
+   if (NL_items > NL_MAX_ITEMS-2)
+   {
+      printf("\n*** Error ***\n");
+      printf("Number of namelist items exceeds %d \n",NL_MAX_ITEMS);
+      printf("Increase NL_MAX_ITEMS in most,c\n");
+      exit(1);
+   }
+   NL_list[NL_items].model = PLASIM;
+   strcpy(NL_list[NL_items].list,"planet");
+   strcpy(NL_list[NL_items].name,name);
+   NL_list[NL_items].flag = SEL_PLANET;
+   NL_list[NL_items].ival = 0;
+   NL_list[NL_items].rval = 0.0;
+   NL_list[NL_items].text[0] = 0;
+   memcpy(NL_list[NL_items].pvec,r,sizeof(float) * PLANETS);
    NL_items++;
 }
 
@@ -946,7 +1000,6 @@ void NL_t(int m, int p, char *list, char *name, char *t)
       exit(1);
    }
    NL_list[NL_items].model = m;
-   NL_list[NL_items].planet = p;
    strcpy(NL_list[NL_items].list,list);
    strcpy(NL_list[NL_items].name,name);
    NL_list[NL_items].flag = SEL_TEVA;
@@ -957,19 +1010,23 @@ void NL_t(int m, int p, char *list, char *name, char *t)
 }
 
 
+//                             Earth       Mars          Exo
+float eccen_vec[PLANETS] = {   0.016715,   0.09341233,   0.0};
+float mvelp_vec[PLANETS] = { 102.7     , 336.04084   ,   0.0};
+float obliq_vec[PLANETS] = {  23.44    ,  25.19      ,   0.0};
+float gsol0_vec[PLANETS] = {1367.0     , 595.0       ,1000.0};
 
 void InitNamelist(void)
 {
    // Planet Simulator
 
-   NL_t(PLASIM,EARTH,"planet","yplanet","Earth");
-   NL_i(PLASIM,ALL  ,"planet","nfixorb",0);
-   NL_r(PLASIM,EARTH,"planet","eccen"  ,0.016715);
-   NL_r(PLASIM,EARTH,"planet","mvelp"  ,102.7);
-   NL_r(PLASIM,EARTH,"planet","obliq"  ,23.44);
-   NL_r(PLASIM,EARTH,"planet","GSOL0"  ,1367.0);
-   NL_r(PLASIM,EARTH,"radmod","CO2"    ,360.0);
+   NL_p("ECCEN" , eccen_vec);
+   NL_p("MVELP" , mvelp_vec);
+   NL_p("OBLIQ" , obliq_vec);
+   NL_p("GSOL0" , gsol0_vec);
 
+   NL_i(PLASIM,ALL  ,"planet" ,"NFIXORB" ,  0);
+   NL_r(PLASIM,EARTH,"radmod" ,"CO2"     ,360.0);
    NL_i(PLASIM,ALL  ,"plasim" ,"KICK"    ,  1);
    NL_i(PLASIM,ALL  ,"plasim" ,"MPSTEP"  ,  0);
    NL_i(PLASIM,ALL  ,"plasim" ,"NDIAG"   ,  0);
@@ -1031,6 +1088,19 @@ void NamelistSelector(int model)
    ml = 0;
    Sel = &SelModels[model];
 
+   if (model == PLASIM)
+   {
+      Sel->type = SEL_TEXT;
+      Sel->teco = HeadC;
+      Sel->y    = opbox_y;
+      Sel->xt   = nlpos_x;
+      Sel->yt   = Sel->y + BigFontAscent + 1;
+      strcpy(Sel->text,PlanetName[Planet]);
+      Sel->lt   = strlen(Sel->text);
+      yn += BigFontHeight + 1;
+      Sel = NewSel(Sel);
+   }
+
    for (i=0 ; i < NL_items ; ++i)
    if (NL_list[i].model == model)
    {
@@ -1057,6 +1127,13 @@ void NamelistSelector(int model)
          Sel->edco = 11;
          Sel->w    = 11 * FixFontWidth + 2;
          Sel->dfv  = Sel->fv = NL_list[i].rval;
+      }
+      else if (NL_list[i].flag == SEL_PLANET)
+      {
+         Sel->edco = 11;
+         Sel->w    = 11 * FixFontWidth + 2;
+         Sel->dfv  = Sel->fv = NL_list[i].pvec[Planet];
+         memcpy(Sel->fpl,NL_list[i].pvec,sizeof(float) * PLANETS);
       }
       else
       {
@@ -1184,19 +1261,24 @@ void InitSelections(void)
 
    Sel = NewSel(Sel);
    InitNextSelection(Sel,dyn,"Earth");
-   SelEarth = Sel;
+   SelPlanet[EARTH] = Sel;
    Sel->div  = Sel->iv   =  1;
    Sel->no = 1;
+   Sel->xo = (5 * FixFontWidth) / 2;
 
    // Mars
 
    Sel = NewSel(Sel);
    InitNextSelection(Sel,dyn,"Mars");
-   SelMars  = Sel;
-   Sel->piv = &Mars;
+   SelPlanet[MARS] = Sel;
    Sel->no  = 1;
-   Sel->y   = SelEarth->y;
-   Sel->yt  = SelEarth->yt;
+
+   // Exo
+
+   Sel = NewSel(Sel);
+   InitNextSelection(Sel,dyn,"Exo");
+   SelPlanet[EXO] = Sel;
+   Sel->no  = 1;
 
    // Modules
 
@@ -1207,6 +1289,7 @@ void InitSelections(void)
    Sel->h    = 0;
    Sel->w    = 0;
    Sel->yt   = Sel->y + BigFontAscent + 1;
+   Sel->xo   = 0;
    
    // Mixed Layer Ocean
 
@@ -1514,7 +1597,7 @@ void InitSelections(void)
 
    for (Sel = &SelStart ; Sel ; Sel = Sel->Next)
    {
-      Sel->xt = FixFontWidth * 2 + mw;
+      Sel->xt = Sel->xo + FixFontWidth * 2 + mw;
       if (!Sel->x) Sel->x  = Sel->xt - Sel->w - FixFontWidth;
       if (Sel->type == SEL_INT )
       {
@@ -1530,18 +1613,6 @@ void InitSelections(void)
       if (x < l) x = l;
    }
    opbox_w = x + mw + 2 * FixFontWidth;
-
-   /* Adjust sub selection Earth */
-
-   dx = (5 * FixFontWidth) / 2;
-   SelEarth->x  += dx;
-   SelEarth->xt += dx;
-
-   /* Adjust sub selection Mars */
-
-   dx = (24 * FixFontWidth) / 2;
-   SelMars->x  += dx;
-   SelMars->xt += dx;
 
    nlbox_x = opbox_x + opbox_w + FixFontWidth;
    nlbox_y = opbox_y;
@@ -1564,20 +1635,6 @@ void DisplayTeVa(int x, int y, int w, char *t)
    XSetForeground(display,gc,WhitePix);
    XSetBackground(display,gc,BlackPix);
    if (l) XDrawImageString(display,Cow,gc,x,y,t,l);
-}
-
-
-void DisplayInt(int x, int y, int w, int iv)
-{
-   int l,p;
-   char text[80];
-
-   sprintf(text,"%d",iv);
-   l = strlen(text);
-   p = w - 1 - l * FixFontWidth;
-   XSetForeground(display,gc,BlackPix);
-   XSetBackground(display,gc,WhitePix);
-   XDrawImageString(display,Cow,gc,x+p,y,text,l);
 }
 
 
@@ -1910,9 +1967,6 @@ int Build(int model)
 
    porm = MAX(Cores,Multirun);
 
-   if (Mars && model == PLASIM) Planet = MARS;
-   else                         Planet = EARTH;
-
    shomo = ShortModelName[model];
    strcpy(bld,shomo);
    strcat(bld,"/bld/");
@@ -1943,7 +1997,8 @@ int Build(int model)
       putenv("PUMAX=pumax_stub");
       putenv("GUILIB=");    
    }
-   if (Mars) putenv("PLAMOD=p_mars");
+   if (Planet == MARS) putenv("PLAMOD=p_mars");
+   if (Planet == EXO ) putenv("PLAMOD=p_exo");
    if (Lsg)
    {
       fputs("cp -p ../../lsg/src/lsgmod.f90 .\n",fp);
@@ -1994,17 +2049,22 @@ int Build(int model)
    sprintf(command,"cp %s/bin/%s %s/run\n",shomo,exec_name,shomo);
    system(command);
 
-   if (model == PUMA || model == PLASIM)
+   if (model == PUMA || model == PLASIM )
    {
-       if (model == PLASIM && Mars)
+       if (model == PLASIM && Planet == MARS)
+       {
           sprintf(command,"cp images/mars.bmp %s/run/map.bmp\n",shomo);
-       else
-          sprintf(command,"cp images/earth.bmp %s/run/map.bmp\n",shomo);
        system(command);
+       }
+       else if (model == PLASIM && Planet == EARTH)
+       {
+          sprintf(command,"cp images/earth.bmp %s/run/map.bmp\n",shomo);
+          system(command);
+       }
    }
    if (model == PLASIM)
    {
-      if (Mars)
+      if (Planet == MARS)
          sprintf(command,"cp plasim/dat/T%d_mars/* plasim/run/\n",Truncation);
       else
          sprintf(command,"cp plasim/dat/T%d/* plasim/run/\n",Truncation);
@@ -2882,12 +2942,12 @@ void ShowOrography(void)
 
    if (Model == PLASIM)
    {
-      if (Mars)
+      if (Planet == MARS)
       {
          XCopyArea(display,OpmMars,Cow,gc,0,0,
                    Frame[0].w,Frame[0].h,Frame[0].x,Frame[0].y);
       }
-      else
+      else if (Planet == EARTH)
       {
          XCopyArea(display,OpmEarth,Cow,gc,0,0,
                    Frame[0].w,Frame[0].h,Frame[0].x,Frame[0].y);
@@ -2958,6 +3018,15 @@ void ShowMars(void)
 {
    if (Debug) printf("ShowMars\n");
    XPutImage(display,Cow,gc,MapLRM.X,0,0,Frame[1].x,Frame[1].y,MapLRM.w,MapLRM.h);
+}
+
+
+void ShowExo(void)
+{
+   printf("Exo 0 %d %d %d %d\n",Frame[0].x,Frame[0].y,MapLRL.w,MapLRL.h);
+   printf("Ex1 0 %d %d %d %d\n",Frame[1].x,Frame[1].y,MapLRK.w,MapLRK.h);
+   XPutImage(display,Cow,gc,MapLRL.X,0,0,Frame[0].x,Frame[0].y,MapLRL.w,MapLRL.h);
+   XPutImage(display,Cow,gc,MapLRK.X,0,0,Frame[1].x,Frame[1].y,MapLRK.w,MapLRK.h);
 }
 
 
@@ -3114,19 +3183,13 @@ void ShowModeSelector(void)
 
 void ShowFrame1(void)
 {
-   if (Model == PLASIM && Mars)
-   {
-      ShowMars();
-      return;
-   }
-
    if (Model == PLASIM)
    {
-      ShowEarth();
-      return;
+           if (Planet == MARS) ShowMars();
+      else if (Planet == EXO ) ShowExo();
+      else                     ShowEarth();
    }
-
-   ShowModeSelector();
+   else ShowModeSelector();
 }
 
 
@@ -3211,20 +3274,22 @@ void WriteNamelistFile(char *nl,  int instance)
       fprintf(fp," %-12s=%6d\n","NGUI"  ,ngui);
       fprintf(fp," %-12s=%6d\n","N_START_YEAR",SimStart);
       if (Lsg)        fprintf(fp," %-12s=%6d\n","N_DAYS_PER_YEAR",360);
-      else if (!Mars) fprintf(fp," %-12s=%6d\n","N_DAYS_PER_YEAR",365);
+      else if (Planet != MARS) fprintf(fp," %-12s=%6d\n","N_DAYS_PER_YEAR",365);
       if (ngui) fprintf(fp," %-12s=%6d\n","N_RUN_YEARS",SimYears);
       else      fprintf(fp," %-12s=%6d\n","N_RUN_YEARS",1);
       fprintf(fp," %-12s=%6d\n","N_RUN_MONTHS",0);
       fprintf(fp," %-12s=%6d\n","N_RUN_DAYS",0);
    }
    for (Sel = ComEnd->Next ; Sel ; Sel = Sel->Next)
-   if (!strcasecmp(Sel->Item->list,nl))
-   {    
-      if (Sel->type == SEL_TEVA)
-         fprintf(fp," %-12s=%c%s%c\n",Sel->text,'\"',Sel->teva,'\"');
-      else
-         fprintf(fp," %-12s=%s\n",Sel->text,Sel->teva);
-   }    
+   {
+      if (Sel->Item && !strcasecmp(Sel->Item->list,nl))
+      {    
+         if (Sel->type == SEL_TEVA)
+            fprintf(fp," %-12s=%c%s%c\n",Sel->text,'\"',Sel->teva,'\"');
+         else
+            fprintf(fp," %-12s=%s\n",Sel->text,Sel->teva);
+      }    
+   }
    fprintf(fp," /END\n");
    fclose(fp);
 }
@@ -3329,22 +3394,6 @@ void MarkRectangle(void)
 }
 
 
-void PaintStars(XImage *dX, int diw, int dih)
-{
-   int x,y;
-   double xrf,yrf;
-
-   xrf = (double)diw / pow(2.0,31),
-   yrf = (double)dih / pow(2.0,31);
-
-   // Paint some stars on the sky
-
-   srandom(Seed);
-   for (y = 0 ; y < (diw * dih) >> 8  ; ++y)
-      XPutPixel(dX,xrf*random(),yrf*random(),WhitePix);
-}
-
-
 /* ==================================================== */
 /* AzimuthalImage - Display map in azimuthal projection */
 /* ==================================================== */
@@ -3441,6 +3490,58 @@ void AzimuthalImage(struct MapImageStruct *s, struct MapImageStruct *d)
 }
 
 
+/* =============================================== */
+/* RectImage - Display map in azimuthal projection */
+/* =============================================== */
+
+void RectImage(struct MapImageStruct *s, struct MapImageStruct *d)
+{
+   int x  ;           // x      pixel coordinate in destination image
+   int y  ;           // y      pixel coordinate in destination image
+
+   unsigned int dih;  // destination image height
+   unsigned int diw;  // destination image width
+   unsigned int dpw;  // destination image padded width
+
+   XImage *sX;        // source      image
+   XImage *dX;        // destination image
+
+
+   // Destroy old image structure inclusive data storage
+
+   if (d->X) XDestroyImage(d->X);
+
+   // Set width of new image
+
+   diw = d->w;
+
+   // Pad width of new image to a multiple of 8
+
+   dpw = (diw + 7) & 0xFFF8;
+
+   // Set height of new image
+
+   dih =  d->h;
+
+   // Allocate space for image data
+
+   d->d = calloc(dpw * dih,4);
+
+   // Create image structure
+
+   dX = d->X = XCreateImage(display,CopyFromParent,ScreenD,ZPixmap,0,d->d,dpw,dih,8,0);
+   sX = s->X;
+
+   for (y = 0 ; y < dih ; ++y)
+   {
+      for (x = 0 ; x < diw ; ++x)
+      {
+         XPutPixel(dX,x,y,XGetPixel(sX,x,y));
+      }
+   }
+}
+
+
 void ToggleMode(void)
 {
    int i,j,m,n,mx,my,dx,dy;
@@ -3449,7 +3550,7 @@ void ToggleMode(void)
    {
       if (WinEvent.xbutton.button == Button1) // Rotate right
       {
-         if (Mars)
+         if (Planet == MARS)
          {
             MapLRM.l += 10;
             if (MapLRM.l >  180) MapLRM.l -= 360;
@@ -3464,7 +3565,7 @@ void ToggleMode(void)
       }
       else if (WinEvent.xbutton.button == Button3) // Rotate left
       {
-         if (Mars)
+         if (Planet == MARS)
          {
             MapLRM.l -= 10;
             if (MapLRM.l < -180) MapLRM.l += 360;
@@ -3921,11 +4022,11 @@ unsigned long create_pixel(long red, long green, long blue)
 {
    if (ScreenD == 24)       // 24 bit true color
    {
-       return red | green << 8 | blue << 16;
+       return blue | green << 8 | red << 16;
    }
    else if (ScreenD == 16)  // 16 bit RGB 565
    {
-      return red >> 3 | (green >> 2) << 5 | (blue >> 3) << 11;
+      return blue >> 3 | (green >> 2) << 5 | (red >> 3) << 11;
 
    }
    else return 0;
@@ -4022,28 +4123,39 @@ void ReadImage(struct MapImageStruct *ei, char *filename, int corw)
       printf("BMI Planes   = %d\n",ImageBMI.Planes);
       printf("BMI Count    = %d\n",ImageBMI.Count);
       printf("BMI ClrUsed  = %d\n",ImageBMI.ClrUsed);
+      printf("BMI ClrImpo  = %d\n",ImageBMI.ClrImportant);
       printf("Pad Bytes    = %d\n",PadBytes);
-      printf("ScreenD= %d\n",ScreenD);
+      printf("Pad Width    = %d\n",PadWidth);
    }
 
    PicBytes = (bpp * ImageBMI.Width + PadBytes) * ImageBMI.Height;
    ImgBytes = 4 * PadWidth * ImageBMI.Height;
    ei->d = calloc(ImgBytes,1);
    BuffImageData = malloc(PicBytes);
-   n = fread(BuffImageData,PicBytes,1,fp);
+
+   fseek(fp,OffBits,SEEK_SET);
+   n = fread(BuffImageData,1,PicBytes,fp);
    fclose(fp);  
+
+   if (Debug)
+   {
+      printf("Size Bytes   = %d\n",PicBytes);
+      printf("Read Bytes   = %d\n",n);
+   }
    
    ei->X = XCreateImage(display,CopyFromParent,ScreenD,ZPixmap,0,
                   ei->d,PadWidth,ImageBMI.Height,8,0);
 
    for (y = 0 ; y < ImageBMI.Height ; ++y)
-   for (x = 0 ; x < ImageBMI.Width  ; ++x)
    {
-       i = bpp * x + (ImageBMI.Height - 1 - y) * (ImageBMI.Width*bpp+PadBytes);
-       r = BuffImageData[i  ];
-       g = BuffImageData[i+1];
-       b = BuffImageData[i+2];
-       XPutPixel(ei->X, x, y, create_pixel(r,g,b));
+      for (x = 0 ; x < ImageBMI.Width  ; ++x)
+      {
+          i = bpp * x + (ImageBMI.Height - 1 - y) * (ImageBMI.Width*bpp+PadBytes);
+          b = BuffImageData[i  ];
+          g = BuffImageData[i+1];
+          r = BuffImageData[i+2];
+          XPutPixel(ei->X, x, y, create_pixel(r,g,b));
+      }
    }
    free(BuffImageData);
    ei->w = ImageBMI.Width;
@@ -4065,6 +4177,17 @@ void ReadLogo(int logo, char *filename)
       Logo[logo].x = Logo[logo-1].x + Logo[logo-1].w;
       Logo[logo].y = Logo[logo-1].y;
    }
+}
+
+void ShowCopyright(void)
+{
+   int x,y;
+   x = CowSizeHints.min_width - 8.5 * ModFontWidth;
+   y = CowSizeHints.min_height - ModFontHeight/2;
+   XSetFont(display, gc, ModFont->fid);
+   XSetForeground(display,gc,WhitePix);
+   XSetBackground(display,gc,BlackPix);
+   XDrawImageString(display,Cow,gc,x,y,"(c) NASA",8);
 }
 
 int redaco;
@@ -4110,6 +4233,7 @@ int RedrawControlWindow(void)
    {
       XPutImage(display,Cow,gc,Logo[l].X,0,0,Logo[l].x,Logo[l].y,Logo[l].w,Logo[l].h);
    }
+   if (Model == PLASIM) ShowCopyright();
    XSync(display,0);
    return 0;
 }
@@ -4151,6 +4275,7 @@ char *vcn[6] =
    "TrueColor",
    "DirectColor"
 };
+
 
 void InitGUI(void)
 {
@@ -4277,10 +4402,10 @@ void InitGUI(void)
       }
    }
 
-   xpp = fopen("Expert","r"); // Expert mode ?
+   xpp = fopen("Beginner","r"); // Expert mode ?
    if (xpp)
    {
-      Expert = 1;
+      Expert = 0;
       fclose(xpp);
    }
 
@@ -4315,6 +4440,9 @@ void InitGUI(void)
    ReadLogo(1,"images/puma.bmp");
    ReadImage(&MapHRE,"images/earth.bmp",0);
    ReadImage(&MapHRM,"images/mars.bmp",0);
+   ReadImage(&MapLRK,"images/Kepler-16.bmp",0);
+// ReadImage(&MapLRL,"images/Kepler-186f.bmp",0);
+   ReadImage(&MapLRL,"images/habit360x180.bmp",0);
    opbox_y = 8 + 64 + 2 * FixFontHeight;
    InitSelections();
 
@@ -4340,8 +4468,12 @@ void InitGUI(void)
    InitButtons();
    MapLRE.w = Frame[1].w;
    MapLRE.h = Frame[1].h;
+   MapLRK.w = Frame[1].w;
+   MapLRK.h = Frame[1].h;
    MapLRM.w = Frame[1].w;
    MapLRM.h = Frame[1].h;
+   MapLRL.w = Frame[0].w;
+   MapLRL.h = Frame[0].h;
    MapLRM.l = -90;
    AzimuthalImage(&MapHRE,&MapLRE);
    AzimuthalImage(&MapHRM,&MapLRM);
@@ -4394,7 +4526,7 @@ int OnFrame(int i)
 
 void OnMouseClick(void)
 {
-   int i,j;
+   int i,j,cp;
    struct SelStruct *Sel;
 
    /* Check Action Buttons */
@@ -4425,18 +4557,13 @@ void OnMouseClick(void)
    {
       if (Sel->type == SEL_CHECK && HitBox(Sel) && !Sel->no)
       {
-         Sel->iv = !Sel->iv;
-         if (Sel->piv) *Sel->piv = Sel->iv;
-         if (Sel == SelEarth || Sel == SelMars)
+         cp = -1;
+         for (i=0 ; i < PLANETS ; ++i) if (Sel == SelPlanet[i]) cp = i;
+         if (cp >= 0 && Planet != cp) ChangePlanet(cp);
+         else
          {
-            if (Sel == SelEarth) SelMars->iv  = !SelEarth->iv;
-            if (Sel == SelMars ) SelEarth->iv = !SelMars->iv;
-            *SelMars->piv  = SelMars->iv;
-         }
-         if (Sel == SelLsg && Sel->iv == 1)
-         {
-            SelOce->iv = 1;
-            SelIce->iv = 1;
+            Sel->iv = !Sel->iv;
+            if (Sel->piv) *Sel->piv = Sel->iv;
          }
       }
       else if ((Sel->type == SEL_INT || Sel->type == SEL_REAL) && HitBox(Sel))

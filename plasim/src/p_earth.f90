@@ -9,26 +9,29 @@ logical :: lex
 
 ! Preset parameters may be changed using the namelist
 
-namelist /planet_nl/ nfixorb, eccen, mvelp, obliq &
-                , rotspd, siderial_day, solar_day &
+namelist /planet_nl/ nfixorb, eccen, mvelp, obliq  &
+                , rotspd, sidereal_day, solar_day  &
+                , sidereal_year, tropical_year     &
                 , akap, alr, gascon, ra1, ra2, ra4 &
                 , pnu, ga, plarad &
                 , gsol0 &
                 , yplanet
 
 yplanet = "Earth"    ! Planet name
-nplanet = 3          ! Planet index
+nplanet = 3          ! 3rd. stone from the sun
 
 ! *********
 ! Astronomy
 ! *********
 
-eccen        =     0.016715 ! Eccentricity (AMIP-II value)
-mvelp        =   102.7      ! Longitude of perihelion
-obliq        =    23.441    ! Obliquity [deg] (AMIP-II)
-rotspd       =     1.0      ! Rotation speed (factor)
-siderial_day = 86164.0      ! 23h 56m 04s
-solar_day    = 86400.0      ! 24h 00m 00s
+eccen         =     0.016715  ! Eccentricity (AMIP-II value)
+mvelp         =   102.7       ! Longitude of perihelion
+obliq         =    23.441     ! Obliquity [deg] (AMIP-II)
+rotspd        =     1.0       ! Rotation speed (factor)
+sidereal_day  =    86164.0916 !      23h 56m 04s
+solar_day     =    86400.0    !      24h 00m 00s
+sidereal_year = 31558149.0    ! 365d 06h 09m 09s
+tropical_year = 31556956.0    ! 365d 05h 49m 16s
 
 ! **********
 ! Atmosphere
@@ -93,9 +96,9 @@ p_ellipticity =    0.0034  ! Ellipticity
 p_density     = 5520.0     ! [kg/m3]
 p_albedo      =    0.385   ! Bond albedo
 p_blackt      =  247.3     ! Black body temperature
-p_sidorbit    =  365.256   ! Siderial orbit period
 p_perihelion  =  147.1     ! Perihelion [10^6 km]
 p_aphelion    =  152.1     ! Aphelion [10^6 km]
+p_sidorbit    =  sidereal_year / sidereal_day ! Sidereal orbit period
 
 write(nud,4000)
 write(nud,1000)
@@ -115,7 +118,7 @@ write(nud,3000) 'Bond albedo'      ,' '           ,p_albedo
 write(nud,3000) 'Solar irradiance' ,'[W/m2]'      ,gsol0
 write(nud,3000) 'Black-body temperature','[K]'    ,p_blackt
 write(nud,3000) 'Sidereal orbit period' ,'[days]' ,p_sidorbit
-write(nud,3000) 'Sidereal rotation period','[h]'  ,siderial_day/3600.0
+write(nud,3000) 'Sidereal rotation period','[h]'  ,sidereal_day/3600.0
 write(nud,3000) 'Perihelion'       ,'[10^6 km]'   ,p_perihelion
 write(nud,3000) 'Aphelion'         ,'[10^6 km]'   ,p_aphelion
 

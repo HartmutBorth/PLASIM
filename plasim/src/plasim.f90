@@ -40,7 +40,7 @@
 !
 !     UPDATE VERSION IDENTIFIER AFTER EACH CODE CHANGE!
 
-plasimversion = "https://svn-zmk.zmaw.de/svn/most/ :   rev 14   : 31-Oct-2012"
+plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
 
       call mpstart(-1)       ! -1: Start MPI   >=0 arg = MPI_COMM_WORLD
       call setfilenames
@@ -140,28 +140,28 @@ plasimversion = "https://svn-zmk.zmaw.de/svn/most/ :   rev 14   : 31-Oct-2012"
 
       if (mypid == NROOT) then
          call cpu_time(tmstart)
-         write(nud,'(64("*"))')
-         write(nud,'("* ",22X,"PLANET SIMULATOR",22X," *")')
-         write(nud,'("* ",a60," *")') plasimversion
-         write(nud,'(64("*"))')
+         write(nud,'(54("*"))')
+         write(nud,'("* ",17X,"PLANET SIMULATOR",17X," *")')
+         write(nud,'("* ",a50," *")') plasimversion
+         write(nud,'(54("*"))')
          if (mrnum > 1) then
-            write(nud,'("* Instance ",i3," of ",i3,42x,"*")') &
+            write(nud,'("* Instance ",i3," of ",i3,32x,"*")') &
                   mrpid+1, mrnum
-            write(nud,'("* My    truncation  :",i5,37x,"*")') NTRU
-            write(nud,'("* Other truncation  :",i5,37x,"*")') mrtru(2-mrpid)
-            write(nud,'(64("*"))')
+            write(nud,'("* My    truncation  :",i5,27x,"*")') NTRU
+            write(nud,'("* Other truncation  :",i5,27x,"*")') mrtru(2-mrpid)
+            write(nud,'(54("*"))')
          endif
-         write(nud,'("* Truncation   NTRU :",i5,37x,"*")') NTRU
-         write(nud,'("* Levels       NLEV :",i5,37x,"*")') NLEV
-         write(nud,'("* Latitudes    NLAT :",i5,37x,"*")') NLAT
-         write(nud,'("* Longitudes   NLON :",i5,37x,"*")') NLON
-         write(nud,'(64("*"))')
+         write(nud,'("* Truncation   NTRU :",i5,27x,"*")') NTRU
+         write(nud,'("* Levels       NLEV :",i5,27x,"*")') NLEV
+         write(nud,'("* Latitudes    NLAT :",i5,27x,"*")') NLAT
+         write(nud,'("* Longitudes   NLON :",i5,27x,"*")') NLON
+         write(nud,'(54("*"))')
          if (NPRO > 1) then
-            write(nud,'(64("*"))')
+            write(nud,'(54("*"))')
             do jpro = 1 , NPRO
-              write(nud,'("* CPU",i4,1x,a52," *")') jpro-1,ympname(jpro)
+              write(nud,'("* CPU",i4,1x,a42," *")') jpro-1,ympname(jpro)
             enddo
-            write(nud,'(64("*"))')
+            write(nud,'(54("*"))')
          endif
       endif ! (mypid == NROOT)
 
@@ -279,7 +279,9 @@ plasimversion = "https://svn-zmk.zmaw.de/svn/most/ :   rev 14   : 31-Oct-2012"
       call mpbcr(rdbrv   )
       call mpbcr(ww      )
       call mpbcr(solar_day)
-      call mpbcr(siderial_day)
+      call mpbcr(sidereal_day)
+      call mpbcr(tropical_year)
+      call mpbcr(sidereal_year)
       call mpbcr(rotspd)
       call mpbcr(eccen)
       call mpbcr(obliq)
@@ -483,7 +485,7 @@ plasimversion = "https://svn-zmk.zmaw.de/svn/most/ :   rev 14   : 31-Oct-2012"
 
 !     ****************************************************************
 !     * The scaling factor "ww" is derived from the rotation "omega" *
-!     * with 1 planetary rotation per siderial day (2 Pi)            *
+!     * with 1 planetary rotation per sidereal day (2 Pi)            *
 !     ****************************************************************
 
       deltsec  = solar_day / ntspd   ! timestep in seconds
@@ -993,10 +995,10 @@ plasimversion = "https://svn-zmk.zmaw.de/svn/most/ :   rev 14   : 31-Oct-2012"
          solar_day = solar_day / rotspd
          n_days_per_year = n_days_per_year * rotspd
          n_days_per_month = n_days_per_year / 12
-         siderial_day =(n_days_per_year*solar_day)/(n_days_per_year+1.0)
+         sidereal_day =(n_days_per_year*solar_day)/(n_days_per_year+1.0)
       endif
 
-      ww    = TWOPI / siderial_day ! Omega (scaling)
+      ww    = TWOPI / sidereal_day ! Omega (scaling)
       acpd  = gascon / akap        ! Specific heat for dry air
       adv   = ACPV / acpd -1.0     ! Often used
       cv    = plarad * ww          ! cv
@@ -1056,7 +1058,7 @@ plasimversion = "https://svn-zmk.zmaw.de/svn/most/ :   rev 14   : 31-Oct-2012"
 
       write(nud,'(/,"**********************************")')
       write(nud,'("* Solar    day     :",f8.1," [s] *")') solar_day
-      write(nud,'("* Siderial day     :",f8.1," [s] *")') siderial_day
+      write(nud,'("* Sidereal day     :",f8.1," [s] *")') sidereal_day
       write(nud,'("* Omega            :",f6.2," [s-6] *")') ww * 1.0e6
       write(nud,'("* Rotation Speed   :",f8.1,"     *")') rotspd
       write(nud,'("* Days / Year      :",i6,"       *")') n_days_per_year

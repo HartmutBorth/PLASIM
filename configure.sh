@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 rm -f *.x most_* F90_*
 

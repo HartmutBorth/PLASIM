@@ -3023,8 +3023,6 @@ void ShowMars(void)
 
 void ShowExo(void)
 {
-   printf("Exo 0 %d %d %d %d\n",Frame[0].x,Frame[0].y,MapLRL.w,MapLRL.h);
-   printf("Ex1 0 %d %d %d %d\n",Frame[1].x,Frame[1].y,MapLRK.w,MapLRK.h);
    XPutImage(display,Cow,gc,MapLRL.X,0,0,Frame[0].x,Frame[0].y,MapLRL.w,MapLRL.h);
    XPutImage(display,Cow,gc,MapLRK.X,0,0,Frame[1].x,Frame[1].y,MapLRK.w,MapLRK.h);
 }

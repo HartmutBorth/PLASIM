@@ -2328,8 +2328,8 @@ double *ReadGrid(const char *fn, int klat, double Sc)
 
    nlat = klat;
    nlon = nlat + nlat;
-   VGAX = (sfbox_w - 1.0) / nlon;
-   VGAY = (sfbox_h - 1.0) / (nlat-1);
+   VGAX = (double)sfbox_w / nlon;
+   VGAY = (double)sfbox_h / (nlat-1);
    gridsize = (nlon+1) * nlat * sizeof(double);
 
    gp = malloc(gridsize);
@@ -2906,8 +2906,11 @@ int CalcFrame(int lats)
 Pixmap IsoPixmap(double *Grid, int nlon, int nlat, struct ColorStrip Strip[])
 {
    pix = XCreatePixmap(display,Cow,sfbox_w,sfbox_h,ScreenD);
+   //XFillRectangle(display,Cow,gc,0,0,Frame[0].w,Frame[0].h);
    Flag = realloc(Flag,(nlon+1) * sizeof(int));
    IsoAreas(Grid,nlon+1,nlat,Strip);
+   //XSetForeground(display,gc,Blue.pixel);
+   //XDrawRectangle(display,Cow,gc,Frame[0].x-1,Frame[0].y-1,Frame[0].w,Frame[0].h);
    return pix;
 }
 

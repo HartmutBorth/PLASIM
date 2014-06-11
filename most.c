@@ -2066,6 +2066,8 @@ int Build(int model)
    {
       if (Planet == MARS)
          sprintf(command,"cp plasim/dat/T%d_mars/* plasim/run/\n",Truncation);
+      if (Planet == EXO)
+         sprintf(command,"cp plasim/dat/T%d_exo/* plasim/run/\n",Truncation);
       else
          sprintf(command,"cp plasim/dat/T%d/* plasim/run/\n",Truncation);
       system(command);

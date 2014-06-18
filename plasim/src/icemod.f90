@@ -461,6 +461,7 @@
 !
 !     reset arrays
 !
+      zicedold(:) = 0.0
       ximelt(:)=0.
       xsmelt(:)=0.
       xsmflx(:)=0.

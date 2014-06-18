@@ -199,7 +199,6 @@ struct SelStruct *SelRes;
 struct SelStruct *SelOce;
 struct SelStruct *SelLsg;
 struct SelStruct *SelIce;
-struct SelStruct *SelVeg;
 struct SelStruct *SelAnn;
 struct SelStruct *SelPlanet[PLANETS];
 struct SelStruct *SelSYear;
@@ -317,7 +316,6 @@ struct ItemStruct NL_list[NL_MAX_ITEMS];
 int BigEndian;
 int Oce;
 int Ice;
-int Veg;
 int Lsg;
 int SimStart;
 int SimYears;
@@ -651,7 +649,6 @@ void ChangeModel(int NewMo)
        SelAnn->no   = 0;
        SelOce->no   = 1;
        SelIce->no   = 1;
-       SelVeg->no   = 1;
        SelOro->no   = 0;
        SelSYear->no = 1;
        if (SelLsg) SelLsg->no   = 1;
@@ -662,7 +659,6 @@ void ChangeModel(int NewMo)
        SelAno->hide = 1;
        SelAnn->no   = 1;
        SelOro->no   = 1;
-       SelVeg->no   = 0;
        SelSYear->no = 0;
        if (Expert)
        {
@@ -929,7 +925,7 @@ struct SelStruct *NewSel(struct SelStruct *OldSel)
 }
 
 
-void NL_i(int m, int p, char *list, char *name, int i)
+void NL_i(int m, char *list, char *name, int i)
 {
    if (NL_items > NL_MAX_ITEMS-2)
    {
@@ -949,7 +945,7 @@ void NL_i(int m, int p, char *list, char *name, int i)
 }
 
 
-void NL_r(int m, int p, char *list, char *name, double r)
+void NL_r(int m, char *list, char *name, double r)
 {
    if (NL_items > NL_MAX_ITEMS-2)
    {
@@ -990,7 +986,7 @@ void NL_p(char *name, float r[])
 }
 
 
-void NL_t(int m, int p, char *list, char *name, char *t)
+void NL_t(int m, char *list, char *name, char *t)
 {
    if (NL_items > NL_MAX_ITEMS-2)
    {
@@ -1025,50 +1021,52 @@ void InitNamelist(void)
    NL_p("OBLIQ" , obliq_vec);
    NL_p("GSOL0" , gsol0_vec);
 
-   NL_i(PLASIM,ALL  ,"planet" ,"NFIXORB" ,  0);
-   NL_r(PLASIM,EARTH,"radmod" ,"CO2"     ,360.0);
-   NL_i(PLASIM,ALL  ,"plasim" ,"KICK"    ,  1);
-   NL_i(PLASIM,ALL  ,"plasim" ,"MPSTEP"  ,  0);
-   NL_i(PLASIM,ALL  ,"plasim" ,"NDIAG"   ,  0);
-   NL_i(PLASIM,ALL  ,"plasim" ,"NGUIDBG" ,  0);
-   NL_i(PLASIM,EARTH,"plasim" ,"NQSPEC"  ,  1);
-   NL_i(PLASIM,ALL  ,"plasim" ,"NWPD"    ,  1);
-   NL_i(PLASIM,ALL  ,"plasim" ,"NPRINT"  ,  0);
-   NL_i(PLASIM,ALL  ,"plasim" ,"NSYNC"   ,  1);
-   NL_i(PLASIM,ALL  ,"rainmod","NSTORAIN",  0);
-   NL_r(PLASIM,ALL  ,"plasim" ,"SYNCSTR", 0.0);
+   NL_i(PLASIM,"planet" ,"NFIXORB" ,  0);
+   NL_r(PLASIM,"radmod" ,"CO2"     ,360.0);
+   NL_i(PLASIM,"plasim" ,"KICK"    ,  1);
+   NL_i(PLASIM,"plasim" ,"MPSTEP"  ,  0);
+   NL_i(PLASIM,"plasim" ,"NAQUA"   ,  0);
+   NL_i(PLASIM,"plasim" ,"NDIAG"   ,  0);
+   NL_i(PLASIM,"plasim" ,"NGUIDBG" ,  0);
+   NL_i(PLASIM,"plasim" ,"NQSPEC"  ,  1);
+   NL_i(PLASIM,"plasim" ,"NVEG"    ,  0);
+   NL_i(PLASIM,"plasim" ,"NWPD"    ,  1);
+   NL_i(PLASIM,"plasim" ,"NPRINT"  ,  0);
+   NL_i(PLASIM,"plasim" ,"NSYNC"   ,  1);
+   NL_i(PLASIM,"rainmod","NSTORAIN",  0);
+   NL_r(PLASIM,"plasim" ,"SYNCSTR", 0.0);
 
    // SAM
 
-   NL_i(SAM,ALL,"sam","KICK"   ,  1);
-   NL_i(SAM,ALL,"sam","NAFTER" , 24);
-   NL_i(SAM,ALL,"sam","NDEL"   ,  8);
-   NL_i(SAM,ALL,"sam","NDIAG"  ,240);
-   NL_i(SAM,ALL,"sam","NEXP"   ,  4);
-   NL_i(SAM,ALL,"sam","NGUIDBG",  0);
-   NL_i(SAM,ALL,"sam","NTSPD"  ,  0);
-   NL_r(SAM,ALL,"sam","DISP"   ,0.0);
-   NL_r(SAM,ALL,"sam","ROTSPD" ,1.0);
+   NL_i(SAM,"sam","KICK"   ,  1);
+   NL_i(SAM,"sam","NAFTER" , 24);
+   NL_i(SAM,"sam","NDEL"   ,  8);
+   NL_i(SAM,"sam","NDIAG"  ,240);
+   NL_i(SAM,"sam","NEXP"   ,  4);
+   NL_i(SAM,"sam","NGUIDBG",  0);
+   NL_i(SAM,"sam","NTSPD"  ,  0);
+   NL_r(SAM,"sam","DISP"   ,0.0);
+   NL_r(SAM,"sam","ROTSPD" ,1.0);
 
    // PUMA
 
-   NL_i(PUMA,ALL,"puma","KICK"   ,  1);
-   NL_i(PUMA,ALL,"puma","MPSTEP" ,  0);
-   NL_i(PUMA,ALL,"puma","NDEL"   ,  6);
-   NL_i(PUMA,ALL,"puma","NDHEAT" ,  0);
-   NL_i(PUMA,ALL,"puma","NDIAG"  ,  0);
-   NL_i(PUMA,ALL,"puma","NEWSR"  ,  0);
-   NL_i(PUMA,ALL,"puma","NGUIDBG",  0);
-   NL_i(PUMA,ALL,"puma","NHELSUA",  0);
-   NL_i(PUMA,ALL,"puma","NSYNC"  ,  0);
-   NL_i(PUMA,ALL,"puma","NWPD"   ,  1);
-   NL_r(PUMA,ALL,"puma","DTEP"   , 60);
-   NL_r(PUMA,ALL,"puma","DTNS"   ,-70.0);
-   NL_r(PUMA,ALL,"puma","DTROP"  , 12000.0);
-   NL_r(PUMA,ALL,"puma","DTTRP"  ,  2.0);
-   NL_r(PUMA,ALL,"puma","SYNCSTR",  0.0);
-   NL_r(PUMA,ALL,"puma","ROTSPD" ,  1.0);
-   NL_r(PUMA,ALL,"puma","TGR"    , 288.0);
+   NL_i(PUMA,"puma","KICK"   ,  1);
+   NL_i(PUMA,"puma","MPSTEP" ,  0);
+   NL_i(PUMA,"puma","NDEL"   ,  6);
+   NL_i(PUMA,"puma","NDHEAT" ,  0);
+   NL_i(PUMA,"puma","NDIAG"  ,  0);
+   NL_i(PUMA,"puma","NEWSR"  ,  0);
+   NL_i(PUMA,"puma","NGUIDBG",  0);
+   NL_i(PUMA,"puma","NHELSUA",  0);
+   NL_i(PUMA,"puma","NSYNC"  ,  0);
+   NL_i(PUMA,"puma","NWPD"   ,  1);
+   NL_r(PUMA,"puma","DTEP"   , 60);
+   NL_r(PUMA,"puma","DTNS"   ,-70.0);
+   NL_r(PUMA,"puma","DTROP"  , 12000.0);
+   NL_r(PUMA,"puma","DTTRP"  ,  2.0);
+   NL_r(PUMA,"puma","SYNCSTR",  0.0);
+   NL_r(PUMA,"puma","ROTSPD" ,  1.0);
+   NL_r(PUMA,"puma","TGR"    , 288.0);
 };
 
 
@@ -1331,20 +1329,6 @@ void InitSelections(void)
    Sel->no   = 1;
    SelIce    = Sel;
    Sel->piv  = &Ice;
-
-   // Vegetation
-
-   Sel = NewSel(Sel);
-   InitNextSelection(Sel,FixFontHeight,"Vegetation");
-   Sel->type = SEL_CHECK;
-   Sel->teco = BlackPix;
-   Sel->h    = FixFontHeight + 1;
-   Sel->w    = FixFontHeight + 1;
-   Sel->yt   = Sel->y + FixFontAscent + 1;
-   Sel->div  = Sel->iv   =  0;
-   Sel->no   = 1;
-   SelVeg    = Sel;
-   Sel->piv  = &Veg;
 
    // Hardware
 
@@ -3262,10 +3246,6 @@ void WriteNamelistFile(char *nl,  int instance)
    {
       fprintf(fp," %-12s=%6d\n","NICE",Ice);
    }
-   if (!strcmp(nl,"landmod"))
-   {
-      fprintf(fp," %-12s=%6d\n","NBIOME",Veg);
-   }
    if (!strcmp(nl,"oceanmod"))
    {
       fprintf(fp," %-12s=%6d\n","NOCEAN",Oce);
@@ -3313,6 +3293,7 @@ void WritePlasimNamelist(void)
       WriteNamelistFile("fluxmod" ,imr);
       WriteNamelistFile("icemod"  ,imr);
       WriteNamelistFile("landmod" ,imr);
+      WriteNamelistFile("vegmod"  ,imr);
       WriteNamelistFile("miscmod" ,imr);
       WriteNamelistFile("oceanmod",imr);
       WriteNamelistFile("planet"  ,imr);
@@ -4185,12 +4166,12 @@ void ReadLogo(int logo, char *filename)
 void ShowCopyright(void)
 {
    int x,y;
-   x = CowSizeHints.min_width - 8.5 * ModFontWidth;
+   x = CowSizeHints.min_width - 18.5 * ModFontWidth;
    y = CowSizeHints.min_height - ModFontHeight/2;
    XSetFont(display, gc, ModFont->fid);
    XSetForeground(display,gc,WhitePix);
    XSetBackground(display,gc,BlackPix);
-   XDrawImageString(display,Cow,gc,x,y,"(c) NASA",8);
+   XDrawImageString(display,Cow,gc,x,y,"Image Credit: NASA",18);
 }
 
 int redaco;

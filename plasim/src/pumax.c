@@ -2031,7 +2031,7 @@ void initgui_(int *model, int *debug, int *lats, int *mrpid, int *mrnum, char *p
 
    Delwin = XInternAtom(display,"WM_DELETE_WINDOW",0);
 
-   ReadImage(&MapHR,"map.bmp");
+   if (strncmp(PlanetName,"Aqua",4)) ReadImage(&MapHR,"map.bmp");
 
    for (i = 0 ; i < NumWin ; ++i)
    {

@@ -81,6 +81,7 @@
       character (256) :: oceanmod_namelist   = "oceanmod_namelist"
       character (256) :: ocean_output        = "ocean_output"
       character (256) :: landmod_namelist    = "landmod_namelist"
+      character (256) :: vegmod_namelist     = "vegmod_namelist"
       character (256) :: seamod_namelist     = "seamod_namelist"
 
 !     ****************************************************************
@@ -153,6 +154,8 @@
       integer :: mars     =  0  ! global switch for planet mars
       integer :: noutput  =  1  ! master switch for output: 0=no output
       integer :: nafter   =  0  ! write data interval: 0 = once per day
+      integer :: naqua    =  0  ! 1: switch to aqua planet mode
+      integer :: nveg     =  1  ! 1: run vegetation module
       integer :: ncoeff   =  0  ! number of modes to print
       integer :: ndiag    =  0  ! write diagnostics interval 0 = every 10th. day
       integer :: ngui     =  0  ! 1: run with GUI
@@ -349,19 +352,7 @@
 !     * BIOME *
 !     *********
 
-      real :: dcsoil(NHOR)   =0.0  ! organic carbon stored in soil
-      real :: dcveg(NHOR)    =0.0  ! organic carbon stored in biomass
       real :: dforest(NHOR) = 0.5  ! forest cover (fract.)
-      real :: dgpp(NHOR)    = 0.0  ! gross primary production (kg C /m2 /s)
-      real :: dgppl(NHOR)   = 0.0  ! light limited gpp (kg C /m2 /s)
-      real :: dgppw(NHOR)   = 0.0  ! water limited gpp (kg C /m2 /s)
-      real :: dlai(NHOR)    = 0.0  ! leaf area index (integer value)
-      real :: dlitter(NHOR) = 0.0  ! litterfall (kg C /m2 /s)
-      real :: dnogrow(NHOR) = 0.0  ! no growth allocation (kg C /m2 /s)
-      real :: dnpp(NHOR)    = 0.0  ! net primary production (kg C /m2 /s)
-      real :: dres(NHOR)    = 0.0  ! heterotrophic respiration (kg C /m2 /s)
-      real :: dveg(NHOR)    = 0.5  ! vegetation cover (fract.)
-      real :: dwloss(NHOR)   =0.0  ! water loss
       real :: dwmax(NHOR)   = 0.0  ! field capacity (m)
 
 !     ********
@@ -427,15 +418,6 @@
       real :: atsama(NHOR)= 0. ! maximum surface air temperature
       real :: atsami(NHOR)= 0. ! minimum surface air temperature
       real :: ats0(NHOR)  = 0. ! accumulated surface temperature
-
-      real :: anpp(NHOR)    = 0.0
-      real :: agpp(NHOR)    = 0.0
-      real :: agppl(NHOR)   = 0.0
-      real :: agppw(NHOR)   = 0.0
-      real :: anogrow(NHOR) = 0.0
-      real :: aresh(NHOR)   = 0.0
-      real :: alitter(NHOR) = 0.0
-      real :: awloss(NHOR)  = 0.0
 
 !     *******************
 !     * Latitude Arrays *
@@ -518,7 +500,7 @@
 !     ******************************
 
 
-      character(len=32) :: yplanet=" " ! Planet name
+      character(len=80) :: yplanet=" " ! Planet name
 
       integer :: nfixorb = 0           ! Global switch to fix orbit
 
@@ -528,8 +510,10 @@
       real :: gascon = 0.0             ! Gas constant for dry air
       real :: plarad = 0.0             ! Planet radius
       real :: pnu    = 0.0             ! Time filter
-      real :: sidereal_day = 0.0       ! Length of sidereal day [sec]
-      real :: solar_day    = 0.0       ! Length of solar day [sec]
+      real :: sidereal_day  = 0.0      ! Length of sidereal day [sec]
+      real :: solar_day     = 0.0      ! Length of solar day [sec]
+      real :: sidereal_year = 0.0      ! Length of sidereal year [sec]
+      real :: tropical_year = 0.0      ! Length of tropical year [sec]
       real :: ww     = 0.0             ! Omega used for scaling
       real :: oroscale = 1.0           ! Orography scaling
       real :: ra1    = 0.0             !

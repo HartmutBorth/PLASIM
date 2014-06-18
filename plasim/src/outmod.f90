@@ -1,134 +1,36 @@
 !     =================
-!     SUBROUTINE PACKGP
-!     =================
-
-      subroutine packgp(pu,pmin,psca,kp)
-      use pumamod
-      real         :: pu(2,NPGP)   ! in:  array to pack
-      real(kind=4) :: pmin         ! out: minimum
-      real(kind=4) :: psca         ! out: scaling factor
-      integer(kind=4) :: kp(NPGP)  ! out: array for packed data
-      integer(kind=4) :: ir,ii
-      
-      zmax = maxval(pu(:,:))
-      pmin = minval(pu(:,:))
-      zran = zmax - pmin           ! range of values
-      if (zran > 1.0e-25) then
-         psca = 64000.0 / zran
-      else
-         psca = 1.0
-      endif
-
-      do j = 1 , NPGP
-         ir = ishft(nint((pu(1,j) - pmin) * psca),  16)
-         ii = ibits(nint((pu(2,j) - pmin) * psca),0,16)
-         kp(j) = ior(ir,ii)
-      enddo
-
-      return
-      end
-
-!     ===================
-!     SUBROUTINE UNPACKGP
-!     ===================
-
-      subroutine unpackgp(pu,pmin,psca,kp)
-      use pumamod
-      real            :: pu(2,NPGP)
-      integer(kind=4) :: pmin
-      integer(kind=4) :: psca
-      integer(kind=4) :: kp(NPGP)
-
-      do j = 1 , NPGP
-         ir = iand(ishft(kp(j),-16),65535)
-         ii = iand(kp(j),65535)
-         pu(1,j) = ir / psca + pmin
-         pu(2,j) = ii / psca + pmin
-      enddo
-
-      return
-      end
-
-!     =================
-!     SUBROUTINE PACKSP
-!     =================
-
-      subroutine packsp(pu,pp,kp)
-      use pumamod
-      real(kind=4)    :: pu(2,NCSP)       ! in:  array to pack
-      real(kind=4)    :: pp(NTP1+1)       ! out: modes for m=0
-      integer(kind=4) :: kp(NTP1+1:NCSP)  ! out: array for packed data
-      integer(kind=4) :: ir,ii
-
-      pp(1:NTP1) = pu(1,1:NTP1) ! store first modes unpacked
-
-      zmax = maxval(pu(:,NTP1+1:NCSP))
-      zmin = minval(pu(:,NTP1+1:NCSP))
-      zabs = max(abs(zmax),abs(zmin))
-      if (zabs > 1.0e-25) then
-         zsca = 32000.0 / zabs
-      else
-         zsca = 1.0
-      endif
-      pp(NTP1+1) = zsca
-
-      do j = NTP1+1 , NCSP
-         ir = ishft(32768+nint(pu(1,j) * zsca),  16)
-         ii = ibits(32768+nint(pu(2,j) * zsca),0,16)
-         kp(j) = ior(ir,ii)
-      enddo
-
-      return
-      end
-
-!     ===================
-!     SUBROUTINE UNPACKSP
-!     ===================
-
-      subroutine unpacksp(pu,pp,kp)
-      use pumamod
-      real :: pu(2,NCSP)
-      real(kind=4) :: pp(NTP1+1)
-      integer(kind=4) :: kp(NTP1+1:NCSP)
-
-      pu(1,1:NTP1) = pp(1:NTP1) ! first modes unpacked
-      zsca = pp(NTP1+1)
-
-      do j = NTP1+1 , NCSP
-         ir = iand(ishft(kp(j),-16),65535) - 32768
-         ii = iand(kp(j),65535) - 32768
-         pu(1,j) = ir / zsca
-         pu(2,j) = ii / zsca
-      enddo
-
-      return
-      end
-
-!     =================
 !     SUBROUTINE OUTINI
 !     =================
 
       subroutine outini
       use pumamod
 
-!     If PLASIM runs as 64 bit version truncate output variables 32 bit
+!     Output has always 32 bit precision
 
-      real(kind=4) :: zsigmah(NLEV)
-      integer(kind=4) :: itru,ilat,ilev
-!
-      character(len=8) ypuma
-      data ypuma/'PUMA-II '/
+      integer (kind=4) :: ihead(8)   ! header of first data set
+      real    (kind=4) :: zsig(NUGP) ! first block contains settings
 
-      itru = NTRU
-      ilat = NLAT
-      ilev = NLEV
+      call ntomin(nstep,nmin,nhour,nday,nmonth,nyear)
+
+      ihead(1) = 333  ! ID for PUMA/PLASIM parameter block
+      ihead(2) = 0
+      ihead(3) = nday + 100 * nmonth + 10000 * nyear
+      ihead(4) = 0
+      ihead(5) = NLON
+      ihead(6) = NLAT
+      ihead(7) = NLEV
+      ihead(8) = NTRU
+
+!     The first data block with Code = 333 is used for transferring
+!     planet properties to the postprocessor "burn"
+
+      zsig(:)      = 0.0       ! initialize
+      zsig(1:NLEV) = sigmah(:) ! vertical coordinate table
+      zsig(NLEV+1) = n_days_per_year
+
       open  (40,file=plasim_output,form='unformatted')
-      write (40) ypuma
-      write (40) itru
-      write (40) ilat
-      write (40) ilev
-      zsigmah(:)=sigmah(:)
-      write (40) zsigmah
+      write (40) ihead(:)
+      write (40) zsig(:)
 
       return
       end
@@ -156,21 +58,15 @@
       ihead(4) = nmin + 100 * nhour
       ihead(5) = NLON
       ihead(6) = NLAT
-      ihead(7) = 1
+      ihead(7) = nstep - nstep1
       ihead(8) = n_days_per_year
 
       call mpgagp(zf,pf,1)
 
       if (mypid == NROOT) then
          write (kunit) ihead
-         if (npackgp == 1) then
-            call packgp(zf,zmin,zsca,la)
-            write (kunit) zmin,zsca
-            write (kunit) la
-         else
-            zzf(:) = zf(:)
-            write (kunit) zzf
-         endif
+         zzf(:) = zf(:)
+         write (kunit) zzf
       endif
 
       return
@@ -197,7 +93,7 @@
       ihead(4) = nmin + 100 * nhour
       ihead(5) = NRSP
       ihead(6) = 1
-      ihead(7) = 1
+      ihead(7) = nstep - nstep1
       ihead(8) = n_days_per_year
 
 !     normalize ECHAM compatible and scale to physical dimensions
@@ -205,13 +101,7 @@
       zf(:) = pf(:) * spnorm(1:NRSP) * pscale
       zf(1) = zf(1) + poff ! Add offset if necessary
       write (kunit) ihead
-      if (npacksp == 1) then
-         call packsp(zf,za,la)
-         write (kunit) za
-         write (kunit) la
-      else
-         write (kunit) zf
-      endif
+      write (kunit) zf
 
       return
       end
@@ -476,18 +366,6 @@
 
       call writegp(40,dtsoil,183,0)
 
-!     ********************
-!     * vegetation cover *
-!     ********************
-
-      call writegp(40,dveg,199,0)
-
-!     *******************
-!     * leaf area index *
-!     *******************
-
-      call writegp(40,dlai,200,0)
-
 !     ***********************************
 !     * maximum surface air temperature *
 !     ***********************************
@@ -584,74 +462,8 @@
 !     ***   S I M B A   ***
 !     *********************
 
-!     ****************************
-!     * gross primary production *
-!     ****************************
+      if (nveg > 0) call vegout
 
-      agpp(:)=agpp(:)/real(naccuout)
-      call writegp(40,agpp,300,0)
-
-!     **************************
-!     * net primary production *
-!     **************************
-
-      anpp(:)=anpp(:)/real(naccuout)
-      call writegp(40,anpp,301,0)
-
-!     *********************
-!     * light limited GPP *
-!     *********************
-
-      agppl(:)=agppl(:)/real(naccuout)
-      call writegp(40,agppl,302,0)
-
-!     *********************
-!     * water limited GPP *
-!     *********************
-
-      agppw(:)=agppw(:)/real(naccuout)
-      call writegp(40,agppw,303,0)
-
-!     *********************
-!     * vegetation carbon *
-!     *********************
-
-      call writegp(40,dcveg,304,0)
-
-!     ***************
-!     * soil carbon *
-!     ***************
-
-      call writegp(40,dcsoil,305,0)
-
-!     ************************
-!     * no growth allocation *
-!     ************************
-
-      anogrow(:)=anogrow(:)/real(naccuout)
-      call writegp(40,anogrow,306,0)
-
-!     *****************************
-!     * heterotrophic respiration *
-!     *****************************
-
-      aresh(:)=aresh(:)/real(naccuout)
-      call writegp(40,aresh,307,0)
-
-!     *********************
-!     * litter production *
-!     *********************
-
-      alitter(:)=alitter(:)/real(naccuout)
-      call writegp(40,alitter,308,0)
-
-!     **************
-!     * water loss *
-!     **************
-
-      awloss(:)=awloss(:)/real(naccuout)
-      call writegp(40,awloss,309,0)
-!
       return
       end
 
@@ -783,15 +595,6 @@
       atsami(:)=1.E10
       atsama(:)=0.
 
-      anpp(:)=0.
-      alitter(:)=0.
-      awloss(:)=0.
-      anogrow(:)=0.
-      agpp(:)=0.
-      agppl(:)=0.
-      agppw(:)=0.
-      aresh(:)=0.
-
       naccuout=0
 
 !     ************************************************
@@ -838,15 +641,6 @@
       ats0(:)=ats0(:)+dt(:,NLEP)
       atsami(:)=AMIN1(atsami(:),dtsa(:))
       atsama(:)=AMAX1(atsama(:),dtsa(:))
-
-      anpp(:)=anpp(:)+dnpp(:)
-      alitter(:)=alitter(:)+dlitter(:)
-      awloss(:)=awloss(:)+dwloss(:)
-      anogrow(:)=anogrow(:)+dnogrow(:)
-      agpp(:)=agpp(:)+dgpp(:)
-      agppl(:)=agppl(:)+dgppl(:)
-      agppw(:)=agppw(:)+dgppw(:)
-      aresh(:)=aresh(:)+dres(:)
 
       naccuout=naccuout+1
 !

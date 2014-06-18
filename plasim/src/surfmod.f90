@@ -1,7 +1,7 @@
       module surfmod
       use pumamod
 
-      character(len=80) :: version = '23.07.2009 by edi'
+      character(len=80) :: version = '12.06.2014 by Edi'
 
       integer, parameter :: nsurdim  = 100           ! max # of variables
       integer, parameter :: nsurunit =  35           ! read unit
@@ -18,7 +18,7 @@
       integer :: nsurf = 1
       integer :: noromax = NTRU
 
-      real :: doro(NHOR)      ! orography
+      real :: doro(NHOR) = 0.0     ! orography
 
       end module surfmod
 
@@ -160,14 +160,14 @@
          endif ! (ilot < klot) 
          close(ncodunit)
          kread = 1
-         write(nud,'(" * Read ",A10," from <",A,"> *")') yc,yf
+         write(nud,'(" * Read ",A10,"    <",A,"> *")') yc,yf
          if (ilot < klot) then
           write(nud, &
-          '(" * Expanded ",A10,"  from",I3," to",I3," months *")') &
+          '(" * Expanded ",A10,"    ",I3," to",I3," months *")') &
           yc,ilot,klot
          endif
       else
-         write(nud,'(" * Init ",A10," [code = ",I5,"] internally *")') yc,icode
+         write(nud,'(" * Init ",A10," [code =",I4,"] internally *")') yc,icode
       endif
       return
       end subroutine get_surf_array
@@ -232,10 +232,10 @@
       call surfcode( 200,'dlai'    ) ! leaf area index
       call surfcode( 304,'dcveg'   ) ! carbon in biomass
       call surfcode( 305,'dcsoil'  ) ! carbon in soil
-      call surfcode(1604,'pgrow'   ) ! biomass growth
-      call surfcode(1605,'plai'    ) ! above ground growth
-      call surfcode(1606,'pgs'     ) ! stomatal conductance
-      call surfcode(1607,'pz0_max' ) ! max. roughness
+      call surfcode(1604,'dgrow'   ) ! biomass growth
+      call surfcode(1605,'dagg'    ) ! above ground growth
+      call surfcode(1606,'dsc'     ) ! stomatal conductance
+      call surfcode(1607,'dmr'     ) ! max. roughness
 
 !     landmod arrays
 
@@ -349,6 +349,9 @@
        write(nud,'(/,"***********************************************")')
        write(nud,'("* SURFMOD ",a35," *")') trim(version)
        write(nud,'("***********************************************")')
+       if (naqua /= 0) then
+       write(nud,'("* AQUA planet mode - ignoring land data       *")')
+       endif
        write(nud,'("* Namelist SURFMOD_NL from <surfmod_namelist> *")')
        write(nud,'("***********************************************")')
        write(nud,surfmod_nl)
@@ -356,7 +359,18 @@
 
       call mpbci(nsurf)
 
-      if (nrestart == 0) then ! need to read start data
+!     Aqua planet settings
+
+      if (nrestart == 0 .and. naqua /= 0) then
+         n_sea_points = NUGP   ! all gridpoints are water
+         dls(:)  = 0.0         ! land/sea mask ro water
+         doro(:) = 0.0         ! gridpoint orography
+         so(:)   = 0.0         ! spectral  orography
+         sp(:)   = 0.0         ! spectral  pressure
+         spm(:)  = 0.0         ! spectral  pressure scattered
+      endif
+
+      if (nrestart == 0 .and. naqua == 0) then ! need to read start data
          call mpsurfgp('doro',doro,NHOR,1)
          call mpsurfgp('dls' ,dls ,NHOR,1)
          if (npro == 1) then ! print only in single core runs
@@ -411,9 +425,9 @@
 
       endif ! (nrestart == 0)
 
-      call landini                      ! land module
-      call vegini                       ! vegetation module
-      if (n_sea_points > 0) call seaini ! sea module
+                            call landini  ! land module
+      if (nveg > 0)         call vegini   ! vegetation module
+      if (n_sea_points > 0) call seaini   ! sea module
 
       return
       end subroutine surfini
@@ -425,7 +439,7 @@
       subroutine surfstep
       use surfmod
 
-      call landstep
+      if (naqua == 0)       call landstep
       if (n_sea_points > 0) call seastep
 
       return
@@ -438,8 +452,8 @@
       subroutine surfstop
       use surfmod
 
-      call landstop
-      call vegstop
+                            call landstop
+      if (nveg > 0)         call vegstop
       if (n_sea_points > 0) call seastop
 
       return

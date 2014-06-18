@@ -6,6 +6,8 @@ module vegmod
 use landmod
 implicit none
 
+character(len=80) :: veg_version = 'SIMBA 18-Jun-2014 by Edi'
+
 integer :: jhor
 
 ! parameter for soil component
@@ -26,14 +28,12 @@ real, parameter :: valb_max  =  0.30              ! max albedo for bare soil
 real, parameter :: vsalb_min =  0.20              ! snow albedo for veg
 real, parameter :: vwmax_max =  0.5               ! max SWHC for veg
 real, parameter :: vwmax_min =  0.05              ! SWHC for bare soil
-real, parameter :: vz0_max   =  2.0               ! max roughness for veg 
-! not used! Uses pz0_max from landmod instead, which is a namelist parameter (PP)
 real, parameter :: vz0_min   =  0.05              ! min roughness for bare soil
 real, parameter :: cveg_a    =  2.9               ! forest cover conversion
 real, parameter :: cveg_b    =  1.0               ! forest cover conversion
 real, parameter :: cveg_c    =  1.570796326794897 ! forest cover conversion
 real, parameter :: cveg_d    =  -1.9              ! new forest cover parameter
-real, parameter :: cveg_f    =  3.0              ! new soil cover parameter
+real, parameter :: cveg_f    =  3.0               ! new soil cover parameter
 real, parameter :: cveg_k    =  0.5               ! conversion LAI
 real, parameter :: cveg_l    =  0.25              ! LAI-biomass relationship
 real, parameter :: ct_crit   =  5.0               ! for temp limit function
@@ -47,16 +47,52 @@ real, parameter :: co2_sens  = 0.3      ! beta factor
 
 real            :: cveg_e               ! forest cover conversion
 real            :: cveg_g               ! soil cover conversion
+real            :: zgpp                 ! gross primary production (kg C /m2 /s)
+real            :: zgppl                ! light limited gpp (kg C /m2 /s)
+real            :: zgppw                ! water limited gpp (kg C /m2 /s)
+real            :: znpp                 ! net primary production (kg C /m2 /s)
+real            :: zforest              ! forest cover
+real            :: zlitter              ! litterfall (kg C /m2 /s)
+real            :: znogrow              ! no growth allocation (kg C /m2 /s)
+real            :: zvalb                ! albedo
+real            :: zvrhs                ! surface conductance
+real            :: zres                 ! heterotrophic respiration (kg C /m2 /s)
+real            :: zveg                 ! vegetation cover (fract.)
+real            :: zvz0                 ! roughness length
+real            :: zwmax                ! bucket depth
 
-!     * dynamically calculated land surface parameters
+! namelist variables
 
-real,dimension(NHOR) :: zforest=   0.0         ! forest cover = dforest(:)
-real,dimension(NHOR) :: zwmax  =   0.0         ! bucket depth = dwmax(:)
-real,dimension(NHOR) :: dvz0   =   vz0_min     ! roughness length
-real,dimension(NHOR) :: dvalb  =   valb_max    ! albedo
-real,dimension(NHOR) :: dvrhs  =   0.          ! surface conductance
-real,dimension(NHOR) :: dvsoil =   0.          ! soil cover
-real :: zalbsn =   0.          ! snow albedo
+integer         :: ncveg     = 1        ! vegetation accelerator
+real            :: forgrow   = 1.0      ! 
+real            :: rinidagg  = 0.5      ! initial value for dagg(:)
+real            :: rinidsc   = 1.0      ! initial value for dsc(:)
+real            :: rinidmr   = 2.0      ! initial value for dmr(:)
+real            :: rinisoil  = 0.0      ! initial value for dcsoil(:)
+real            :: riniveg   = 0.0      ! initial value for dcveg(:)
+
+! dynamically calculated land surface parameters
+
+real, allocatable :: dagg(:)     ! above ground growth
+real, allocatable :: dsc(:)      ! stomatal conductance
+real, allocatable :: dmr(:)      ! maximum roughness
+real, allocatable :: dcsoil(:)   ! organic carbon stored in soil
+real, allocatable :: dcveg(:)    ! organic carbon stored in biomass
+real, allocatable :: dgrow(:)    ! biomass growth parameter
+real, allocatable :: dlai(:)     ! leaf area index (integer value)
+real, allocatable :: dvsoil(:)   ! soil cover
+
+! accumulated output variables
+
+real, allocatable :: agpp(:)     ! gross primary production
+real, allocatable :: agppl(:)    ! light limited GPP
+real, allocatable :: agppw(:)    ! water limited GPP
+real, allocatable :: alitter(:)  ! litter production
+real, allocatable :: anogrow(:)  ! no growth allocation 
+real, allocatable :: anpp(:)     ! net primary production
+real, allocatable :: aresh(:)    ! heterotrophic respiration
+
+real :: zalbsn =   0.           ! snow albedo
 
 !     * output of cumulative fluxes
 
@@ -80,11 +116,115 @@ subroutine vegini
 use vegmod
 implicit none
 
-if (nrestart == 0) then
-   where (dls(:) == 0) dforest(:) = 0.0
+namelist/vegmod_nl/ncveg,forgrow,rinidagg,rinidsc,rinidmr,rinisoil &
+                  ,riniveg
+
+if (mypid == NROOT) then 
+   open(12,file=vegmod_namelist)
+   read(12,vegmod_nl)
+   write(nud,'(/,"***********************************************")')
+   write(nud,'("* VEGMOD: ",a35," *")') trim(veg_version)
+   write(nud,'("***********************************************")')
+   write(nud,'("* Namelist VEGMOD_NL from <",a18,"> *")') &
+         vegmod_namelist
+   write(nud,'("***********************************************")')
+   write(nud,vegmod_nl)
+   close(12)
 endif
 
+call mpbci(ncveg)
+call mpbcr(forgrow)
+call mpbcr(rinidagg)
+call mpbcr(rinidsc)
+call mpbcr(rinidmr)
+call mpbcr(rinisoil)
+call mpbcr(riniveg)
+
+allocate(dagg(NHOR))    ; dagg(:)    = rinidagg ! above ground growth
+allocate(dsc(NHOR))     ; dsc(:)     = rinidsc  ! stomatal conductance
+allocate(dmr(NHOR))     ; dmr(:)     = rinidmr  ! maximum roughness
+allocate(dcsoil(NHOR))  ; dcsoil(:)  = rinisoil ! organic carbon stored in soil
+allocate(dcveg(NHOR))   ; dcveg(:)   = riniveg  ! organic carbon stored in biomass
+allocate(dgrow(NHOR))   ; dgrow(:)   = forgrow  ! biomass growth parameter
+allocate(dlai(NHOR))    ; dlai(:)    = 0.0      ! leaf area index
+allocate(dvsoil(NHOR))  ; dvsoil(:)  = 0.0      ! soil cover
+allocate(agpp(NHOR))    ; agpp(:)    = 0.0      ! gross primary production
+allocate(agppl(NHOR))   ; agppl(:)   = 0.0      ! light limited GPP
+allocate(agppw(NHOR))   ; agppw(:)   = 0.0      ! water limited GPP
+allocate(alitter(NHOR)) ; alitter(:) = 0.0      ! litter production
+allocate(anogrow(NHOR)) ; anogrow(:) = 0.0      ! no growth allocation 
+allocate(anpp(NHOR))    ; anpp(:)    = 0.0      ! net primary production
+allocate(aresh(NHOR))   ; aresh(:)   = 0.0      ! heterotrophic respiration
+
+call mpsurfgp('dagg'    ,dagg    ,NHOR,1)
+call mpsurfgp('dsc'     ,dsc     ,NHOR,1)
+call mpsurfgp('dmr'     ,dmr     ,NHOR,1)
+call mpsurfgp('dgrow'   ,dgrow   ,NHOR,1)
+
+if (nrestart == 0) then
+   where (dls(:) == 0) dforest(:) = 0.0
+else ! read variables from restart file
+   call mpgetgp('agpp'   ,agpp   ,NHOR,1)
+   call mpgetgp('agppl'  ,agppl  ,NHOR,1)
+   call mpgetgp('agppw'  ,agppw  ,NHOR,1)
+   call mpgetgp('alitter',alitter,NHOR,1)
+   call mpgetgp('anogrow',anogrow,NHOR,1)
+   call mpgetgp('anpp'   ,anpp   ,NHOR,1)
+   call mpgetgp('aresh'  ,aresh  ,NHOR,1)
+   call mpgetgp('dcsoil' ,dcsoil ,NHOR,1)
+   call mpgetgp('dcveg'  ,dcveg  ,NHOR,1)
+endif ! (nrestart == 0)
+return
 end subroutine vegini
+
+
+!========!
+! VEGOUT !
+!========!
+
+subroutine vegout
+use vegmod
+implicit none
+real :: zfac
+
+zfac = 1.0 / naccuout
+
+! scale accumulated output variables
+
+agpp(:)    = agpp(:)    * zfac
+agppl(:)   = agppl(:)   * zfac
+agppw(:)   = agppw(:)   * zfac
+alitter(:) = alitter(:) * zfac
+anogrow(:) = anogrow(:) * zfac
+anpp(:)    = anpp(:)    * zfac
+aresh(:)   = aresh(:)   * zfac
+
+! write output variables
+
+call writegp(40,dlai   ,200,0) ! leaf area index
+
+call writegp(40,agpp   ,300,0) ! gross primary production
+call writegp(40,anpp   ,301,0) ! net primary production
+call writegp(40,agppl  ,302,0) ! light limited GPP 
+call writegp(40,agppw  ,303,0) ! water limited GPP
+call writegp(40,dcveg  ,304,0) ! vegetation carbon
+call writegp(40,dcsoil ,305,0) ! soil carbon
+call writegp(40,anogrow,306,0) ! no growth allocation 
+call writegp(40,aresh  ,307,0) ! heterotrophic respiration
+call writegp(40,alitter,308,0) ! litter production
+
+! reset accumulated output variables
+
+agpp(:)    = 0.0
+agppl(:)   = 0.0
+agppw(:)   = 0.0
+alitter(:) = 0.0
+anogrow(:) = 0.0
+anpp(:)    = 0.0
+aresh(:)   = 0.0
+
+return
+end subroutine vegout
 
 
 !=========!
@@ -94,6 +234,16 @@ end subroutine vegini
 subroutine vegstop
 use vegmod
 implicit none
+
+call mpputgp('agpp'   ,agpp   ,NHOR,1)
+call mpputgp('agppl'  ,agppl  ,NHOR,1)
+call mpputgp('agppw'  ,agppw  ,NHOR,1)
+call mpputgp('alitter',alitter,NHOR,1)
+call mpputgp('anogrow',anogrow,NHOR,1)
+call mpputgp('anpp'   ,anpp   ,NHOR,1)
+call mpputgp('aresh'  ,aresh  ,NHOR,1)
+call mpputgp('dcsoil' ,dcsoil ,NHOR,1)
+call mpputgp('dcveg'  ,dcveg  ,NHOR,1)
 
 return
 end subroutine vegstop
@@ -116,27 +266,13 @@ zbeta  = max(0.,1.+co2_sens*log((co2-co2_comp)/(co2_ref-co2_comp)))
 ! Following plasim arrays are used but not modified
 ! -------------------------------------------------
 ! dwatc(:) = soil wetness [m]
-! dgppl(:) = GPP light limited
 ! dswfl(:) = short wave radiation [W/m2]
 ! devap(:) = surface evaporation (negative)
-
-! Make local copies of some plasim arrays
-! They are copied back if NBIOME is set to 1 (interactive)
-
-zforest(:) = dforest(:) ! Forest cover (0.0 - 1.0)
-zwmax(:)   = dwmax(:)   ! Bucket depth
-
-! Initialize arrays (declared in plasimmod)
-
-dgpp(:)   = 0.0  ! Gross primary production [kg C m-2 s-1]
-dgppl(:)  = 0.0  ! GPP light limited        [kg C m-2 s-1]
-dgppw(:)  = 0.0  ! GPP water limited        [kg C m-2 s-1]
-dnpp(:)   = 0.0  ! Net primary production   [kg C m-2 s-1]
-dveg(:)   = 0.0  ! Vegetation cover         [0..1]
 
 do jhor = 1 , NHOR
   if (dls(jhor) > 0.0 .and. dglac(jhor) < 0.90) then ! land cell with < 90 % glacier
 
+    zwmax = dwmax(jhor)   ! Bucket depth
     zglacfree = 1.0 - dglac(jhor) ! glacier free fraction
     ! zsvp = saturation vapor pressure [Pa] (Magnus-Teten)
     ! zvpd = vapor pressure deficit    [Pa] (set to >= 0.01 Pa)
@@ -148,10 +284,8 @@ do jhor = 1 , NHOR
     ! zlaimax : set to 9.0 - local constant
     ! zlaimin : set to 0.1 - minimal LAI for bare soil
 
-!    zlaim = zlaimax * zforest(jhor) + zlaimin * (1.0 - zforest(jhor))
-!    zlaim = zlaimin + 0.63661977236758 * zlaimax * atan(cveg_l * dcveg(jhor))
-     zlaim = zlaimin + 0.63661977236758 * zlaimax * atan(cveg_l * 2.0 * plai(jhor) * dcveg(jhor))
-! where 0.6366... = 2/pi
+    zlaim = zlaimin + 0.63661977236758 * zlaimax * atan(cveg_l*2.0*dagg(jhor)*dcveg(jhor))
+    ! where 0.6366... = 2/pi
 
     ! structurally limited vegetation cover (eq. 6.5 PlaSim RM)
     ! cveg_k : set to 0.5 (local constant)
@@ -161,8 +295,9 @@ do jhor = 1 , NHOR
     ! calculate water stress factor (eq. 6.3 PlaSim RM)
     ! water stress = soil wetness / (field capacity * critical soil wetness)
 
-    if (zwmax(jhor) > 0.0) then
-       dveg(jhor) = min(1.0,zvegm,max(0.0,dwatc(jhor) / (zwmax(jhor) * vws_crit)))
+    zveg  = 0.0
+    if (zwmax > 0.0) then
+       zveg = min(1.0,zvegm,max(0.0,dwatc(jhor) / (zwmax * vws_crit)))
     endif
 
     ! calculate gross primary productivity
@@ -171,58 +306,56 @@ do jhor = 1 , NHOR
 
     ! light limited gpp [kg C / m2 /s]
 
-    dgppl(jhor) = rlue * zbeta * zft * dveg(jhor) * dfd(jhor,NLEP)
+    zgppl = rlue * zbeta * zft * zveg * dfd(jhor,NLEP)
 
     ! water limited gpp [kg C / m2 /s]
     ! co2    : initialized with 360.0 [ppmv] - member of namelist $RADPAR
     ! co2conv:                               - member of namelist $LANDPAR
 
-    dgppw(jhor) = co2conv * dp(jhor) * dveg(jhor) * (-devap(jhor)) / zvpd * (0.3 * co2)
-    dgppw(jhor) = min(1.0,max(0.0,dgppw(jhor))) ! limit to range (0..1)
+    zgppw = co2conv * dp(jhor) * zveg * (-devap(jhor)) / zvpd * (0.3 * co2)
+    zgppw = min(1.0,max(0.0,zgppw)) ! limit to range (0..1)
 
     ! combine light & water limitations (eq. 6.1 PlaSim RM)
 
-    dgpp(jhor) = min(dgppl(jhor),dgppw(jhor))
+    zgpp = min(zgppl,zgppw)
 
     ! net primary production [kg C / m2 /s]
-    ! pgrow : initialized to 1.0 from variable forgrow from $LANDPAR
+    ! dgrow : initialized from forgrow or read from surface file
 
-    dnpp(jhor) = pgrow(jhor) * 0.5 * dgpp(jhor) * zglacfree
+    znpp = dgrow(jhor) * 0.5 * zgpp * zglacfree
 
     ! litterfall [kg C / m2 /s]
     ! tau_veg : initialized to 10 [years] - member of namelist $LANDPAR
 
-    dlitter(jhor) = dcveg(jhor) / tau_veg
+    zlitter = dcveg(jhor) / tau_veg
 
     ! heterotrophic respiration [kg C / m2 /s]
     ! q10 : set to 2.0 (local constant)
     ! tau_soil : initialized to 42 [years] - member of namelist $LANDPAR
 
-    dres(jhor) = q10**((dt(jhor,NLEP)-TMELT-10.)/10.) * dcsoil(jhor)/tau_soil
+    zres = q10**((dt(jhor,NLEP)-TMELT-10.)/10.) * dcsoil(jhor)/tau_soil
 
     ! no growth allocation [kg C / m2 /s]
 
-    dnogrow(jhor)  = (1.0 - pgrow(jhor)) * 0.5 * dgpp(jhor)
+    znogrow  = (1.0 - dgrow(jhor)) * 0.5 * zgpp
 
     ! carbon stored in biomass (ncveg = time accelerator)
 
-    dcveg(jhor) = dcveg(jhor) + (dnpp(jhor) - dlitter(jhor)) * deltsec * ncveg  !! FL
+    dcveg(jhor) = dcveg(jhor) + (znpp - zlitter) * deltsec * ncveg  !! FL
 
     ! carbon stored in soil
 
-    dcsoil(jhor) = dcsoil(jhor) + (dlitter(jhor) - dres(jhor)) * deltsec * ncveg !! FL
+    dcsoil(jhor) = dcsoil(jhor) + (zlitter - zres) * deltsec * ncveg !! FL
 
     ! forest cover
-    ! plai : above ground growth factor : initialized to 0.5 in LANDMOD
+    ! dagg : above ground growth factor : initialized from riidagg
 
-!   zforest(jhor) = atan((2.0*plai(jhor)*dcveg(jhor)-cveg_a) /cveg_b) /cveg_c +cveg_d
-!   zforest(jhor) = min(1.0,max(0.0,cveg_e * zforest(jhor)))
-    zforest(jhor) = (atan(dcveg(jhor) - cveg_a) - cveg_e) / (cveg_c - cveg_e)
-    zforest(jhor) = min(1.0,max(0.0,zforest(jhor)))
+    zforest = (atan(dcveg(jhor) - cveg_a) - cveg_e) / (cveg_c - cveg_e)
+    zforest = min(1.0,max(0.0,zforest))
 
     ! soil cover
 
-!   dvsoil(jhor) = atan((2.0*(1.0-plai(jhor))*dcveg(jhor)-cveg_a)/cveg_b)/cveg_c+cveg_d
+!   dvsoil(jhor) = atan((2.0*(1.0-dagg(jhor))*dcveg(jhor)-cveg_a)/cveg_b)/cveg_c+cveg_d
 !   dvsoil(jhor) = min(1.0,max(0.0,cveg_e * dvsoil(jhor)))
     dvsoil(jhor) = (atan(dcveg(jhor) - cveg_f) - cveg_g) / (cveg_c - cveg_g)
     dvsoil(jhor) = min(1.0,max(0.0,dvsoil(jhor)))
@@ -230,19 +363,19 @@ do jhor = 1 , NHOR
     ! discretization of vegetation state
 
     if (rnbiocats >= 2.0) then
-      ibiomass      = zforest(jhor) * rnbiocats
-      zforest(jhor) = min(1.0, real(ibiomass)/(rnbiocats-1.0))
+      ibiomass      = zforest * rnbiocats
+      zforest       = min(1.0, real(ibiomass)/(rnbiocats-1.0))
       ibiomass      = dvsoil(jhor) * rnbiocats
       dvsoil(jhor)  = min(1.0, real(ibiomass)/(rnbiocats-1.0))
     endif
 
     ! derivation of land surface parameters
 
-    dlai(jhor)  = -log(1.0 - dveg(jhor))/cveg_k
-    dvz0(jhor)  = pz0_max(jhor) * zforest(jhor)+vz0_min*(1.0-zforest(jhor))
-    dvalb(jhor) = valb_min * dveg(jhor) + valb_max * (1.0 - dveg(jhor))
-    zwmax(jhor) = vwmax_max * dvsoil(jhor) + vwmax_min * (1.0 - dvsoil(jhor))
-    dvrhs(jhor) = pgs(jhor) * min(1.0,max(0.0,dwatc(jhor)/(zwmax(jhor)*vws_crit)))
+    dlai(jhor)  = -log(1.0 - zveg)/cveg_k
+    zvz0  = dmr(jhor) * zforest+vz0_min*(1.0-zforest)
+    zvalb = valb_min * zveg + valb_max * (1.0 - zveg)
+    zwmax = vwmax_max * dvsoil(jhor) + vwmax_min * (1.0 - dvsoil(jhor))
+    zvrhs = dsc(jhor) * min(1.0,max(0.0,dwatc(jhor)/(zwmax*vws_crit)))
 
     ! modify albedo and surface conductance due to snow
 
@@ -252,30 +385,41 @@ do jhor = 1 , NHOR
 
       zalbsn = (albsmax - albsmin) * (dt(jhor,NLEP)-263.16) / (TMELT-263.16)
       zalbsn = max(albsmin,min(albsmax,albsmax-zalbsn))
-      dvalb(jhor)=dvalb(jhor)+(zalbsn-dvalb(jhor))*dsnow(jhor)/(dsnow(jhor)+0.01)
-      dvalb(jhor)=vsalb_min * zforest(jhor) + dvalb(jhor) * (1.-zforest(jhor))
-  
-      dvrhs(jhor) = 1.0
+      zvalb  = zvalb+(zalbsn-zvalb)*dsnow(jhor)/(dsnow(jhor)+0.01)
+      zvalb  = vsalb_min * zforest + zvalb * (1.-zforest)
+      zvrhs  = 1.0
     endif
 
     ! interactive coupling
 
-    if (nbiome == 1) then
-      dz0(jhor)     = sqrt(dvz0(jhor)*dvz0(jhor)+dz0climo(jhor)*dz0climo(jhor))
-      dwmax(jhor)   = zwmax(jhor)
-      drhs(jhor)    = dvrhs(jhor)
-      dalb(jhor)    = dvalb(jhor)
-      dforest(jhor) = zforest(jhor)
+    if (nveg == 2) then
+       dz0(jhor)     = sqrt(zvz0*zvz0+dz0climo(jhor)*dz0climo(jhor))
+       dwmax(jhor)   = zwmax
+       drhs(jhor)    = zvrhs
+       dalb(jhor)    = zvalb
+       dforest(jhor) = zforest
     endif
+
+  ! accumulate output variables
+
+  agpp(jhor)    = agpp(jhor)    + zgpp
+  agppl(jhor)   = agppl(jhor)   + zgppl
+  agppw(jhor)   = agppw(jhor)   + zgppw
+  alitter(jhor) = alitter(jhor) + zlitter
+  anogrow(jhor) = anogrow(jhor) + znogrow
+  anpp(jhor)    = anpp(jhor)    + znpp
+  aresh(jhor)   = aresh(jhor)   + zres
 
   endif ! (dls(jhor) > 0.0 .and. dglac(jhor) < 0.9)
 enddo ! jhor
 
 ! Send some arrays to GUI
 
-call guihor("DCVEG"   // char(0),dcveg  ,1,1000.0,0.0)
-call guihor("DVSOIL"  // char(0),dvsoil ,1,1000.0,0.0)
-call guihor("ZFOREST" // char(0),zforest,1,1000.0,0.0)
+if (ngui > 0) then
+   call guihor("DCVEG"   // char(0),dcveg  ,1,1000.0,0.0)
+   call guihor("DVSOIL"  // char(0),dvsoil ,1,1000.0,0.0)
+   call guihor("DFOREST" // char(0),dforest,1,1000.0,0.0)
+endif
 
 return
 end subroutine vegstep

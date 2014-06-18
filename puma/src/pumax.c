@@ -770,11 +770,11 @@ unsigned long create_pixel(long red, long green, long blue)
 {
    if (ScreenD == 24)       // 24 bit true color
    {
-       return red | green << 8 | blue << 16;
+       return blue | green << 8 | red << 16;
    }
    else if (ScreenD == 16)  // 16 bit RGB 565
    {
-      return red >> 3 | (green >> 2) << 5 | (blue >> 3) << 11;
+      return blue >> 3 | (green >> 2) << 5 | (red >> 3) << 11;
    }
    else return 0;
 }
@@ -1077,6 +1077,7 @@ void ReadImage(struct MapImageStruct *ei, char *filename)
    ImgBytes = 4 * PadWidth * ImageBMI.Height;
    ei->d = calloc(ImgBytes,1);
    BuffImageData = malloc(PicBytes);
+   fseek(fp,OffBits,SEEK_SET);
    n = fread(BuffImageData,PicBytes,1,fp);
    fclose(fp);  
    
@@ -1087,9 +1088,9 @@ void ReadImage(struct MapImageStruct *ei, char *filename)
    for (x = 0 ; x < ImageBMI.Width  ; ++x)
    {
        i = bpp * x + (ImageBMI.Height - 1 - y) * (ImageBMI.Width*bpp+PadBytes);
-       r = BuffImageData[i  ];
+       b = BuffImageData[i  ];
        g = BuffImageData[i+1];
-       b = BuffImageData[i+2];
+       r = BuffImageData[i+2];
        XPutPixel(ei->X, x, y, create_pixel(r,g,b));
    }
    free(BuffImageData);
@@ -2793,7 +2794,7 @@ void TracerPlot(int w)
    roa  = MapLR[w].l * lpx / 360.0;
    rary = 1.0 / ary;
    alpy = rary * lpy;
-   ipr  = rary * InYSize / 60.0;
+   ipr  = rary * InYSize / 80.0; // Size of tracer dots
 
    // Compute scale factors
 

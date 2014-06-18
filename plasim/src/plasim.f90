@@ -3,11 +3,12 @@
 !     * Planet Simulator 17 *
 !     ***********************
 
-!     *****************
-!     * Frank Lunkeit *       University of Hamburg
-!     * Edilbert Kirk *      Meteorological Institute
-!     *****************   Dept.: Theoretical Meteorology
-!                             Head: Klaus Fraedrich
+!     ********************
+!     * Frank Lunkeit    *       University of Hamburg
+!     * Edilbert Kirk    *      Meteorological Institute
+!     * KLaus Fraedrich  *
+!     * Valerio Lucarini *
+!     ********************
 
 !     **************
 !     * Name rules *
@@ -40,7 +41,7 @@
 !
 !     UPDATE VERSION IDENTIFIER AFTER EACH CODE CHANGE!
 
-plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
+plasimversion = "https://github.com/Edilbert/PLASIM/ : 12-Jun-2014"
 
       call mpstart(-1)       ! -1: Start MPI   >=0 arg = MPI_COMM_WORLD
       call setfilenames
@@ -87,6 +88,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
       oceanmod_namelist   = trim(oceanmod_namelist  ) // mrext
       ocean_output        = trim(ocean_output       ) // mrext
       landmod_namelist    = trim(landmod_namelist   ) // mrext
+      vegmod_namelist     = trim(vegmod_namelist    ) // mrext
       seamod_namelist     = trim(seamod_namelist    ) // mrext
       
       return
@@ -182,7 +184,6 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
          call initpm                ! Several initializations
          call initsi                ! Initialize semi implicit scheme
          call guistart              ! Initialize GUI
-         if (noutput > 0) call outini    ! Open output file <plasim_output>
          if (nsela > 0) call tracer_ini0 ! initialize tracer data 
       endif ! (mypid == NROOT)
 
@@ -205,6 +206,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
       call mpbci(ntpal   ) ! color pallet for T
 
       call mpbci(kick    ) ! add noise for kick > 0
+      call mpbci(naqua   ) ! aqua planet switch
+      call mpbci(nveg    ) ! vegetation switch
       call mpbci(noutput ) ! write data switch
       call mpbci(nafter  ) ! write data interval
       call mpbci(nwpd    ) ! number of writes per day
@@ -321,6 +324,10 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
                  ,solar_day,-1)
       if (nrestart == 0) nstep = n_start_step ! timestep since 01-01-0001
       call updatim(nstep)  ! set date & time array ndatim
+
+      if (mypid == NROOT) then
+         if (noutput > 0) call outini    ! Open output file <plasim_output>
+      endif
 !
 !     allocate additional diagnostic arrays, if switched on
 !
@@ -485,7 +492,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
 
 !     ****************************************************************
 !     * The scaling factor "ww" is derived from the rotation "omega" *
-!     * with 1 planetary rotation per sidereal day (2 Pi)            *
+!     * with 1 planetary rotation per sidereal day (2 Pi) of Earth   *
 !     ****************************************************************
 
       deltsec  = solar_day / ntspd   ! timestep in seconds
@@ -544,8 +551,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
          if (ngui > 0) call guistep_plasim
          call spectrald
 
-         if (mod(nstep,nafter) == 0) then
           call outaccu
+         if (mod(nstep,nafter) == 0) then
           if(noutput > 0) then
            call outgp
            koutdiag=ndiaggp3d+ndiaggp2d+ndiagsp3d+ndiagsp2d+ndiagcf     &
@@ -553,8 +560,6 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
            if(koutdiag > 0) call outdiag
           endif
           call outreset
-         else
-          call outaccu
          endif
 
          iyea  = ndatim(1)    ! current year
@@ -649,7 +654,6 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
       call mpputgp('diced'  ,diced  ,NHOR,1)
       call mpputgp('dwatc'  ,dwatc  ,NHOR,1)
       call mpputgp('drunoff',drunoff,NHOR,1)
-      call mpputgp('dveg'   ,dveg   ,NHOR,1)
       call mpputgp('dforest',dforest,NHOR,1)
       call mpputgp('dust3'  ,dust3  ,NHOR,1)
       call mpputgp('dcc'    ,dcc    ,NHOR,NLEV)
@@ -825,7 +829,6 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
       call mpgetgp('diced'  ,diced  ,NHOR,   1)
       call mpgetgp('dwatc'  ,dwatc  ,NHOR,   1)
       call mpgetgp('drunoff',drunoff,NHOR,   1)
-      call mpgetgp('dveg'   ,dveg   ,NHOR,   1)
       call mpgetgp('dforest',dforest,NHOR,   1)
       call mpgetgp('dust3'  ,dust3  ,NHOR,   1)
       call mpgetgp('dcc'    ,dcc    ,NHOR,NLEV)
@@ -940,23 +943,20 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
       use pumamod
 
       namelist /plasim_nl/ &
-                     kick    , mpstep  , nadv    , ncoeff  , ndel       &
-                   , ndheat     &
-                   , ndiag   , ndiagcf , ndiaggp , ndiaggp2d            &
-                   , ndiaggp3d         , ndiagsp , ndiagsp2d            &
-                   , ndiagsp3d         , ndl     , nentropy, neqsig     &
-                   , nflux      &
+                     kick    , mpstep  , nadv    , naqua   , ncoeff     &
+                   , ndel    , ndheat  , ndiag   , ndiagcf , ndiaggp    &
+                   , ndiaggp2d , ndiaggp3d                              &
+                   , ndiagsp   , ndiagsp2d , ndiagsp3d                  &
+                   , ndl     , nentropy, neqsig  , nflux                &
                    , ngui    , nguidbg , nhdiff  , nhordif , nkits      &
                    , noutput    &
                    , npackgp , npacksp , nperpetual        , nprhor     &
                    , nprint  , nqspec  , nrad    , nsela   , nsync      &
-                   , ntime      &
-                   , ntspd      &
-                   , nwpd       &
-                   , seed    , sellon     &
+                   , ntime   , ntspd   , nveg    , nwpd    &
                    , n_start_year , n_start_month, n_run_steps          &
                    , n_run_years , n_run_months  , n_run_days           &
                    , n_days_per_month, n_days_per_year                  &
+                   , seed    , sellon     &
                    , syncstr , synctime                                 &
                    , dtep    , dtns    , dtrop   , dttrp                &
                    , tdissd  , tdissz  , tdisst  , tdissq  , tgr        &
@@ -987,6 +987,12 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 02-Jun-2014"
 
       open(11,file=plasim_namelist,form='formatted')
       read (11,plasim_nl)
+
+!     aqua planet settings
+
+      if (naqua == 1) then
+         nveg = 0 ! switch off vegetation
+      endif
 
 !     set rotation dependent variables
 

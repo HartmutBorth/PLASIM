@@ -15,7 +15,6 @@
 !
       integer :: nlandt   = 1     ! switch for land model (1/0 : prog./clim)
       integer :: nlandw   = 1     ! switch for soil model (1/0 : prog./clim)
-      integer :: nbiome   = 0     ! switch for vegetation model (1/0 : prog./clim)
       integer :: newsurf  = 0     ! (dtcl,dwcl) 1: update from file, 2:reset 
       integer :: nwatcini = 0     ! (0/1) initialize water content of soil
       real    :: albland  = 0.2   ! albedo for land
@@ -35,19 +34,13 @@
       real    :: wsmax    = WSMAX_EARTH ! max field capacity of soil water (m)
       real    :: dwatcini = 0           ! water content of soil (m)
 
-!     SIMBA - switches
-
-      integer :: ncveg    = 1     ! compute new dcveg (0=keep initial state)
-
 !     SIMBA - fixed parameters
 
       real    :: rlue     =  3.4E-10 ! Recommended by Pablo Paiewonsky
       real    :: co2conv  =  8.3E-4  ! Recommended by Pablo Paiewonsky
       real    :: tau_veg  = 10.0  ! [years] - in landini scaled to seconds
       real    :: tau_soil = 42.0  ! [years] - in landini scaled to seconds
-      real    :: riniveg  =  0.0
       real    :: rinifor  =  0.5
-      real    :: rinisoil =  0.0
       real    :: rnbiocats=  0.0
 !
 !     global scalars (snow similar to the sea ice module)
@@ -59,14 +52,6 @@
       real :: soilcap  = 2.4E6   ! heat capacity of the soil  (J/m**3/K)
       real :: sicecap  = 2.07E6  ! heat capacity of ice       (J/m**3/K)
       real :: snowcap  = 0.6897E6! heat capacity of snow      (J/m**3/K)
-
-!     SIMBA - flexible parameters
-
-      real    :: forgrow  = 1.0
-      real    :: rlaigrow = 0.5
-      real    :: gs       = 1.0
-      real    :: z0_max   = 2.0
-
 !
 !     global arrays
 !
@@ -90,32 +75,19 @@
       real :: dsoilt(NHOR,NLSOIL) = TMELT  ! soil temperatur (K)
       real :: dsnowt(NHOR)        = TMELT  ! snow temperatur (K)
       real :: dtclsoil(NHOR)      = TMELT  ! clim soil temp. (initilization) (K)
-      real :: dsnowz(NHOR)=0.           ! snow depth (m water equivalent)
-      real :: dwater(NHOR)              ! surface water for soil (m/s)
-!
-!     d) vegetation (simba)
-!
-!     * parameters for optimization
-
-      real :: pgrow(NHOR)    =1.0       ! biomass growth parameter
-      real :: plai(NHOR)     =0.5       ! aboveground growth parameter
-      real :: pgs(NHOR)      =1.0       ! stomatal conductance
-      real :: pz0_max(NHOR)  =2.0       ! maximum roughness
-
+      real :: dsnowz(NHOR)        = 0.0    ! snow depth (m water equivalent)
+      real :: dwater(NHOR)        = 0.0    ! surface water for soil (m/s)
 !
 !     e) climatological surface
 !
-      real :: dtcl(NHOR,0:13)      ! climatological surface temperature
-                                   ! (monthly means)
-      real :: dwcl(NHOR,0:13)=-1.0 ! climatological soil wetness
-                                   ! (monthly means)
-      real :: dalbcl(NHOR,0:13)    ! climatological background albedo
-                                   ! (monthly means)
-      real :: dtclim(NHOR)         ! climatological surface temperature
-      real :: dwclim(NHOR)         ! climatological soil wetness
-      real :: dz0clim(NHOR)        ! climatological z0  (total)
-      real :: dz0climo(NHOR)       ! climatological z0  (from topograhpy only)
-      real :: dalbclim(NHOR)       ! climatological background albedo
+      real :: dtcl(NHOR,0:13)   = TMELT ! climatological surface temperature
+      real :: dwcl(NHOR,0:13)   = -1.0  ! climatological soil wetness
+      real :: dalbcl(NHOR,0:13) =  0.2  ! climatological background albedo
+      real :: dtclim(NHOR)      = TMELT ! climatological surface temperature
+      real :: dwclim(NHOR)      =  0.0  ! climatological soil wetness
+      real :: dz0clim(NHOR)     =  2.0  ! climatological z0  (total)
+      real :: dz0climo(NHOR)    =  0.0  ! climatological z0  (from topograhpy only)
+      real :: dalbclim(NHOR)    =  2.0  ! climatological background albedo
 !
       end module landmod
 
@@ -153,13 +125,13 @@
 !
 !     initialize land surface
 !
-      namelist/landmod_nl/nlandt,nlandw,nbiome,albland,dz0land,drhsland &
+      namelist/landmod_nl/nlandt,nlandw,albland,dz0land,drhsland        &
      &                ,albsmin,albsmax,albsminf,albsmaxf                &
      &                ,albgmin,albgmax                                  &
      &                ,dsmax,wsmax,drhsfull,dzglac,dztop,dsoilz         &
-     &                ,rlue,co2conv,tau_veg,tau_soil,forgrow            &
-     &                ,rlaigrow,gs,z0_max,riniveg,rinisoil,rnbiocats    &
-     &                ,ncveg,newsurf,rinifor,nwatcini,dwatcini
+     &                ,rlue,co2conv,tau_veg,tau_soil                    &
+     &                ,rnbiocats                                        &
+     &                ,newsurf,rinifor,nwatcini,dwatcini
 !
       dtclsoil(:) = TMELT
       dsoilt(:,:) = TMELT
@@ -175,23 +147,22 @@
       endif
 
       if (mypid == NROOT) then
-         open(12,file=landmod_namelist)
-         read(12,landmod_nl)
-         write(nud,'(/,"***********************************************")')
-         write(nud,'("* LANDMOD ",a35," *")') trim(version)
-         write(nud,'("***********************************************")')
-         write(nud,'("* Namelist LANDMOD_NL from <",a19,"> *")') &
-               landmod_namelist
-         write(nud,'("***********************************************")')
-         write(nud,landmod_nl)
-         close(12)
+      open(12,file=landmod_namelist)
+      read(12,landmod_nl)
+      write(nud,'(/,"***********************************************")')
+      write(nud,'("* LANDMOD ",a35," *")') trim(version)
+      write(nud,'("***********************************************")')
+      write(nud,'("* Namelist LANDMOD_NL from <",a17,"> *")') &
+            landmod_namelist
+      write(nud,'("***********************************************")')
+      write(nud,landmod_nl)
+      close(12)
       endif
 
       if (wsmax < 0.0) wsmax = 0.0 ! Catch user error
 
       call mpbci(nlandt)
       call mpbci(nlandw)
-      call mpbci(nbiome)
       call mpbci(newsurf)
       call mpbci(nwatcini)
       call mpbcr(albland)
@@ -209,18 +180,11 @@
       call mpbcr(dzglac)
       call mpbcr(dztop)
       call mpbcr(dsmax)
-      call mpbci(ncveg)
       call mpbcr(rlue)
       call mpbcr(co2conv)
       call mpbcr(tau_veg)
       call mpbcr(tau_soil)
-      call mpbcr(forgrow)
-      call mpbcr(rlaigrow)
-      call mpbcr(gs)
-      call mpbcr(z0_max)
-      call mpbcr(riniveg)
       call mpbcr(rinifor)
-      call mpbcr(rinisoil)
       call mpbcr(rnbiocats)
       call mpbcrn(dsoilz,NLSOIL)
 
@@ -234,34 +198,11 @@
          stop 1
        endif
 
-!     * set biota parameter independent of restart
-
-      if (mypid == NROOT) then
-         write(nud,*) 'SET BIOME PARAMETER'
-         write(nud,*) '==================='
-      endif
-!
 !     preset
-!
-      if (nrestart == 0) then
-         dcveg(:)  = riniveg
-         dforest(:)= rinifor
-         dcsoil(:) = rinisoil
-      endif
 
-      pgrow(:)   = forgrow
-      pgs(:)     = gs
-      plai(:)    = rlaigrow
-      pz0_max(:) = z0_max
-!
-!     read biome arrays from surface file
-!
-      call mpsurfgp('pgrow'   ,pgrow   ,NHOR,1)
-      call mpsurfgp('plai'    ,plai    ,NHOR,1)
-      call mpsurfgp('pgs'     ,pgs     ,NHOR,1)
-      call mpsurfgp('pz0_max' ,pz0_max ,NHOR,1)
-      call mpsurfgp('dcveg'   ,dcveg   ,NHOR,1)
-      call mpsurfgp('dcsoil'  ,dcsoil  ,NHOR,1)
+      if (nrestart == 0) then
+         dforest(:)= rinifor
+      endif
 
       if (nrestart == 0) then
 !
@@ -401,26 +342,10 @@
        call mpgetgp('dsnowt'  ,dsnowt  ,NHOR,     1)
        call mpgetgp('dsnowz'  ,dsnowz  ,NHOR,     1)
        call mpgetgp('dsoilt'  ,dsoilt  ,NHOR,NLSOIL)
-       call mpgetgp('dcveg'   ,dcveg   ,NHOR,     1)
-       call mpgetgp('dcsoil'  ,dcsoil  ,NHOR,     1)
        call mpgetgp('dglac'   ,dglac   ,NHOR,     1)
        call mpgetgp('dz0clim' ,dz0clim ,NHOR,     1)
        call mpgetgp('dz0climo',dz0climo,NHOR,     1)
        call mpgetgp('dalbcl'  ,dalbcl  ,NHOR,    14)
-!
-!     accumulated simba diagnostic
-!
-       call mpgetgp('agpp'   ,agpp   ,NHOR,1)
-       call mpgetgp('anpp'   ,anpp   ,NHOR,1)
-       call mpgetgp('agppl'  ,agppl  ,NHOR,1)
-       call mpgetgp('agppw'  ,agppw  ,NHOR,1)
-       call mpgetgp('anogrow',anogrow,NHOR,1)
-       call mpgetgp('aresh'  ,aresh  ,NHOR,1)
-       call mpgetgp('alitter',alitter,NHOR,1)
-
-!      accumulated dune diagnostic
-
-       call mpgetgp('awloss' ,awloss ,NHOR,1)
 
        n_sea_points = ncountsea(dls)
 
@@ -518,7 +443,7 @@
 !*    vegetation
 !
 
-      call vegstep
+      if (nveg > 0) call vegstep
 
 !
 !*     modifications according to glacier mask
@@ -557,27 +482,10 @@
       call mpputgp('dsnowt'  ,dsnowt  ,NHOR, 1)
       call mpputgp('dsnowz'  ,dsnowz  ,NHOR, 1)
       call mpputgp('dsoilt'  ,dsoilt  ,NHOR,NLSOIL)
-      call mpputgp('dcveg'   ,dcveg   ,NHOR, 1)
-      call mpputgp('dcsoil'  ,dcsoil  ,NHOR, 1)
       call mpputgp('dglac'   ,dglac   ,NHOR, 1)
       call mpputgp('dz0clim' ,dz0clim ,NHOR, 1)
       call mpputgp('dz0climo',dz0climo,NHOR, 1)
       call mpputgp('dalbcl'  ,dalbcl  ,NHOR,14)
-!
-!     accumulated simba diagnostic
-!
-      call mpputgp('agpp'   ,agpp   ,NHOR,1)
-      call mpputgp('anpp'   ,anpp   ,NHOR,1)
-      call mpputgp('agppl'  ,agppl  ,NHOR,1)
-      call mpputgp('agppw'  ,agppw  ,NHOR,1)
-      call mpputgp('anogrow',anogrow,NHOR,1)
-      call mpputgp('aresh'  ,aresh  ,NHOR,1)
-      call mpputgp('alitter',alitter,NHOR,1)
-
-!     accumulated dune diagnostic
-
-      call mpputgp('awloss' ,awloss ,NHOR,1)
-
       return
       end subroutine landstop
 

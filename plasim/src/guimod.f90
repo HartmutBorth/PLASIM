@@ -18,10 +18,17 @@
 
 subroutine guistart
 use pumamod
+character (80) :: ypl
+
+if (naqua /= 0) then
+   ypl = "Aqua " // trim(yplanet) // char(0)
+else
+   ypl = trim(yplanet) // char(0)
+endif
 
 if (ngui == 0) return
 
-call initgui(model,nguidbg,NLAT,mrpid,mrnum,trim(yplanet) // char(0))
+call initgui(model,nguidbg,NLAT,mrpid,mrnum,ypl)
 
 return
 end subroutine guistart

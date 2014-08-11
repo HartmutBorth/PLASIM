@@ -222,6 +222,8 @@ mkdir -p sam/run
 mkdir -p plasim/bld
 mkdir -p plasim/bin
 mkdir -p plasim/run
+mkdir -p plasim/dat/T21_exo
+mkdir -p plasim/dat/T42_exo
 
 #check FORTRAN I/O
 

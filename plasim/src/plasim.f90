@@ -325,9 +325,6 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 12-Jun-2014"
       if (nrestart == 0) nstep = n_start_step ! timestep since 01-01-0001
       call updatim(nstep)  ! set date & time array ndatim
 
-      if (mypid == NROOT) then
-         if (noutput > 0) call outini    ! Open output file <plasim_output>
-      endif
 !
 !     allocate additional diagnostic arrays, if switched on
 !
@@ -372,6 +369,9 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 12-Jun-2014"
          call initfd
       endif
 
+      if (mypid == NROOT) then
+         if (noutput > 0) call outini    ! Open output file <plasim_output>
+      endif
 !
 !*    initialize miscellaneous additional parameterization
 !     which are included in *miscmod*

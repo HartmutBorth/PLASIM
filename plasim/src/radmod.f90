@@ -1447,7 +1447,6 @@
       zero=1.E-6                     ! small number
 
       zco20=0.0676*(0.01022)**0.421  ! to get a(co2)=0 for co2=0
-      zo30=0.0122*ALOG10(6.5E-4)     ! to get a(o3)=0 for o3=0
       zh2o0a=0.846*(3.59E-5)**0.243  ! to get a(h2o)=0 for h2o=0
       zh2o0=0.832*0.0286**0.26       ! to get t(h2o)=1 for h2o=0
       zqco2=co2*zpv2pm*1.E-6         ! co2 pp mass needed for transmissivities
@@ -1560,13 +1559,22 @@
          zaco2(:)=0.0546*ALOG10(zsumco2(:))+0.0581
         endwhere
 !
-!     h2o-co2 overlap transmission:
+!     Boer et al. (1984) scheme:
 !
-        zth2o(:)=1.-(0.832*(zsumwv(:)+0.0286)**0.26-zh2o0)
+        where(zsumwv(:)<= 2.)
+          zth2o(:)=1.-(0.832*(zsumwv(:)+0.0286)**0.26-zh2o0)
+        elsewhere
+          zth2o(:)=max(0.,0.33-0.1196*log(zsumwv(:)-0.6931))
+        endwhere
 !
 !     o3 absorption:
 !
-        zao3(:)=0.0122*ALOG10(zsumo3(:)+6.5E-4)-zo30
+        where(zsumo3(:) <= 0.01)
+          zao3(:)= 0.209*(zsumo3(:)+7.E-5)**0.436 - 0.003225
+        elsewhere
+          zao3(:)= 0.0212*log10(zsumo3(:))+0.0748
+        endwhere
+
 !
 !     total clear sky transmissivity
 !

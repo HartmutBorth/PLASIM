@@ -475,67 +475,6 @@ struct MapImageStruct MapLRM; // Lores azimuthal   Mars  image
 struct MapImageStruct MapLRK; // Lores azimuthal   Kepler-16
 struct MapImageStruct MapLRL; // Lores azimuthal   Kepler-186b
 
-#define DIMX_LOGO_PLASIM 57
-#define DIMY_LOGO_PLASIM 57
-char *pixelplasim[DIMY_LOGO_PLASIM]  = {
-".........................................................",
-".........................................................",
-".........................................................",
-".........................................................",
-".........................................................",
-"........................*********........................",
-"....................****...*.***.****....................",
-"..................******..*..*..****.**..................",
-"................**......**********.....**................",
-"...............*........*....*....*......*...............",
-"..............*........*.....*.....*......*..............",
-"............**........*......*......*......**............",
-"...........*.........*.......*.......*.......*...........",
-"...........*........*........*.......*.......*...........",
-"..........*.........*........*........*.......*..........",
-".........***.......*.........*.........*.......*.........",
-"........*...**.....*.........*.........*......***........",
-"........*.....**..*..........*..........*...**..*........",
-".......*........***..........*..........****.....*.......",
-".......*.........*.*****.....*......******.......*.......",
-"......*..........*......************.....*........*......",
-"......*..........*...........*............*.......*......",
-"......*.........*............*............*.......*......",
-"......*.........*............*............*.......*......",
-".....*..........*............*............*........*.....",
-".....*..........*............*.............*.......*.....",
-".....**........*.............*.............*.......*.....",
-".....*.*.......*.............*.............*......**.....",
-".....*..**.....*.............*.............*....**.*.....",
-".....*....*....*.............*.............*...*...*.....",
-".....*.....**..*.............*.............*.**....*.....",
-".....*.......***.............*.............**......*.....",
-".....*.........***...........*..........****.......*.....",
-"......*........*..*****......*.....*****...*......*......",
-"......*........*.......************........*......*......",
-"......*........*.............*.............*......*......",
-"......*.........*............*............*.......*......",
-".......**.......*............*............*......*.......",
-".......*.*......*............*............*.....**.......",
-"........*.**....*............*............*...****.......",
-"........*...*....*...........*...........*...*..*........",
-".........*...**..*...........*...........*.**.**.........",
-"..........*....***...........*..........***..**..........",
-"...........*.....***.........*........***....*...........",
-"...........*......*.*****....*.....***..*....*...........",
-"............**.....*.....***********...*...**............",
-"..............*....*.........*........*...*..............",
-"...............*....*........*.......*...*...............",
-"................**..*........*.......*.**................",
-"..................**.*.......*......***..................",
-"....................****.....*...****....................",
-"........................*********........................",
-".........................................................",
-".........................................................",
-".........................................................",
-".........................................................",
-".........................................................",
-};
 /* Isoarea data */
 
 #define TOLELO 0x0001
@@ -702,7 +641,7 @@ void WriteSettings(void)
       }
            if (Sel->type == SEL_CHECK) fprintf(fp,"%6d\n",Sel->iv);
       else if (Sel->type == SEL_INT  ) fprintf(fp,"%6d\n",Sel->iv);
-      else if (Sel->type == SEL_TEVA ) fprintf(fp,"%\n",Sel->teva);
+      else if (Sel->type == SEL_TEVA ) fprintf(fp,"%s\n",Sel->teva);
       else if (Sel->type == SEL_REAL || Sel->type == SEL_PLANET)
       {
          if (Sel->type == SEL_PLANET) Sel->fv = Sel->fpl[Planet];
@@ -1674,6 +1613,9 @@ void InitLogo(void)
    // Plasim
 
    ++n;
+   strcpy(Logo[n].t[0],FullModelName[PLASIM]);
+
+/*
    Logo[n].x = 350;
    Logo[n].y = 8;
    Logo[n].w = DIMX_LOGO_PLASIM;
@@ -1683,6 +1625,7 @@ void InitLogo(void)
    strcpy(Logo[n].t[0],"Planet");
    strcpy(Logo[n].t[1],"Simulator");
    Logo[n].i    = pixelplasim;
+*/
 
    Logos = n;
 }
@@ -3783,45 +3726,6 @@ void InitButtons(void)
    Button[n].Action = ClearOro;
 }
 
-
-void ShowLogos(void)
-{
-   int i,j,k,l,x,y;
-
-   for (l=1 ; l < DIMLOGO ; ++l)
-   {
-      if (l > 1)
-      {
-      if (Logo[l].b)
-      {
-         XSetForeground(display,gc,Logo[l].b);
-         XFillRectangle(display,Cow,gc,Logo[l].x,Logo[l].y,Logo[l].w,Logo[l].h);
-      }
-      XSetForeground(display,gc,Logo[l].f);
-      for (j=0 ; j < Logo[l].h ; ++j)
-      for (i=0 ; i < Logo[l].w ; ++i)
-      if (Logo[l].i[j][i] == '*')
-         XDrawPoint(display,Cow,gc,Logo[l].x+i,Logo[l].y+j);
-      }
-      XSetBackground(display,gc,WinBG);
-      XSetForeground(display,gc,TextC);
-      for (j=0 ; j < 2 ; ++j)
-      if (Logo[l].t[j][0])
-      {
-         k = strlen(Logo[l].t[j]);
-         x = Logo[l].x + (Logo[l].w - k * FixFontWidth) / 2;
-         y = Logo[l].y + Logo[l].h + FixFont->ascent + j * FixFontHeight;
-         XDrawImageString(display,Cow,gc,x,y,Logo[l].t[j],k);
-      }
-   }
-   XSetFont(display, gc, SamFont->fid);
-   x = Logo[2].x + Logo[2].w + 30;
-   y = 30;
-   XDrawImageString(display,Cow,gc,x,y,"SAM",3);
-   XDrawImageString(display,Cow,gc,x,y+30,"SOM",3);
-}
-
-
 /* ================== */
 /* CreateModeSelector */
 /* ================== */
@@ -4050,7 +3954,7 @@ short ReadSHORT(FILE *fpi)
 
 struct BMIstruct ImageBMI;
 
-void ReadImage(struct MapImageStruct *ei, char *filename, int corw)
+void ReadImage(struct MapImageStruct *ei, char *filename)
 {
    char ch;
    int i,n,x,y,z;
@@ -4150,7 +4054,7 @@ void ReadLogo(int logo, char *filename)
 {
    struct MapImageStruct MapI;
 
-   ReadImage(&MapI,filename,0);
+   ReadImage(&MapI,filename);
 
    Logo[logo].w = MapI.w;
    Logo[logo].h = MapI.h;
@@ -4169,7 +4073,7 @@ void ShowCopyright(void)
    x = CowSizeHints.min_width - 18.5 * ModFontWidth;
    y = CowSizeHints.min_height - ModFontHeight/2;
    XSetFont(display, gc, ModFont->fid);
-   XSetForeground(display,gc,WhitePix);
+   XSetForeground(display,gc,Grey.pixel);
    XSetBackground(display,gc,BlackPix);
    XDrawImageString(display,Cow,gc,x,y,"Image Credit: NASA",18);
 }
@@ -4212,8 +4116,7 @@ int RedrawControlWindow(void)
    ShowOrography();
    ShowFrame1();
    ShowButtons();
-   ShowLogos();
-   for (l=0 ; l < 2 ; ++l)
+   for (l=0 ; l < 3 ; ++l)
    {
       XPutImage(display,Cow,gc,Logo[l].X,0,0,Logo[l].x,Logo[l].y,Logo[l].w,Logo[l].h);
    }
@@ -4265,7 +4168,7 @@ void InitGUI(void)
 {
    int argc = 1;
    int i,j,k;
-   char *WinconTitle1 = {"MoSt - Model Starter (16.00) - University of Hamburg"};
+   char *WinconTitle1 = {"MoSt - Model Suite (17) - University of Hamburg"};
    unsigned long valuemask = 0; /* ignore XGCvalues and use defaults */
    FILE *ftp;
    FILE *xpp;
@@ -4422,11 +4325,11 @@ void InitGUI(void)
    InitLogo();
    ReadLogo(0,"images/KC-Logo_RGB.bmp");
    ReadLogo(1,"images/puma.bmp");
-   ReadImage(&MapHRE,"images/earth.bmp",0);
-   ReadImage(&MapHRM,"images/mars.bmp",0);
-   ReadImage(&MapLRK,"images/Kepler-16.bmp",0);
-// ReadImage(&MapLRL,"images/Kepler-186f.bmp",0);
-   ReadImage(&MapLRL,"images/habit360x180.bmp",0);
+   ReadLogo(2,"images/plasim.bmp");
+   ReadImage(&MapHRE,"images/earth.bmp");
+   ReadImage(&MapHRM,"images/mars.bmp");
+   ReadImage(&MapLRK,"images/Kepler-16.bmp");
+   ReadImage(&MapLRL,"images/habit360x180.bmp");
    opbox_y = 8 + 64 + 2 * FixFontHeight;
    InitSelections();
 

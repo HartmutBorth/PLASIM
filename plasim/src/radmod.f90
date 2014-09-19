@@ -1446,6 +1446,7 @@
 
       zero=1.E-6                     ! small number
 
+      zao30= 0.209*(7.E-5)**0.436    ! to get a(o3)=0 for o3=0
       zco20=0.0676*(0.01022)**0.421  ! to get a(co2)=0 for co2=0
       zh2o0a=0.846*(3.59E-5)**0.243  ! to get a(h2o)=0 for h2o=0
       zh2o0=0.832*0.0286**0.26       ! to get t(h2o)=1 for h2o=0
@@ -1570,7 +1571,7 @@
 !     o3 absorption:
 !
         where(zsumo3(:) <= 0.01)
-          zao3(:)= 0.209*(zsumo3(:)+7.E-5)**0.436 - 0.003225
+          zao3(:)= 0.209*(zsumo3(:)+7.E-5)**0.436 - zao30
         elsewhere
           zao3(:)= 0.0212*log10(zsumo3(:))+0.0748
         endwhere

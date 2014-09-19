@@ -46,7 +46,7 @@
 !     global scalars (snow similar to the sea ice module)
 !
       real :: rhosnow  = 330.    ! snow density (kg/m**3)
-      real :: soildiff = 7.      ! heat diffusivity of the soil (W/m/K)
+      real :: soildiff = 1.8     ! heat diffusivity of the soil (W/m/K)
       real :: sicediff = 2.03    ! heat diffusivity of ice      (W/m/K)
       real :: snowdiff = 0.31    ! heat diffusivity of snow     (W/m/K)
       real :: soilcap  = 2.4E6   ! heat capacity of the soil  (J/m**3/K)

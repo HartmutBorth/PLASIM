@@ -11,6 +11,7 @@
       integer :: kbetta   = 1 ! switch for betta in kuo (1/0=yes/no)
       integer :: nprl     = 1 ! switch for large scale precip (1/0=yes/no)
       integer :: nprc     = 1 ! switch for large convective precip (1/0=yes/no)
+      integer :: nclouds  = 1 ! switch for cloud generation (1/0=yes/no)
       integer :: ndca     = 1 ! switch for dry convec. adjustment (1/0=yes/no)
       integer :: ncsurf   = 1 ! switch for conv. starts at surface (1/0=yes/no)
       integer :: nmoment  = 0 ! switch for momentum mixing (1/0=yes/no)
@@ -64,7 +65,7 @@
 !
       namelist/rainmod_nl/kbetta,nprl,nprc,ndca,ncsurf,nmoment,nshallow &
      &       ,nstorain,rcrit,clwcrit1,clwcrit2,pdeep,rkshallow,gamma    &
-     &                ,pdeepth,nevapprec
+     &       ,nclouds,pdeepth,nevapprec
 !
 !     reset defaults (according to general setup... tuning)
 !
@@ -94,6 +95,7 @@
       call mpbci(kbetta)
       call mpbci(nprl)
       call mpbci(nprc)
+      call mpbci(nclouds)
       call mpbci(ndca)
       call mpbci(ncsurf)
       call mpbci(nmoment)
@@ -194,7 +196,7 @@
 !
 
       if(ntime ==1) call mksecond(zsec1,0.)
-      call mkclouds
+      if(nclouds ==1) call mkclouds
       if(ntime ==1) then
        call mksecond(zsec1,zsec1)
        time4cl=time4cl+zsec1

@@ -701,9 +701,9 @@
 !
         dts(:)=dts(:)+zdsnowz(:)*1000.*(ALS-ALV)*deltsec/zctop(:)/zztop(:)
 !
-!       diagnose the lost snow (by modifying the old snow)
+!       diagnose the lost snow as snow melt
 !
-        dsndch(:)=dsndch(:)+zdsnowz(:)*deltsec
+        dsmelt(:)=dsmelt(:)-zdsnowz(:)
        endwhere
       endif
 !

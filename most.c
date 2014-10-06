@@ -972,6 +972,7 @@ void InitNamelist(void)
    NL_i(PLASIM,"plasim" ,"NWPD"    ,  1);
    NL_i(PLASIM,"plasim" ,"NPRINT"  ,  0);
    NL_i(PLASIM,"plasim" ,"NSYNC"   ,  1);
+   NL_i(PLASIM,"rainmod","NCLOUDS" ,  1);
    NL_i(PLASIM,"rainmod","NSTORAIN",  0);
    NL_r(PLASIM,"plasim" ,"SYNCSTR", 0.0);
 
@@ -1993,7 +1994,7 @@ int Build(int model)
    {
       if (Planet == MARS)
          sprintf(command,"cp plasim/dat/T%d_mars/* plasim/run/\n",Truncation);
-      if (Planet == EXO)
+      else if (Planet == EXO)
          sprintf(command,"cp plasim/dat/T%d_exo/* plasim/run/\n",Truncation);
       else
          sprintf(command,"cp plasim/dat/T%d/* plasim/run/\n",Truncation);

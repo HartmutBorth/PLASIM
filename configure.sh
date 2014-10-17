@@ -68,7 +68,7 @@ fi
 #check for C compiler
 # put your favourite compiler in front if you have more than one
 
-for MOST_CC in icc gxlc gcc suncc cc NO_CC
+for MOST_CC in cc gxlc gcc suncc cc NO_CC
 do
    `hash 2>/dev/null $MOST_CC`
    if [ $? = 0 ] ; then break ; fi
@@ -188,6 +188,8 @@ elif [ -e "/usr/X11/lib" ] ; then
    XLIB_PATH="/usr/X11/lib"
 elif [ -e "/usr/lib/X11" ] ; then
    XLIB_PATH="/usr/lib/X11"
+elif [ -e "/opt/X11" ] ; then
+   XLIB_PATH="/opt/X11"
 fi
 if [ -n ${XLIB_PATH} ] ; then
    echo "Found Xlib (X11)              at: $XLIB_PATH"

@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
+#include <X11/XKBlib.h>
 
 #define INT int
 
@@ -2853,7 +2854,7 @@ int PPPCompiled(void)
    strcpy(fn,"puma/run/");
    strcat(fn,exec_ppp);
 
-   if (fp = fopen(fn,"r"))
+   if ((fp = fopen(fn,"r")))
    {
       fclose(fp);
       return 1;

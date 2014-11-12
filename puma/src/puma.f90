@@ -1299,6 +1299,7 @@ end subroutine master
       ncsp = nrsp / 2
       nspp = (nrsp + npro - 1) / npro
       nesp = nspp * npro
+      nesp = nesp + 3 - mod(nesp-1,4)
 
       return
       end

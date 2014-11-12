@@ -7670,7 +7670,7 @@
 !
       real (kind=8) function rho(s,tp,p)
       implicit none
-      real (kind=8) :: s,tp,p
+      real (kind=8), intent(in) :: s,tp,p
 !
 !     ------------------------------------------------------------------
 !

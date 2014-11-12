@@ -134,8 +134,6 @@ Pixmap OpmEarth;
 Pixmap OpmMars;
 Pixmap OpmPrep;
 
-int OroSize = 129 * 64 * sizeof(double);;
-
 double RevGra = 1.0 / 9.81;
 
 /* Object types */
@@ -1009,12 +1007,6 @@ void InitNamelist(void)
    NL_r(PUMA,"puma","ROTSPD" ,  1.0);
    NL_r(PUMA,"puma","TGR"    , 288.0);
 };
-
-
-void ReadNamelist(void)
-{
-}
-
 
 void NamelistSelector(int model)
 {

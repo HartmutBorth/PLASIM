@@ -14,47 +14,47 @@ done
 
 if [ $MOST_F90 != "NO_F90" ] ; then
    F90_PATH=`which $MOST_F90`
-   echo >  most_compiler MOST_F90=$MOST_F90 " # " $F90_PATH
-   echo >> most_compiler "MPIMOD=mpimod_stub"
    echo "Found FORTRAN-90 compiler     at: $F90_PATH"
    if [ $MOST_F90 = "sunf90" ] ; then
-      echo >> most_compiler "MOST_F90_OPTS=-O3"
-      echo > most_debug_options "MOST_F90_OPTS=-g -C -ftrap=common"
+      MOST_F90_OPTS="-O3"
+      DEBUG_F90_OPTS="-g -C -ftrap=common"
       echo > most_precision_options "MOST_PREC=-r8"
    elif [ $MOST_F90 = "ifort" ] ; then
-      echo >> most_compiler "MOST_F90_OPTS=-O"
-      echo > most_debug_options "MOST_F90_OPTS=-g -C -fpe0 -traceback"
+      MOST_F90_OPTS="-O"
+      DEBUG_F90_OPTS="-g -C -fpe0 -traceback"
       echo > most_precision_options "MOST_PREC=-r8"
    elif [ $MOST_F90 = "nagfor" ] ; then
-      echo >> most_compiler "MOST_F90_OPTS=-O -kind=byte"
-      echo > most_debug_options "MOST_F90_OPTS=-g -C -fpe0 -traceback -kind=byte"
+      MOST_F90_OPTS="-O -kind=byte"
+      DEBUG_F90_OPTS="-g -C -fpe0 -traceback -kind=byte"
    elif [ $MOST_F90 = "gfortran" ] ; then
       # get major and minor version number
       GFMAJ=`gfortran -dumpversion | head -1 | sed -e 's/.*)//' | awk 'BEGIN {FS="."}{print $1}'`
       GFMIN=`gfortran -dumpversion | head -1 | sed -e 's/.*)//' | awk 'BEGIN {FS="."}{print $2}'`
       GFVER=`expr 100 '*' $GFMAJ + $GFMIN`
       echo "gfortran version " $GFMAJ.$GFMIN
-      # flags for gfortran version >= 4.5 [ -fcheck=all -finit-real=snan ]
-      if [ "$GFVER" -ge "405" ] ; then
-         echo >> most_compiler "MOST_F90_OPTS=-O3"
-         echo > most_debug_options "MOST_F90_OPTS=-g -O0 -ffpe-trap=invalid,zero,overflow -fcheck=all -finit-real=snan"
+      # flags for gfortran version >= 4.9 [ -ffpe-summary ]
+      if [ "$GFVER" -ge "409" ] ; then
+         MOST_F90_OPTS="-O3 -ffpe-trap=invalid,zero,overflow -ffpe-summary=none -finit-real=snan"
+         DEBUG_F90_OPTS="-g -O0 -ffpe-trap=invalid,zero,overflow -ffpe-summary=none -fcheck=all -finit-real=snan"
+         echo > most_precision_options "MOST_PREC=-fdefault-real-8"
+      # flags for gfortran version 4.5 - 4.8
+      elif [ "$GFVER" -ge "405" ] ; then
+         MOST_F90_OPTS="-O3 -ffpe-trap=invalid,zero,overflow -finit-real=snan"
+         DEBUG_F90_OPTS="-g -O0 -ffpe-trap=invalid,zero,overflow -fcheck=all -finit-real=snan"
          echo > most_precision_options "MOST_PREC=-fdefault-real-8"
       # flags for gfortran version 4.2, 4.3 and 4.4
-      elif [ "$GFVER" -ge "402" ] ; then
-         echo >> most_compiler "MOST_F90_OPTS=-O3"
-         echo > most_debug_options "MOST_F90_OPTS=-g -ffpe-trap=invalid,zero,overflow -fbounds-check"
-      # flags for gfortran version <= 4.1 [ -frecord-marker=4 ]
       else
-         echo >> most_compiler "MOST_F90_OPTS=-O3 -frecord-marker=4"
-         echo > most_debug_options "MOST_F90_OPTS=-g -ffpe-trap=invalid,zero,overflow -fbounds-check -frecord-marker=4"
+         MOST_F90_OPTS="-O3"
+         DEBUG_F90_OPTS="-g -ffpe-trap=invalid,zero,overflow -fbounds-check"
       fi
    else
-      echo >> most_compiler "MOST_F90_OPTS=-O"
-      echo > most_debug_options "MOST_F90_OPTS=-g"
+      MOST_F90_OPTS="-O"
+      DEBUG_F90_OPTS="-g"
    fi
-   # disable assembler routines in debug mode
-   echo >> most_debug_options "LEGMOD=legsym"
-   echo >> most_debug_options "LEGFAST="
+   echo  > most_compiler "MOST_F90=$MOST_F90"
+   echo >> most_compiler "MOST_F90_OPTS=$MOST_F90_OPTS"
+   echo >> most_compiler "MPIMOD=mpimod_stub"
+   echo  > most_debug_options "MOST_F90_OPTS=$DEBUG_F90_OPTS"
 else
    echo "****************************************************"
    echo "* Sorry - didn't find any FORTRAN-90 compiler      *"
@@ -103,13 +103,13 @@ done
 if [ $MPI_F90 != "NO_F90" ] ; then
    F90_PATH=`which $MPI_F90`
    if [ $MPI_F90 = "openmpif90" ] ; then
-      echo > most_compiler_mpi "MPI_RUN=openmpiexec"
-      echo >> most_compiler_mpi "MOST_F90_OPTS=-O3"
+      MPI_RUN="openmpiexec"
    else
-      echo > most_compiler_mpi "MPI_RUN=mpiexec"
-      echo >> most_compiler_mpi "MOST_F90_OPTS=-O3"
+      MPI_RUN="mpiexec"
    fi
+   echo  > most_compiler_mpi "MPI_RUN=$MPI_RUN"
    echo >> most_compiler_mpi MOST_F90=$MPI_F90
+   echo >> most_compiler_mpi "MOST_F90_OPTS=$MOST_F90_OPTS"
    echo >> most_compiler_mpi "MPIMOD=mpimod"
    echo "Found MPI FORTRAN-90 compiler at: $F90_PATH"
 else

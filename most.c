@@ -1767,9 +1767,9 @@ int WriteRunScript(int model)
    {
       fprintf(fp,"   [ -e %s ] && mv %s $DATANAME\n",outp_name,outp_name);
       fprintf(fp,"   [ -e %s ] && mv %s $DIAGNAME\n",diag_name,diag_name);
-      fprintf(fp,"   [ -e %s ] && cp %s_status %s_restart\n",
+      fprintf(fp,"   [ -e %s_status ] && cp %s_status %s_restart\n",
               ShortModelName[model],ShortModelName[model],ShortModelName[model]);
-      fprintf(fp,"   [ -e %s ] && mv %s_status $RESTNAME\n",
+      fprintf(fp,"   [ -e %s_status ] && mv %s_status $RESTNAME\n",
               ShortModelName[model],ShortModelName[model]);
    }
    if (ngui) fputs("# ",fp); /* deactivate loop for GUI case */

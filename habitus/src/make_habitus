@@ -1,14 +1,22 @@
 # Makefile template for MoSt
 # Compiler names and options are inserted by MoSt
 
+# C++ code (HABITUS)
+
 %.o : %.cpp
-	c++ -c $(MOST_CC_OPTS) $<
+	$(MOST_PP) -c $(MOST_CC_OPTS) $<
+
+# C code (GUI)
 
 %.o : %.c
 	$(MOST_CC) -c $(MOST_CC_OPTS) $<
 
+# FORTRAN code
+
 %.o : %.f90
 	$(MOST_F90) -c $(MOST_F90_OPTS) $(MOST_PREC) $<
+
+# ASSEMBLER code (Legendre Transformation)
 
 %.o : %.s
 	$(MOST_AS) -o $@ $<
@@ -45,7 +53,7 @@ FFTMOD=fftmod
 OBJ=habitus.o
 
 habitus.x:	$(OBJ)
-	c++ -o habitus.x $(MOST_CC_OPTS) $(OBJ)
+	$(MOST_PP) -o habitus.x $(MOST_CC_OPTS) $(OBJ)
 
 habitus.o:		habitus.cpp
 

@@ -93,6 +93,28 @@ else
    exit 2
 fi
 
+#check for C++ compiler
+# put your favourite compiler in front if you have more than one
+
+for MOST_PP in c++ g++ NO_PP
+do
+   `hash 2>/dev/null $MOST_PP`
+   if [ $? = 0 ] ; then break ; fi
+done
+
+if [ $MOST_PP != "NO_PP" ] ; then
+   PP_PATH=`which $MOST_PP`
+   echo >> most_compiler MOST_PP=$MOST_PP " # " $PP_PATH
+   echo "Found C++ compiler            at: $PP_PATH"
+else
+   echo "****************************************************"
+   echo "* Sorry - didn't find any C++ compiler             *"
+   echo "* Please install one (e.g. c++ or g++              *"
+   echo "* or update list of known compilers in this script *"
+   echo "****************************************************"
+   exit 2
+fi
+
 #check for MPI-FORTRAN-90 compiler
 for MPI_F90 in openmpif90 mpif90 mpf90 mpxlf90 NO_F90
 do
@@ -134,8 +156,25 @@ if [ $MPI_F90 != "NO_F90" ] ; then
       echo "Found MPI C compiler          at: $CC_PATH"
    else
       echo "********************************************"
-      echo "* No Message Passing Interface (MPI) found *"
-      echo "* Models run on single CPU                 *"
+      echo "* No MPI C compiler found                  *"
+      echo "********************************************"
+   fi
+fi
+
+#check for MPI-C++ compiler
+if [ $MPI_F90 != "NO_F90" ] ; then
+   for MPI_PP in openmpicxx mpicxx NO_PP
+   do
+      `hash 2>/dev/null $MPI_PP`
+      if [ $? = 0 ] ; then break ; fi
+   done
+   if [ $MPI_PP != "NO_PP" ] ; then
+      PP_PATH=`which $MPI_PP`
+      echo >> most_compiler_mpi MOST_PP=$MPI_PP
+      echo "Found MPI C++ compiler        at: $PP_PATH"
+   else
+      echo "********************************************"
+      echo "* No MPI C++ compiler found                *"
       echo "********************************************"
    fi
 fi

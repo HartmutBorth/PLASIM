@@ -52,10 +52,11 @@ String Buffer;
 
 /* Models */
 
-#define PUMA   0
-#define SAM    1
-#define PLASIM 2
-#define MODELS 3
+#define PUMA    0
+#define SAM     1
+#define HABITUS 2
+#define PLASIM  3
+#define MODELS  4
 
 /* Resolutions */
 
@@ -99,6 +100,7 @@ char *ShortModelName[MODELS] =
 {
    "puma",
    "sam",
+   "habitus",
    "plasim"
 };
 
@@ -106,6 +108,7 @@ char *FullModelName[MODELS] =
 {
    "PUMA",
    "SAM",
+   "HaBITuS",
    "Planet Simulator"
 };
 
@@ -333,6 +336,7 @@ int Preprocessed;
 int SAMindex;
 int ScreenHeight;
 int Expert = 1;
+int Habitus = 0;
 int LsgEnabled;
 int ModeRadiusSq;
 int ForceRebuild;
@@ -1006,6 +1010,10 @@ void InitNamelist(void)
    NL_r(PUMA,"puma","SYNCSTR",  0.0);
    NL_r(PUMA,"puma","ROTSPD" ,  1.0);
    NL_r(PUMA,"puma","TGR"    , 288.0);
+
+   // WHABITUS
+
+   NL_i(HABITUS,"habitus","KICK"   ,  1);
 };
 
 void NamelistSelector(int model)
@@ -1182,6 +1190,14 @@ void InitSelections(void)
 
    Sel = NewSel(Sel);
    InitNextSelection(Sel,dyn,"SAM");
+
+   // Habitus
+
+   if (Habitus)
+   {
+      Sel = NewSel(Sel);
+      InitNextSelection(Sel,dyn,FullModelName[HABITUS]);
+   }
 
    // Planet Simulator
 
@@ -1628,7 +1644,12 @@ void GenerateNames(void)
 {
    Truncation = (2 * Latitudes - 1) / 3;
    sprintf(namelist_name,"%s_namelist",ShortModelName[Model]);
-   if (Model == PUMA)
+   if (Model == HABITUS)
+   {
+      if (Cores < 2) strcpy(exec_name,"habitus.x");
+      else           strcpy(exec_name,"habitus_mpi.x");
+   }
+   else if (Model == PUMA)
    {
       if (Cores < 2) strcpy(exec_name,"most_puma.x");
       else           strcpy(exec_name,"most_puma_mpi.x");
@@ -1661,6 +1682,11 @@ int WriteRunScript(int model)
    char run[256];
 
    strcpy(exec_nam2,exec_name); // Duplicate exec name
+
+   if (model == HABITUS) // Add Dimensions
+   {
+      sprintf(exec_name+strlen(exec_name)," %d %d",Latitudes,Latitude2);
+   }
 
    if (model == PUMA) // Add Latitudes and Levels as arguments
    {
@@ -1741,8 +1767,10 @@ int WriteRunScript(int model)
    {
       fprintf(fp,"   [ -e %s ] && mv %s $DATANAME\n",outp_name,outp_name);
       fprintf(fp,"   [ -e %s ] && mv %s $DIAGNAME\n",diag_name,diag_name);
-      fprintf(fp,"   cp %s_status %s_restart\n",ShortModelName[model],ShortModelName[model]);
-      fprintf(fp,"   mv %s_status $RESTNAME\n",ShortModelName[model]);
+      fprintf(fp,"   [ -e %s ] && cp %s_status %s_restart\n",
+              ShortModelName[model],ShortModelName[model],ShortModelName[model]);
+      fprintf(fp,"   [ -e %s ] && mv %s_status $RESTNAME\n",
+              ShortModelName[model],ShortModelName[model]);
    }
    if (ngui) fputs("# ",fp); /* deactivate loop for GUI case */
    fputs("done\n",fp);
@@ -3261,6 +3289,13 @@ void BuildScripts(void)
       if (!Build(SAM)) Exit();
       WriteRunScript(SAM);
    }
+   if (Model == HABITUS)
+   {
+      GenerateNames();
+      // WriteHabitusNamelist();
+      if (!Build(HABITUS)) Exit();
+      WriteRunScript(HABITUS);
+   }
    if (Model == PLASIM)
    {
       CheckPlasimNamelist();
@@ -4287,6 +4322,13 @@ void InitGUI(void)
    if (xpp)
    {
       Expert = 0;
+      fclose(xpp);
+   }
+
+   xpp = fopen("Turbo","r"); // Habitus enabled
+   if (xpp)
+   {
+      Habitus = 1;
       fclose(xpp);
    }
 

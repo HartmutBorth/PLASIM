@@ -25,10 +25,10 @@
       real    :: solclat = 1.0    ! cos of lat of insolation if ncstsol=1
       real    :: solcdec = 1.0    ! cos of dec of insolation if ncstsol=1
       real    :: clgray  = -1.0   ! cloud grayness (-1 = computed)
-      real    :: th2oc   = 0.04   ! absorption coefficient h2o continuum (lwr)
-      real    :: tswr1   = 0.0641 ! tuning of cloud albedo range1
-      real    :: tswr2   = 0.048  ! tuning of cloud back scattering c. range2
-      real    :: tswr3   = 0.0045 ! tuning of cloud s. scattering alb. range2
+      real    :: th2oc   = 0.024  ! absorption coefficient h2o continuum (lwr)
+      real    :: tswr1   = 0.077  ! tuning of cloud albedo range1
+      real    :: tswr2   = 0.065  ! tuning of cloud back scattering c. range2
+      real    :: tswr3   = 0.0055 ! tuning of cloud s. scattering alb. range2
       real    :: tpofmt  = 1.00   ! tuning of point of mean transmittance
       real    :: acllwr  = 0.100  ! mass absorption coefficient for clouds (lwr)
       real    :: a0o3    = 0.25   ! parameter to define o3 profile
@@ -185,8 +185,9 @@
            jtune=0
           else
            tswr1=0.02
+           tswr2=0.065
            tswr3=0.004
-           th2oc=0.035
+           th2oc=0.024
            jtune=1
           endif
          endif 
@@ -197,9 +198,10 @@
           if(NEQSIG==1) then
            jtune=0
           else
-           th2oc=0.03
-           tswr1=0.0641
-           tswr3=0.0045 
+           th2oc=0.024
+           tswr1=0.077
+           tswr2=0.065
+           tswr3=0.0055 
            jtune=1
           endif
          endif 
@@ -1452,6 +1454,23 @@
       zh2o0=0.832*0.0286**0.26       ! to get t(h2o)=1 for h2o=0
       zqco2=co2*zpv2pm*1.E-6         ! co2 pp mass needed for transmissivities
                                      ! note: co2 in ppmv not ppv
+!
+!     to make a(o3) continues at 0.01cm: 
+!
+      zao3c=0.209*(0.01+7.E-5)**0.436-zao30-0.0212*log10(0.01) 
+!
+!     to make a(co2) continues at 1cm:
+!
+      zaco2c=0.0676*(1.01022)**0.421-zco20
+!
+!     to make a(h2o) continues at 0.01gm:
+!
+      zah2oc=0.846*(0.01+3.59E-5)**0.243-zh2o0a-0.24*ALOG10(0.02)
+!
+!     to make t(h2o) continues at 2gm :
+!
+      zth2oc=1.-(0.832*(2.+0.0286)**0.26-zh2o0)+0.1196*log(2.-0.6931)
+
       zsigh2(1)=0.
       zsigh2(2:NLEP)=sigmah(1:NLEV)**2
 
@@ -1543,7 +1562,7 @@
         where(zsumwv(:) <= 0.01)
          zah2o(:)=0.846*(zsumwv(:)+3.59E-5)**0.243-zh2o0a
         elsewhere
-         zah2o(:)=0.24*ALOG10(zsumwv(:)+0.01)+0.622
+         zah2o(:)=0.24*ALOG10(zsumwv(:)+0.01)+zah2oc
         endwhere
 !
 !     b) continuum
@@ -1557,25 +1576,24 @@
         where(zsumco2(:) <= 1.0)
          zaco2(:)=0.0676*(zsumco2(:)+0.01022)**0.421-zco20
         elsewhere
-         zaco2(:)=0.0546*ALOG10(zsumco2(:))+0.0581
+         zaco2(:)=0.0546*ALOG10(zsumco2(:))+zaco2c
         endwhere
 !
-!     Boer et al. (1984) scheme:
+!     Boer et al. (1984) scheme for t(h2o) at co2 overlapp
 !
         where(zsumwv(:)<= 2.)
-          zth2o(:)=1.-(0.832*(zsumwv(:)+0.0286)**0.26-zh2o0)
+         zth2o(:)=1.-(0.832*(zsumwv(:)+0.0286)**0.26-zh2o0)
         elsewhere
-          zth2o(:)=max(0.,0.33-0.1196*log(zsumwv(:)-0.6931))
+         zth2o(:)=max(0.,zth2oc-0.1196*log(zsumwv(:)-0.6931))
         endwhere
 !
 !     o3 absorption:
 !
         where(zsumo3(:) <= 0.01)
-          zao3(:)= 0.209*(zsumo3(:)+7.E-5)**0.436 - zao30
+         zao3(:)= 0.209*(zsumo3(:)+7.E-5)**0.436 - zao30
         elsewhere
-          zao3(:)= 0.0212*log10(zsumo3(:))+0.0748
+         zao3(:)= 0.0212*log10(zsumo3(:))+zao3c
         endwhere
-
 !
 !     total clear sky transmissivity
 !

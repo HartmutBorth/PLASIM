@@ -215,8 +215,9 @@
            jtune=0
           else
            tswr1=0.085
+           tswr2=0.065
            tswr3=0.0048
-           th2oc=0.035
+           th2oc=0.0285
            jtune=1
           endif
          endif

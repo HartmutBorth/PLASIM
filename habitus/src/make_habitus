@@ -4,7 +4,7 @@
 # C++ code (HABITUS)
 
 %.o : %.cpp
-	$(MOST_PP) -c $(MOST_CC_OPTS) $<
+	$(MOST_PP) -c $(MOST_PP_OPTS) $<
 
 # C code (GUI)
 
@@ -53,7 +53,7 @@ FFTMOD=fftmod
 OBJ=habitus.o
 
 habitus.x:	$(OBJ)
-	$(MOST_PP) -o habitus.x $(MOST_CC_OPTS) $(OBJ)
+	$(MOST_PP) -o habitus.x $(MOST_PP_OPTS) $(OBJ)
 
 habitus.o:		habitus.cpp
 

@@ -573,17 +573,17 @@ void ChangeModel(int NewMo)
       NewMo = PUMA; // default if none is specified
       for (i=0 , Sel = SelMod ; i < MODELS; ++i , Sel = Sel->Next)
       {
+         if (!Habitus && i == HABITUS) i++;
          if (Sel->iv == 1) NewMo = i;
       }
    }
-
-   if (!Habitus && NewMo == HABITUS) NewMo = PLASIM;
 
    ComEnd->Next = &SelModels[NewMo];
    ComEnd->Next->Prev = ComEnd;
 
    for (i=0 , Sel = SelMod ; i < MODELS; ++i , Sel = Sel->Next)
    {
+      if (!Habitus && i == HABITUS) i++;
       if (i == NewMo) Sel->iv = 1;
       else            Sel->iv = 0;
    }
@@ -4468,12 +4468,15 @@ void OnMouseClick(void)
    /* Check for model switch */
 
    for (i = PUMA , Sel = SelMod ; i < MODELS ; ++i , Sel = Sel->Next)
-   if (HitBox(Sel) && Model != i)
    {
-      if (Debug) printf("Change model from %d to %d\n",Model,i);
-      ChangeModel(i);
-      CalcFrame(Latitudes);
-      return;
+      if (!Habitus && i == HABITUS) i++;
+      if (HitBox(Sel) && Model != i)
+      {
+         if (Debug) printf("Change model from %d to %d\n",Model,i);
+         ChangeModel(i);
+         CalcFrame(Latitudes);
+         return;
+      }
    }
 
    /* Continue with all other boxes */

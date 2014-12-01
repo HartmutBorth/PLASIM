@@ -1,6 +1,6 @@
 #include <valarray>
 
-// #define MPI_INTERFACE
+// #define MPI 
 
 using namespace std;
 
@@ -11,6 +11,13 @@ using namespace std;
 // Definitions
 
 #define NROOT 0
+
+int mypid = NROOT;   // process ID
+
+// Files
+
+FILE *DiagFile;
+FILE *DataFile;
 
 // Switches
 
@@ -91,11 +98,11 @@ valarray<double> dpsdmu; // d(LnPs)/d(mu)
 #endif
 
 
-void Stars(int n)  {while (n--) putchar('*');}
+void Stars(int n)  {while (n--) fputc('*',DiagFile);}
 void ErrStars(int n)  {while (n--) putc('*',stderr);}
-void Blanks(int n) {while (n--) putchar(' ');}
-void Dashes(int n) {putchar('*');putchar(' ');while (--n>3) putchar('-');putchar(' ');putchar('*');}
-void NewLine(void) {putchar('\n');}
+void Blanks(int n) {while (n--) fputc(' ',DiagFile);}
+void Dashes(int n) {fputc('*',DiagFile);fputc(' ',DiagFile);while (--n>3) fputc('-',DiagFile);fputc(' ',DiagFile);fputc('*',DiagFile);}
+void NewLine(void) {fputc('\n',DiagFile);}
 void ErrNewLine(void) {putc('\n',stderr);}
 void StarLine(void) {Stars(COLS); NewLine();}
 
@@ -124,12 +131,25 @@ void LeftText(const char *t, int cols)
    if (l > cols-4) puts(t);
    else 
    {
-      putchar('*');
-      putchar(' ');
-      fputs(t,stdout);
+      fputc('*',DiagFile);
+      fputc(' ',DiagFile);
+      fputs(t,DiagFile);
       Blanks(cols - l - 3);
-      putchar('*');
+      fputc('*',DiagFile);
       NewLine();
+   }
+}
+
+
+void OpenFiles(void)
+{
+   char Filename[80];
+
+   sprintf(Filename,"habitus_%3.3d.diag",mypid);
+   DiagFile = fopen(Filename,"w");
+   if (mypid == NROOT)
+   {
+      DataFile = fopen("habitus_data","w");
    }
 }
 
@@ -137,9 +157,8 @@ void LeftText(const char *t, int cols)
 // -------------------------- MPI -------------------------------------
 
 
-int mypid = NROOT;
 
-#ifdef MPI_INTERFACE
+#ifdef MPI
 #include <mpi.h>
 
 void mpbrdn(double *f, int n)
@@ -166,11 +185,25 @@ void mpsush(double *f, int n)
 
 void mp_start(int *argc, char ***argv)
 {
-   MPI_Status status;
-   MPI_Init(argc,argv);
-   MPI_Comm_size(MPI_COMM_WORLD,&Procs );
-   MPI_Comm_rank(MPI_COMM_WORLD,&mypid);
+   int Return_Code;
 
+   MPI_Status status;
+
+   Return_Code = MPI_Init(argc,argv);
+   if (Return_Code != MPI_SUCCESS)
+   {
+      fprintf(stderr,"*** MPI_Init failed with code %d ***\n",Return_Code);
+      exit(1);
+   }
+fprintf(stderr,"before MPI_Comm_size\n");
+   MPI_Comm_size(MPI_COMM_WORLD,&Procs );
+fprintf(stderr,"Procs = %d\n",Procs);
+fprintf(stderr,"before MPI_Comm_rank\n");
+   MPI_Comm_rank(MPI_COMM_WORLD,&mypid);
+fprintf(stderr,"mypid = %d\n",mypid);
+
+   OpenFiles();
+   
    if (Procs > 1)
    {
       Lapp = Lats / Procs;
@@ -179,6 +212,7 @@ void mp_start(int *argc, char ***argv)
       nspp = Spec / Procs;
       if (Spec % Procs) nspp++;
       nesp = nspp * Procs;
+fprintf(stderr,"nesp = %d\n",nesp);
    }
 
    NewLine();
@@ -187,7 +221,9 @@ void mp_start(int *argc, char ***argv)
       int len;
       char Pname[Procs*256];
       char tb[80];
+fprintf(stderr,"before MPI_Get_processor_name\n");
       MPI_Get_processor_name(Pname,&len);
+fprintf(stderr,"mypid = %d Processor = %s\n",mypid,Pname);
       MPI_Gather(Pname,256,MPI_CHAR,Pname,256,MPI_CHARACTER,NROOT,MPI_COMM_WORLD);
       MPI_Allreduce(&len,&len,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
       if (mypid == NROOT)
@@ -1571,30 +1607,30 @@ void resource_stats(void)
 
 void PrintGauss(void)
 {
-   printf("********************************************\n");
-   printf("*  Lat |    Deg |    Sin |    Cos | Weight *\n");
-   printf("********************************************\n");
+   fprintf(DiagFile,"********************************************\n");
+   fprintf(DiagFile,"*  Lat |    Deg |    Sin |    Cos | Weight *\n");
+   fprintf(DiagFile,"********************************************\n");
    for (int lat=0 ; lat < Lats ; ++lat)
    {
-      printf("* %4d | %6.2lf | %6.3lf | %6.3lf | %6.3lf *\n",
+      fprintf(DiagFile,"* %4d | %6.2lf | %6.3lf | %6.3lf | %6.3lf *\n",
              lat,180.0*asin(gsi[lat])/M_PI,gsi[lat],
              sqrt(1.0-gsi[lat]*gsi[lat]),gaw[lat]);
    }
-   printf("********************************************\n\n");
+   fprintf(DiagFile,"********************************************\n\n");
 }
 
 
 void PrintSigmaArrays(void)
 {
-   printf("********************************************\n");
-   printf("*  Lev |   Half |   Full |  Delta |   1/2d *\n");
-   printf("********************************************\n");
+   fprintf(DiagFile,"********************************************\n");
+   fprintf(DiagFile,"*  Lev |   Half |   Full |  Delta |   1/2d *\n");
+   fprintf(DiagFile,"********************************************\n");
    for (int lev=0 ; lev < Levs ; ++lev)
    {
-      printf("* %4d | %6.3lf | %6.3lf | %6.3lf | %6.3lf *\n",
+      fprintf(DiagFile,"* %4d | %6.3lf | %6.3lf | %6.3lf | %6.3lf *\n",
              lev,SigHalf[lev],SigFull[lev],SigDelt[lev],SigRevd[lev]);
    }
-   printf("********************************************\n\n");
+   fprintf(DiagFile,"********************************************\n\n");
 }
 
 
@@ -1707,7 +1743,7 @@ void Init_Spectral(void)
       C.sh[    lev * nesp] = M_SQRT2 * (TemPro[lev]/CT - t0);  // mode (0,0) mean
       M.sh[2 + lev * nesp] = r_sqrt6 * dtns * TemGra;          // mode (0,1) N-S
       C.sh[4 + lev * nesp] = r_sqrtx * dtep * TemGra;          // mode (0,2) E-P
-printf("Temp[%d] = %7.3lf\n",lev,TemPro[lev]);
+fprintf(DiagFile,"Temp[%d] = %7.3lf\n",lev,TemPro[lev]);
    }
 
    O.sh /= CV * CV;    // descale orography
@@ -1718,6 +1754,8 @@ printf("Temp[%d] = %7.3lf\n",lev,TemPro[lev]);
 
 void prolog(void)
 {
+   
+
    StepDelta = 2.0 * M_PI / ntspd; // length of time step
 
    gsi = new double[Lats];
@@ -1745,10 +1783,10 @@ void prolog(void)
 
    O.ReadGP(); // Read orograpy gridpoint array
 
-   P.Status(stdout,"after Init");
-   T.Status(stdout,"after Init");
-   D.Status(stdout,"after Init");
-   Z.Status(stdout,"after Init");
+   P.Status(DiagFile,"after Init");
+   T.Status(DiagFile,"after Init");
+   D.Status(DiagFile,"after Init");
+   Z.Status(DiagFile,"after Init");
 
    Init_Vertical();
    if (mypid == NROOT)
@@ -1757,8 +1795,8 @@ void prolog(void)
    }
    C.BroadcastSpectral();
    M.BroadcastSpectral();
-   C.StatusSP(stdout,"Tr Const");
-   M.StatusSP(stdout,"Tr Modul");
+   C.StatusSP(DiagFile,"Tr Const");
+   M.StatusSP(DiagFile,"Tr Modul");
 }
 
 
@@ -1766,7 +1804,9 @@ void epilog(void)
 {
    if (mypid == NROOT)
    {
+      fclose(DataFile);
       resource_stats();
+      fclose(DiagFile);
    }
 }
 
@@ -1821,19 +1861,19 @@ void master(void)
    StepDelta = 2.0 * M_PI / ntspd;
 
    O.gp2fc();
-   O.StatusFC(stdout,"after gp2fc");
+   O.StatusFC(DiagFile,"after gp2fc");
    O.WriteFC("A");
 
    fc2sh(&O.fc[0],&O.sh[0]);
-   O.StatusSP(stdout,"after fc2sh");
+   O.StatusSP(DiagFile,"after fc2sh");
    O.WriteSP();
 
    O.sh2fc();
-   O.StatusFC(stdout,"after sh2fc");
+   O.StatusFC(DiagFile,"after sh2fc");
    O.WriteFC("B");
 
    O.fc2gp();
-   O.StatusGP(stdout,"after fc2gp");
+   O.StatusGP(DiagFile,"after fc2gp");
    O.WriteGP("C");
 }
 

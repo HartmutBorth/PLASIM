@@ -108,7 +108,7 @@ char *FullModelName[MODELS] =
 {
    "PUMA",
    "SAM",
-   "HaBITuS",
+   "HABITUS",
    "Planet Simulator"
 };
 
@@ -576,6 +576,8 @@ void ChangeModel(int NewMo)
          if (Sel->iv == 1) NewMo = i;
       }
    }
+
+   if (!Habitus && NewMo == HABITUS) NewMo = PLASIM;
 
    ComEnd->Next = &SelModels[NewMo];
    ComEnd->Next->Prev = ComEnd;

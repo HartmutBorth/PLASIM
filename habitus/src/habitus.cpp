@@ -250,7 +250,10 @@ void mp_stop(void)
    MPI_Finalize();
 }
 #else
-void mp_start(int *argc, char ***argv) {}
+void mp_start(int *argc, char ***argv)
+{
+   OpenFiles();
+}
 void mp_stop(void) {}
 void mpbrdn(double *f, int n) {}
 void mpsush(double *f, int n) {}

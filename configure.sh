@@ -93,7 +93,7 @@ else
    exit 2
 fi
 
-#check for C++ compiler
+# check for C++ compiler
 # put your favourite compiler in front if you have more than one
 
 for MOST_PP in c++ g++ NO_PP
@@ -171,6 +171,8 @@ if [ $MPI_F90 != "NO_F90" ] ; then
    if [ $MPI_PP != "NO_PP" ] ; then
       PP_PATH=`which $MPI_PP`
       echo >> most_compiler_mpi MOST_PP=$MPI_PP
+      echo >> most_compiler_mpi "MOST_PP_OPTS=-O3 -DMPI"
+      echo >> most_debug_options "MOST_PP_OPTS=-g -DMPI"
       echo "Found MPI C++ compiler        at: $PP_PATH"
    else
       echo "********************************************"

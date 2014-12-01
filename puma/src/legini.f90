@@ -141,12 +141,38 @@ do jlat = 1 , nhpp
       endif
    enddo ! m
 
-   lm = 0
-   do m = 0 , ntru
+! Part 1: m=0 and n=0 (lm=1)
+
+   qi(1,jlat) = zpli(1)
+   qj(1,jlat) = 0.0
+   qc(1,jlat) = zpli(1) * zgwd
+   qu(1,jlat) = 0.0
+   qv(1,jlat) = 0.0
+   qe(1,jlat) = 0.0
+   qq(1,jlat) = 0.0
+   qm(1,jlat) = 0.0
+
+! Part 2: m=0 and n>0
+
+   do lm = 2 , ntp1 ! index for spectral mode lm = n + 1
+      znn1 = 1.0_8 / ((lm-1) * lm)
+      qi(lm,jlat) = zpli(lm)
+      qj(lm,jlat) = zpld(lm)
+      qc(lm,jlat) = zpli(lm) * zgwd
+      qu(lm,jlat) = 0.0
+      qv(lm,jlat) = zpld(lm) * znn1
+      qe(lm,jlat) = zpld(lm) * zgwdcsq
+      qq(lm,jlat) = zpli(lm) * zgwdcsq * (lm-1) * lm * 0.5_8
+      qm(lm,jlat) = 0.0
+   enddo ! lm
+
+! Part 3: m>0 and n>0
+
+   lm = ntp1
+   do m = 1 , ntru
       do n = m , ntru
            lm = lm + 1
-           znn1 = 0.0
-           if (n > 0) znn1 = 1.0_8 / (n*(n+1))
+           znn1 = 1.0_8 / (n * (n+1))
            qi(lm,jlat) = zpli(lm)
            qj(lm,jlat) = zpld(lm)
            qc(lm,jlat) = zpli(lm) * zgwd

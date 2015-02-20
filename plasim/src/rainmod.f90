@@ -1141,8 +1141,8 @@
        zrhm(:)=0.
        where(zpbeta(:) > 0.) zrhm(:)=zbeta(:)/zpbeta(:)
        zbeta(:)=1.
-       where(zrhm(:) >= zrhbeta) 
-        zbeta(:)=((1.-zrhm(:))/(1.-zrhbeta))**nbeta
+       where(zrhm(:) >= rhbeta) 
+        zbeta(:)=((1.-zrhm(:))/(1.-rhbeta))**nbeta
        endwhere
 !
 !     b) beta give explicitely (for sensitivity studies, etc.)

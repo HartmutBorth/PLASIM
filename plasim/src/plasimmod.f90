@@ -139,7 +139,7 @@
       integer :: n_run_days      =       0 ! days  to run (debugging)
       integer :: n_run_steps     =       0 ! steps to run (debugging)
       integer :: mpstep          =       0 ! minutes/timestep = 1day/ntspd
-      integer :: ntspd           =      32 ! number of timesteps per day
+      integer :: ntspd           =       0 ! number of timesteps per day
       integer :: nwpd            =       1 ! number of writes per day
       integer :: ndatim(7)       =      -1 ! date & time array
       real    :: tmstart         =     0.0 ! start of run

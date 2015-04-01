@@ -1016,6 +1016,18 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 12-Jun-2014"
 !     set simulation length by using the following parameters:
 !     "n_run_years" and "n_run_months"
 
+!     mpstep <= 0 and ntspd <= 0 triggers automatic
+
+      if (mpstep <= 0 .and. ntspd <= 0) then
+         if (nlat <= 32) then       ! T21
+            mpstep = 45
+         else if (nlat <= 48) then  ! T31
+            mpstep = 36
+         else                       ! T42 and more
+            mpstep = (30 * 64) / nlat
+         endif
+      endif
+
 !     Make sure that (mpstep * 60) * ntspd = solar_day
 
       if (mpstep > 0) then             ! timestep given in [min]

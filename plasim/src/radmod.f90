@@ -206,6 +206,22 @@
           endif
          endif 
         endif
+       elseif(NTRU==31) then
+        if(NLEV==10) then
+         if(NDCYCLE==1) then
+          jtune=0
+         else
+          if(NEQSIG==1) then
+           jtune=0
+          else
+           tswr1=0.077
+           tswr2=0.067
+           tswr3=0.0055
+           th2oc=0.024
+           jtune=1
+          endif
+         endif
+        endif
        elseif(NTRU==42) then
         if(NLEV==10) then
          if(NDCYCLE==1) then
@@ -214,8 +230,8 @@
           if(NEQSIG==1) then
            jtune=0
           else
-           tswr1=0.085
-           tswr2=0.065
+           tswr1=0.089
+           tswr2=0.06
            tswr3=0.0048
            th2oc=0.0285
            jtune=1

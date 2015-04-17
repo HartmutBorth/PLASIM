@@ -174,7 +174,7 @@
       call mpscgp(zgw2,gw,1)
       call mpbcr(dlam)
       call mpscrn(cphi,NLPP)
-      call mpscrn(cphih(1:NLAT),NLPP)
+      call mpscrn(cphih(1),NLPP)
       call mpscrn(dphi,NLPP)
       call mpscrn(dmue,NLPP)
 !
@@ -739,8 +739,8 @@
        allocate(zprf2(NLON*NLAT))
        allocate(zprf3(NLON*NLAT))
        call mpgagp(zprf1,yfsst2,1)
-       call mpgagp(zprf2,yfsst(:,jm1),1)
-       call mpgagp(zprf3,yfsst(:,jm2),1)
+       call mpgagp(zprf2,yfsst(1,jm1),1)
+       call mpgagp(zprf3,yfsst(1,jm2),1)
        if(mypid==NROOT) then
         write(nud,*)'interpolated flux correction : ',zprf1(nprhor)
         write(nud,*)'from: ',zprf2(nprhor),' and ',zprf3(nprhor)
@@ -807,7 +807,7 @@
       if (nprint==2) then
        ysst(:,1)=zsst(:,1)
        allocate(zprf1(NLON*NLAT))
-       call mpgagp(zprf1,ysst(:,1),1)
+       call mpgagp(zprf1,ysst,1)
        if(mypid==NROOT) then
         write(nud,*)'in mksst:'
         write(nud,*)' '
@@ -825,7 +825,7 @@
 !
 !     comput residual flux going into sea ice (if sst < tfreeze)
 !
-      call mkiflux(zsst(:,1))
+      call mkiflux(zsst)
 !
 !     make horizontal diffusion (new temperatures)
 !
@@ -866,7 +866,7 @@
        allocate(zprf1(NLON*NLAT))
        allocate(zprf2(NLON*NLAT))
        allocate(zprf3(NLON*NLAT))
-       call mpgagp(zprf1,ysst(:,1),1)
+       call mpgagp(zprf1,ysst,1)
        call mpgagp(zprf2,yqhd,1)
        call mpgagp(zprf3,yiflux,1)
        if(mypid==NROOT) then
@@ -946,7 +946,7 @@
        allocate(zprf1(NLON*NLAT))
        allocate(zprf2(NLON*NLAT))
        allocate(zprf3(NLON*NLAT))
-       call mpgagp(zprf1,ysst(:,1),1)
+       call mpgagp(zprf1,ysst,1)
        call mpgagp(zprf2,ydsst,1)
        call mpgagp(zprf3,yiflux,1)
        if(mypid==NROOT) then
@@ -993,7 +993,7 @@
        zsst(:)=psst(:)
        allocate(zprf1(NLON*NLAT))
        allocate(zprf2(NLON*NLAT))
-       call mpgagp(zprf1,zsst(:),1)
+       call mpgagp(zprf1,zsst,1)
        call mpgagp(zprf2,yiflux,1)
        if(mypid==NROOT) then
         write(nud,*)'new sst from correction sst < tfreeze: ',zprf1(nprhor)
@@ -1115,10 +1115,10 @@
        allocate(zprf2(NLON*NLAT))
        allocate(zprf3(NLON*NLAT))
        allocate(zprf4(NLON*NLAT))
-       call mpgagp(zprf1,ysst(:,1),1)
-       call mpgagp(zprf2,yiflux(:),1)
-       call mpgagp(zprf3,yifluxr(:),1)
-       call mpgagp(zprf4,zflxm(:),1)
+       call mpgagp(zprf1,ysst,1)
+       call mpgagp(zprf2,yiflux,1)
+       call mpgagp(zprf3,yifluxr,1)
+       call mpgagp(zprf4,zflxm,1)
        if(mypid==NROOT) then
         write(nud,*)'in addfc: '
         write(nud,*)' '
@@ -1304,7 +1304,7 @@
       do jlev=1,NLEV_OCE
        zfac=hdiffk(jlev)/plarad/plarad
 !
-       call mpgagp(zt,zsst(:,jlev),1)
+       call mpgagp(zt,zsst(1,jlev),1)
 !
        if(mypid==NROOT) then
         if(nentropy > 0) then

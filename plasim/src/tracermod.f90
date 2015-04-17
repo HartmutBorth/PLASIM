@@ -296,7 +296,7 @@
 
          do jc=1,NTRACE
             write(trc_name,'(a,i2.2)') 'DTRACE',jc
-            call guiput(trc_name // char(0), x(:,:,:,jc), NLON+1,NLAT,NLEV)
+            call guiput(trc_name // char(0), x(1,1,1,jc), NLON+1,NLAT,NLEV)
          enddo
 
 !        check the correlation between tracers 3 and 4
@@ -380,7 +380,7 @@
 !    For surface pressure, just reshape and invert: 
 !    Time t
 
-      call mpgagp( zgbl(:,1),pps0,1 )
+      call mpgagp( zgbl,pps0,1 )
 
       do jlat = 1,NLAT
          is = (jlat-1)*NLON + 1
@@ -390,7 +390,7 @@
 
 !    Time t+dt
 
-      call mpgagp( zgbl(:,1),pps1,1 )
+      call mpgagp( zgbl,pps1,1 )
 
       do jlat = 1,NLAT
          is = (jlat-1)*NLON + 1

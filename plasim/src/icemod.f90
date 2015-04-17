@@ -1454,7 +1454,7 @@
       if(naout > 0) then
        do ja=1,naout
         ih(1)=750+ja
-        call mpwritegph(71,xaout(:,ja),NHOR,1,ih)
+        call mpwritegph(71,xaout(1,ja),NHOR,1,ih)
        enddo
       endif
 !

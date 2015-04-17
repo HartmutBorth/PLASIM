@@ -247,7 +247,7 @@
 !     ************************
 
       do jlev = 1 , NLEV
-         call writegp(40,dql(:,jlev),161,jlev)
+         call writegp(40,dql(1,jlev),161,jlev)
       enddo
 
 !     *************

@@ -463,7 +463,7 @@
         call mpgagp(zprf3,zqsat,1)
         call mpgagp(zprf4,zdqdt,1)
         call mpgagp(zprf5,zdtdt,1)
-        call mpgagp(zprf6,dprll(:,jlev),1)
+        call mpgagp(zprf6,dprll(1,jlev),1)
         call mpgagp(zprf7,dp,1)
         if(mypid==NROOT) then
          if(jlev==1) write(nud,*)'In mklsp:'

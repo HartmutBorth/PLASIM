@@ -2729,8 +2729,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 12-Jun-2014"
       if (mod(nstep,nafter)==0 .and. nqspec == 1) then
        do jlev=1,NLEV
         zqout(:,jlev)=gq(:,jlev)/exp(gp(:))
-        call gp2fc(zqout(:,jlev),NLON,NLPP)
-        call fc2sp(zqout(:,jlev),sqout(:,jlev))
+        call gp2fc(zqout(1,jlev),NLON,NLPP)
+        call fc2sp(zqout(1,jlev),sqout(1,jlev))
        enddo
        call mpsum(sqout,NLEV)
       endif
@@ -3559,7 +3559,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 12-Jun-2014"
       zdtdt(:,:)=zdtdt(:,:)/ct/ww
       call gp2fc(zdtdt,NLON,NLPP*NLEV)
       do jlev=1,NLEV
-       call fc2sp(zdtdt(:,jlev),zstf1(:,jlev))
+       call fc2sp(zdtdt(1,jlev),zstf1(1,jlev))
       enddo
       call mpsumsc(zstf1,zstt1,NLEV)
 !
@@ -3582,7 +3582,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 12-Jun-2014"
       enddo
       call gp2fc(zdekin,NLON,NLPP*NLEV)
       do jlev=1,NLEV
-       call fc2sp(zdekin(:,jlev),zsdef(:,jlev))
+       call fc2sp(zdekin(1,jlev),zsdef(1,jlev))
       enddo
       call mpsumsc(zsdef,zsde,NLEV)
       call mpgallsp(zsdef,zsde,NLEV)
@@ -3596,7 +3596,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 12-Jun-2014"
       zdtdt(:,:)=zdtdt(:,:)/ct/ww
       call gp2fc(zdtdt,NLON,NLPP*NLEV)
       do jlev=1,NLEV
-       call fc2sp(zdtdt(:,jlev),zstf2(:,jlev))
+       call fc2sp(zdtdt(1,jlev),zstf2(1,jlev))
       enddo
       call mpsumsc(zstf2,zstt2,NLEV)
 !

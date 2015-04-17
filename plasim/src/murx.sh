@@ -1,0 +1,1 @@
+printf"%s-irgendwas",date

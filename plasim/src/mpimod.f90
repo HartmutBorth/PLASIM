@@ -453,7 +453,7 @@
 
       z = 0.0
 
-      if (mypid == NROOT) read (ktape) z(1:NLON*NLAT,:)
+      if (mypid == NROOT) read (ktape) z(:,:)
 
       if (kdim == NHOR) then
        call mpscgp(z,p,klev)
@@ -530,7 +530,7 @@
       real z(NESP,klev)
 
       z = 0.0
-      if (mypid == NROOT) read(ktape) z(1:NRSP,:)
+      if (mypid == NROOT) read(ktape) ((z(i,j),i=1,NRSP),j=1,klev)
       if (kdim == NSPP) then
          call mpscsp(z,p,klev)
       else
@@ -552,9 +552,9 @@
 
       if (kdim == NSPP) then
          call mpgasp(z,p,klev)
-         if (mypid == NROOT) write(ktape) z(1:NRSP,:)
+         if (mypid == NROOT) write(ktape) ((z(i,j),i=1,NRSP),j=1,klev)
       else
-         if (mypid == NROOT) write(ktape) p(1:NRSP,:)
+         if (mypid == NROOT) write(ktape) ((z(i,j),i=1,NRSP),j=1,klev)
       endif
 
       return

@@ -16,6 +16,6 @@ plasim/doc for the Planet Simulator
 
 Then have a look at the README file for configuration and setup.
 
-More info, references, pictures, movies, forum, etc. can be found at:
+More info, references, pictures, movies, etc. can be found at:
 
 www.mi.uni-hamburg.de/plasim

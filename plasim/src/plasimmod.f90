@@ -115,10 +115,7 @@
       parameter(PI     = 3.14159265359D0)  ! Pi
       parameter(TWOPI  = PI + PI)          ! 2 Pi
       parameter(RV     = 461.51)           ! Gas constant for water vapour
-      parameter(ALV    = 2.5008E6)         ! Latent heat of vaporization
-      parameter(ALS    = 2.8345E6)         ! Latent heat of sublimation
       parameter(ACPV   = 1870.)            ! Specific heat for water vapour
-      parameter(TMELT  = 273.16)           ! Melting point (H2O)
       parameter(TMELT_CO2 = 148.0)         ! Melting point (CO2) - for Mars
 
 !     ***************
@@ -197,6 +194,8 @@
 !     * Global Real Scalars *
 !     ***********************
 
+      real :: als   = 2.8345E6! Latent heat of sublimation
+      real :: alv   = 2.5008E6! Latent heat of vaporization
       real :: plavor=     EZ  ! planetary vorticity
       real :: dawn  =     0.0 ! angle threshold for solar radiation
       real :: deltsec  =  0.0 ! timestep [sec]
@@ -213,6 +212,7 @@
       real :: co2   =   360.0  ! atm. co2 concentration (ppmv)
       real :: umax  =     0.0  ! diagnostic U max
       real :: t2mean=     0.0  ! diagnostic T2m mean
+      real :: tmelt = 273.16   ! Melting point (H2O)
       real :: precip=     0.0  ! diagnostic precipitation mean
       real :: evap  =     0.0  ! diagnostic evaporation
       real :: olr   =     0.0  ! Outgoing longwave radiation

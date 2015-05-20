@@ -39,10 +39,13 @@ tropical_year = 31556956.0    ! 365d 05h 49m 16s
 
 akap    =   0.286     ! Kappa (Poisson constant R/Cp)
 alr     =   0.0065    ! Lapse rate
+als     = 2.8345E6    ! Latent heat of sublimation
+alv     = 2.5008E6    ! Latent heat of vaporization
 gascon  = 287.0       ! Gas constant
 ra1     = 610.78      ! Parameter for Magnus-Teten-Formula
 ra2     =  17.2693882 ! for saturation vapor pressure
 ra4     =  35.86      ! over liquid water
+tmelt   = 273.16      ! Melting point (H2O)
 
 ! ********
 ! Numerics

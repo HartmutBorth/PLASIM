@@ -3,7 +3,7 @@
 #define NETCDF_OUTPUT
 // #define OPEN_MP
 
-#define V0 "burn 7.4 (08-Aug-2012)"
+#define V0 "burn 7.5 (20-May-2015)"
 #define V1 "Edilbert Kirk - University of Hamburg"
 #define V2 "Usage: burn7 [-help|-c|-d|-m|-n|-s] <modelfile> <resultfile>"
 #define V3 "New: option <-g> writes Grads ctl for service plotting"
@@ -5135,13 +5135,14 @@ void PumaControl(void)
       if (DataStep < 0.01) // Compute time interval
       {
          if (HeadIn[2] != HeadSt[2] || HeadIn[3] != HeadSt[3])
-	 {
-	    HeadToDate(HeadSt,&D1);
+	     {
+    	    HeadToDate(HeadSt,&D1);
             HeadToDate(HeadIn,&D2);
             DeltaDy  = D2.tm_mday - D1.tm_mday;
             DeltaHr  = D2.tm_hour - D1.tm_hour;
             DeltaMn  = D2.tm_min  - D1.tm_min ;
-	    DataStep = DeltaDy + DeltaHr / 24.0 + DeltaMn / 1440.0;
+            if (DeltaDy < 0) DeltaDy = 1; // month changed after 1.st term
+    	    DataStep = DeltaDy + DeltaHr / 24.0 + DeltaMn / 1440.0;
          }
       }
 
@@ -5763,7 +5764,7 @@ void parini(void)
          {
             level[i] = 100.0 * hPa[i];
             if (hPa[i] <    0.0) Abort("pressure level < 0.0 is illegal");
-            if (hPa[i] > 2000.0) Abort("pressure level > 2000 hPa is illegal");
+//          if (hPa[i] > 2000.0) Abort("pressure level > 2000 hPa is illegal");
          }
       }
       else
@@ -6236,6 +6237,16 @@ int main(int argc, char *argv[])
       SpecialUV = 1;
 
    Dependencies();
+
+   // Check correct vertical coordinate
+
+   if (GeopotHeight->selected && VerType != 'p')
+   {
+      printf("\n ****************** E R R O R ************************\n");
+      printf(" * Geopotential height (156) requires pressure level *\n");
+      printf(" *****************************************************\n");
+      exit(1);
+   }
 
    Geopotential->needed |= OutRep >= PRE_GRID
                         || SLP->needed || GeopotHeight->needed;

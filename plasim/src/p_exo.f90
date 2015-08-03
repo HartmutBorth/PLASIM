@@ -12,10 +12,11 @@ logical :: lex
 namelist /planet_nl/ nfixorb, eccen, mvelp, obliq  &
                 , rotspd, sidereal_day, solar_day  &
                 , sidereal_year, tropical_year     &
-                , akap, alr, gascon, ra1, ra2, ra4 &
+                , akap, alr, alv, als, gascon, ra1, ra2, ra4, tmelt &
                 , pnu, ga, plarad &
                 , gsol0 &
                 , yplanet
+
 
 yplanet = "Exo"      ! Planet name
 nplanet = 1

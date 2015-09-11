@@ -404,7 +404,7 @@
        if(dls(jhor) > 0.0) then
         dtsm(jhor)=dts(jhor)
         dqs(jhor)=rdbrv*ra1*EXP(ra2*(dts(jhor)-tmelt)/(dts(jhor)-ra4))  &
-     &           /psurf
+     &           /dp(jhor)
         dqs(jhor)=dqs(jhor)/(1.-(1./rdbrv-1.)*dqs(jhor))
         dsnow(jhor)=dsnowz(jhor)
         if(dsnow(jhor) > 0.) then

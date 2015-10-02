@@ -1321,9 +1321,13 @@
 !
       real, allocatable :: zprf1(:),zprf2(:),zprf3(:),zprf4(:)
 !
+!     preset
+!
+      xfluxc(:)=0.
+!
 !     compute conductive heat flux
 !
-      where(xiced(:) <= 0.) 
+      where(xiced(:) < xmind) 
        xcflux(:)=xheat(:)
        xcfluxf(:)=0.
       end where

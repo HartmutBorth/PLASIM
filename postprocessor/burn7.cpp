@@ -3,7 +3,7 @@
 #define NETCDF_OUTPUT
 // #define OPEN_MP
 
-#define V0 "burn 7.5 (20-May-2015)"
+#define V0 "burn 7.6 (10-Dec-2015)"
 #define V1 "Edilbert Kirk - University of Hamburg"
 #define V2 "Usage: burn7 [-help|-c|-d|-m|-n|-s] <modelfile> <resultfile>"
 #define V3 "New: option <-g> writes Grads ctl for service plotting"
@@ -134,7 +134,8 @@ int     SaveMemory = 0; /* Switch on for dynamic memory usage */
 int     PolyCreate = 0; /* Create polynomials files for hires T1365 and more */
 int     PolyDisk   = 0; /* Read polynomials from disk */
 int     GaussGrid  = 0; /* Output Guassian Grid */
-int     DPM        = 0; /* Days Per Month if DPM > 99 */
+int     DPM        = 0; /* Days Per Month */
+int     DPY        = 0; /* Days Per Year */
 int     DayDivisor = 0; /* Use for day adjustment if more than 99 days per month */
 
 char    VerType; /* s=Sigma   p=Pressure */
@@ -5656,6 +5657,8 @@ void parini(void)
       sprintf(tb,"%10.10s = %8d           ","daydivisor",DayDivisor);
       LeftText(tb);
    }
+   DPY        = scanpar("dpy",0);
+   if (DPY > 0) DaysPerYear = DPY;
    Cyclical   = scanpar("cyclical",Cyclical);
    if (Cyclical) Cyclical = 1;
    if (VerType == 0 || HorType == 0)

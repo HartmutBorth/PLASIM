@@ -3,7 +3,7 @@
 #define NETCDF_OUTPUT
 // #define OPEN_MP
 
-#define V0 "burn 7.6 (10-Dec-2015)"
+#define V0 "burn 7.6 (15-Dec-2015)"
 #define V1 "Edilbert Kirk - University of Hamburg"
 #define V2 "Usage: burn7 [-help|-c|-d|-m|-n|-s] <modelfile> <resultfile>"
 #define V3 "New: option <-g> writes Grads ctl for service plotting"
@@ -1387,7 +1387,7 @@ void ServiceGrid::Write_hgrid(void)
    for (code = 0; code < CODES; code++)
    if (All[code].selected)
    {
-      if (!&All[code].hgp[0])
+      if (All[code].hgp.size() == 0)
       {
          fprintf(stderr, "*** Error in ServiceGrid::Write_hgrid\n");
          fprintf(stderr, "    Code %d is not available on sigma level\n",code);
@@ -5914,7 +5914,8 @@ void AnalyzeFile(void)
    
       fcb = ReadFCW();
       RealSize = fcb / SigLevs; // Should be float (4) or double (8)
-      if (RealSize != sizeof(float) && RealSize != sizeof(double)) Abort("FCW error on level record");
+      if (RealSize != sizeof(float) && RealSize != sizeof(double))
+         Abort("FCW error on level record");
       for (i = 0 ; i < SigLevs ; i++)
       {
          if (RealSize == sizeof(float)) vct[i+SigLevs+2] = ReadFLOAT();
@@ -5948,12 +5949,15 @@ void AnalyzeFile(void)
       fcb = ReadFCW();
       RealSize = fcb / (Gats * Gats * 2); // Should be float (4) or double (8)
       fseek(fpi,-4*LongFCW,SEEK_CUR);
-      if (RealSize != sizeof(float) && RealSize != sizeof(double)) Abort("FCW error on first array");
+      if (RealSize != sizeof(float) && RealSize != sizeof(double))
+         Abort("FCW error on first array");
       for (i = 0 ; i < SigLevs ; i++)
       {
          if (RealSize == sizeof(float)) vct[i+SigLevs+2] = ReadFLOAT();
          else                           vct[i+SigLevs+2] = ReadDOUBLE();
       }
+      if (RealSize == sizeof(float)) DaysPerYear = ReadFLOAT();
+      else                           DaysPerYear = ReadDOUBLE();
    }
    HeadSt = HeadIn;
    sprintf(tb,"Truncation                        = %6d",Truncation);

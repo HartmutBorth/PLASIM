@@ -41,7 +41,7 @@
 !
 !     UPDATE VERSION IDENTIFIER AFTER EACH CODE CHANGE!
 
-plasimversion = "https://github.com/Edilbert/PLASIM/ : 12-Jun-2014"
+plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 
       call mpstart(-1)       ! -1: Start MPI   >=0 arg = MPI_COMM_WORLD
       call setfilenames

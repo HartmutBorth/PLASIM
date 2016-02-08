@@ -1,6 +1,6 @@
 /*
 
-MOST - Model Starter - Version 17 - Edilbert Kirk
+MOST - Model Starter
 ---------------------------------------------------------------------------
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -1016,7 +1016,7 @@ void InitNamelist(void)
    // WHABITUS
 
    NL_i(HABITUS,"habitus","KICK"   ,  1);
-};
+}
 
 void NamelistSelector(int model)
 {

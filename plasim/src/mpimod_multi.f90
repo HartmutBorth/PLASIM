@@ -80,7 +80,7 @@
          if (kesp == mrdim) then
             px(:) = pa(:,jlev)
          else
-            call mrtrunc(pa(1,jlev),ntru,px,mintru)
+            call mrtrunc(pa(:,jlev),ntru,px,mintru)
          endif
          call mpi_allreduce(px,py,mrdim,mpi_rtype,MPI_SUM,mrworld,mrinfo)
          py(:) = py(:) - 2.0 * px(:)

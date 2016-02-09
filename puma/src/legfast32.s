@@ -59,13 +59,13 @@ LOOP_M_FC2SP:
         add      $8,%rdi          # fc += 2
         movl     %ecx, %ebx       # index n = m
 LOOP_N_FC2SP:
+        dec      %ebx             # --n
+        jz       L_SINGLE_FC2SP
         movups  (%rsi),%xmm4      # sp(w)
         movlps  (%rdx),%xmm5      # qc(w) & qc(w+1)
         unpcklps %xmm5,%xmm5      # duplicate & combine qc's
         mulps    %xmm3,%xmm5      # qc(w) * (fc(m) + fc(m+nlat))
         addps    %xmm5,%xmm4      # sp(w) + qc(w) * fc
-        dec      %ebx             # --n
-        jz       L_SINGLE_FC2SP
         movups   %xmm4,(%rsi)     # two modes
         add      $16,%rsi         # sp += 4
         add      $8,%rdx          # qc++
@@ -74,8 +74,18 @@ LOOP_N_FC2SP:
         loop     LOOP_M_FC2SP
         jmp      LOOP_M_FC2SP_EXIT
 L_SINGLE_FC2SP:
-        movlps   %xmm4,(%rsi)     # single mode
-        addq     $8,%rsi          # sp += 2
+        movss   (%rsi),%xmm4      # sp(w) real
+        movss   (%rdx),%xmm5      # qc(w)
+        mulss    %xmm3,%xmm5      # qc(w) * (fc(m) + fc(m+nlat))
+        addss    %xmm5,%xmm4      # sp(w) + qc(w) * fc
+        movss    %xmm4,(%rsi)     # single mode
+        addq     $4,%rsi          # sp += 2
+        movss   (%rsi),%xmm4      # sp(w) imag
+        movss   (%rdx),%xmm5      # qc(w)
+        mulss    %xmm3,%xmm5      # qc(w) * (fc(m) + fc(m+nlat))
+        addss    %xmm5,%xmm4      # sp(w) + qc(w) * fc
+        movss    %xmm4,(%rsi)     # single mode
+        addq     $4,%rsi          # sp += 2
         add      $4,%rdx          # qc++
         loop     LOOP_M_FC2SP     # while (m != 0)
 LOOP_M_FC2SP_EXIT:

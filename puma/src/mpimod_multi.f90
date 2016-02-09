@@ -100,7 +100,7 @@
          if (kesp == mrdim) then
             px(:) = pa(:,jlev)
          else
-            call mrtrunc(pa(1,jlev),ntru,px,mintru)
+            call mrtrunc(pa(:,jlev),ntru,px,mintru)
          endif
          call mpi_allreduce(px,py,mrdim,mpi_rtype,MPI_SUM,mrworld,mrinfo)
          py(:) = py(:) - 2.0 * px(:)
@@ -135,14 +135,14 @@
 !     Reduce truncation from nthi to ntlo
 
       subroutine mrtrunc(sphi,nthi,splo,ntlo)
-      complex :: sphi(*)
-      complex :: splo(*)
+      real :: sphi(2,*)
+      real :: splo(2,*)
 
       jl = 1
       jh = 1
       do jm = 0 , ntlo
          jn = ntlo - jm
-         splo(jl:jl+jn) = sphi(jh:jh+jn)
+         splo(:,jl:jl+jn) = sphi(:,jh:jh+jn)
          jl = jl + ntlo - jm + 1
          jh = jh + nthi - jm + 1
       enddo
@@ -157,15 +157,15 @@
 !     Expand truncation from ntlo to nthi
 
       subroutine mrexpand(splo,ntlo,sphi,nthi)
-      complex :: sphi(*)
-      complex :: splo(*)
+      real :: sphi(2,*)
+      real :: splo(2,*)
 
-      sphi(1:nthi) = (0.0,0.0)
+      sphi(:,1:nthi) = 0.0
       jl = 1
       jh = 1
       do jm = 0 , ntlo
          jn = ntlo - jm
-         sphi(jh:jh+jn) = splo(jl:jl+jn)
+         sphi(:,jh:jh+jn) = splo(:,jl:jl+jn)
          jl = jl + ntlo - jm + 1
          jh = jh + nthi - jm + 1
       enddo

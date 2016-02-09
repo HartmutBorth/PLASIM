@@ -18,6 +18,7 @@
 
       subroutine mpbci(k) ! broadcast 1 integer
       use mpimod
+      integer :: k(*)
 
       call mpi_bcast(k,1,mpi_itype,NROOT,myworld,mpinfo)
 
@@ -31,7 +32,7 @@
       subroutine mpbcin(k,n) ! broadcast n integer
       use mpimod
 
-      integer k(n)
+      integer :: k(n)
 
       call mpi_bcast(k,n,mpi_itype,NROOT,myworld,mpinfo)
 
@@ -44,6 +45,7 @@
 
       subroutine mpbcr(p) ! broadcast 1 real
       use mpimod
+      real :: p(*)
 
       call mpi_bcast(p,1,mpi_rtype,NROOT,myworld,mpinfo)
 
@@ -57,7 +59,7 @@
       subroutine mpbcrn(p,n) ! broadcast n real
       use mpimod
 
-      real p(n)
+      real :: p(n)
 
       call mpi_bcast(p,n,mpi_rtype,NROOT,myworld,mpinfo)
 
@@ -68,11 +70,11 @@
 !     SUBROUTINE MPBCL
 !     ================
 
-      subroutine mpbcl(k) ! broadcast 1 logical
+      subroutine mpbcl(l) ! broadcast 1 logical
       use mpimod
-      logical k
+      logical :: l(*)
 
-      call mpi_bcast(k,1,mpi_ltype,NROOT,myworld,mpinfo)
+      call mpi_bcast(l,1,mpi_ltype,NROOT,myworld,mpinfo)
 
       return
       end subroutine mpbcl
@@ -84,7 +86,7 @@
       subroutine mpscin(k,n) ! scatter n integer
       use mpimod
 
-      integer k(*)
+      integer :: k(*)
 
       call mpi_scatter(k,n,mpi_itype,k,n,mpi_itype                  &
      &                ,NROOT,myworld,mpinfo)
@@ -99,7 +101,7 @@
       subroutine mpscrn(p,n) ! scatter n real
       use mpimod
 
-      real p(*)
+      real :: p(*)
 
       call mpi_scatter(p,n,mpi_rtype,p,n,mpi_rtype,NROOT,myworld,mpinfo)
 
@@ -127,12 +129,12 @@
       subroutine mpscgp(pf,pp,klev) ! scatter gridpoint fields
       use mpimod
 
-      real pf(NUGP,klev)
-      real pp(NHOR,klev)
+      real :: pf(NUGP,klev)
+      real :: pp(NHOR,klev)
 
       do jlev = 1 , klev
-         call mpi_scatter(pf(1,jlev),NHOR,mpi_rtype,                     &
-     &                    pp(1,jlev),NHOR,mpi_rtype,                     &
+         call mpi_scatter(pf(:,jlev),NHOR,mpi_rtype,                     &
+     &                    pp(:,jlev),NHOR,mpi_rtype,                     &
      &                    NROOT,myworld,mpinfo)
       enddo
 
@@ -146,12 +148,12 @@
       subroutine mpgagp(pf,pp,klev) ! gather gridpoint fields
       use mpimod
 
-      real pf(NLON*NLAT,klev)
-      real pp(NHOR,klev)
+      real :: pf(NLON*NLAT,klev)
+      real :: pp(NHOR,klev)
 
       do jlev = 1 , klev
-         call mpi_gather(pp(1,jlev),NHOR,mpi_rtype,                      &
-     &                   pf(1,jlev),NHOR,mpi_rtype,                      &
+         call mpi_gather(pp(:,jlev),NHOR,mpi_rtype,                      &
+     &                   pf(:,jlev),NHOR,mpi_rtype,                      &
      &                   NROOT,myworld,mpinfo)
       enddo
 
@@ -165,12 +167,12 @@
       subroutine mpgallgp(pf,pp,klev) ! gather gritpoint to all
       use mpimod
 
-      real pf(NLON*NLAT,klev)
-      real pp(NHOR,klev)
+      real :: pf(NLON*NLAT,klev)
+      real :: pp(NHOR,klev)
 
       do jlev = 1 , klev
-         call mpi_allgather(pp(1,jlev),NHOR,mpi_rtype,                   &
-     &                      pf(1,jlev),NHOR,mpi_rtype,                   &
+         call mpi_allgather(pp(:,jlev),NHOR,mpi_rtype,                   &
+     &                      pf(:,jlev),NHOR,mpi_rtype,                   &
      &                      myworld,mpinfo)
       enddo
 
@@ -184,12 +186,12 @@
       subroutine mpscsp(pf,pp,klev) ! scatter spectral fields
       use mpimod
 
-      real pf(NESP,klev)
-      real pp(NSPP,klev)
+      real :: pf(NESP,klev)
+      real :: pp(NSPP,klev)
 
       do jlev = 1 , klev
-         call mpi_scatter(pf(1,jlev),NSPP,mpi_rtype                      &
-     &                   ,pp(1,jlev),NSPP,mpi_rtype                      &
+         call mpi_scatter(pf(:,jlev),NSPP,mpi_rtype                      &
+     &                   ,pp(:,jlev),NSPP,mpi_rtype                      &
      &                   ,NROOT,myworld,mpinfo)
       enddo
 
@@ -203,12 +205,12 @@
       subroutine mpgasp(pf,pp,klev) ! gather spectral fields
       use mpimod
 
-      real pf(NESP,klev)
-      real pp(NSPP,klev)
+      real :: pf(NESP,klev)
+      real :: pp(NSPP,klev)
 
       do jlev = 1 , klev
-         call mpi_gather(pp(1,jlev),NSPP,mpi_rtype                       &
-     &                  ,pf(1,jlev),NSPP,mpi_rtype                       &
+         call mpi_gather(pp(:,jlev),NSPP,mpi_rtype                       &
+     &                  ,pf(:,jlev),NSPP,mpi_rtype                       &
      &                  ,NROOT,myworld,mpinfo)
       enddo
 
@@ -222,11 +224,11 @@
       subroutine mpgacs(pcs) ! gather cross sections
       use mpimod
 
-      real pcs(NLAT,NLEV)
+      real :: pcs(NLAT,NLEV)
 
       do jlev = 1 , NLEV
-         call mpi_gather(pcs(1,jlev),NLPP,mpi_rtype                      &
-     &                  ,pcs(1,jlev),NLPP,mpi_rtype                      &
+         call mpi_gather(pcs(:,jlev),NLPP,mpi_rtype                      &
+     &                  ,pcs(:,jlev),NLPP,mpi_rtype                      &
      &                  ,NROOT,myworld,mpinfo)
 
       enddo
@@ -240,12 +242,12 @@
       subroutine mpgallsp(pf,pp,klev) ! gather spectral to all
       use mpimod
 
-      real pf(NESP,klev)
-      real pp(NSPP,klev)
+      real :: pf(NESP,klev)
+      real :: pp(NSPP,klev)
 
       do jlev = 1 , klev
-         call mpi_allgather(pp(1,jlev),NSPP,mpi_rtype                    &
-     &                     ,pf(1,jlev),NSPP,mpi_rtype                    &
+         call mpi_allgather(pp(:,jlev),NSPP,mpi_rtype                    &
+     &                     ,pf(:,jlev),NSPP,mpi_rtype                    &
      &                     ,myworld,mpinfo)
       enddo
 
@@ -259,10 +261,10 @@
       subroutine mpsum(psp,klev) ! sum spectral fields
       use mpimod
 
-      real psp(NESP,klev)
-      real tmp(NESP,klev)
+      real :: psp(NESP*klev)
+      real :: tmp(NESP*klev)
 
-      call mpi_reduce(psp(1,1),tmp(1,1),NESP*klev,mpi_rtype,MPI_SUM     &
+      call mpi_reduce(psp,tmp,NESP*klev,mpi_rtype,MPI_SUM                &
      &               ,NROOT,myworld,mpinfo)
       if (mypid == NROOT) psp = tmp
 
@@ -276,11 +278,11 @@
       subroutine mpsumsc(psf,psp,klev) ! sum & scatter spectral
       use mpimod
 
-      real psf(NESP,klev)
-      real psp(NSPP,klev)
+      real :: psf(NESP,klev)
+      real :: psp(NSPP,klev)
 
       do jlev = 1 , klev
-         call mpi_reduce_scatter(psf(1,jlev),psp(1,jlev),nscatsp        &
+         call mpi_reduce_scatter(psf(:,jlev),psp(:,jlev),nscatsp        &
      &                          ,mpi_rtype,MPI_SUM,myworld,mpinfo)
       enddo
 
@@ -633,6 +635,8 @@
       use mpimod
 
       real :: p(kdim,klev)
+      real :: pmax(1)
+      real :: zmax(1)
 
       zmax = maxval(p(:,:))
       call mpi_allreduce(zmax,pmax,1,mpi_rtype,MPI_MAX,myworld,mpinfo)
@@ -649,6 +653,8 @@
       use mpimod
 
       real :: p(kdim,klev)
+      real :: psum(1)
+      real :: zsum(1)
 
       zsum = sum(p(:,:))
       call mpi_allreduce(zsum,psum,1,mpi_rtype,MPI_SUM,myworld,mpinfo)

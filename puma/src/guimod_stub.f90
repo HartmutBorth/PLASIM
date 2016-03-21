@@ -27,7 +27,7 @@ character (len=*) :: yn
 return
 end subroutine guigv
 
-subroutine guips(fp)
+subroutine guips(fp,psmean)
 return
 end subroutine guips
 

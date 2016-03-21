@@ -179,7 +179,6 @@ integer :: nstep    = -1 ! current timestep step 0: 01-Jan-0001  00:00
 integer :: nstop    =  0 ! finishing timestep
 integer :: ntspd    =  0 ! one day = ntspd timesteps
 integer :: mpstep   =  0 ! minutes per step 0 = automatic
-integer :: spstep   =  0 ! seconds per step 0 = automatic
 integer :: ncu      =  0 ! check unit (debug output)
 integer :: nwrioro  =  1 ! controls output of orography
 integer :: nextout  =  0 ! 1: extended output (entropy production)
@@ -233,6 +232,7 @@ real :: plavor =    EZ    ! planetary vorticity
 real :: psmean = PSURF_EARTH ! Mean of Ps on Earth
 real :: rotspd =     1.0  ! rotation speed 1.0 = normal Earth rotation
 real :: sigmax =  6.0e-7  ! sigma for top half level
+real :: spstep =  0.0     ! seconds per step 0 = automatic
 real :: diffts = 21600.0  ! diffusion time scale [sec]
 real :: tac    =   360.0  ! length of annual cycle [days] (0 = no cycle)
 real :: pac    =     0.0  ! phase of the annual cycle [days]
@@ -773,7 +773,7 @@ call mpbci(nvg    )  ! Type of vertical grid
 call mpbci(nenergy)  ! energy diagnostics
 call mpbci(nentropy) ! entropy diagnostics
 call mpbci(ndheat)   ! energy recycling
-call mpbci(nradcv)  ! use two restoration fields
+call mpbci(nradcv)   ! use two restoration fields
 
 !     broadcast logical
 

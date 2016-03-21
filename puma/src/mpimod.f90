@@ -664,7 +664,7 @@
 
 !     Some dummy declarations that are use in multirun mode only
 
-      subroutine mrdiff(p,d,n)
+      subroutine mrdiff(p,d,n,l)
       real :: p(n)
       real :: d(n)
       return

@@ -560,10 +560,19 @@ LOOP_M_MKTEND:
         add     $8,32(%rbp)       # vt += 2
 #       ------------------------- #
         movl    %ecx, %ebx        # index n = m
+        cmp     $1, %ecx          # last mode ?
+        jne     LOOP_N_MKTEND     # proceed
+#       ------------------------- #
+        movsd   (%rdi),%xmm7      # d(w)
+        movsd   (%rsi),%xmm8      # t(w)
+        movsd   (%rdx),%xmm9      # z(w)
+        jmp     LOAD_QE
+        
 LOOP_N_MKTEND:
-        movups  (%rdi),%xmm7      # d(w)
-        movups  (%rsi),%xmm8      # t(w)
-        movups  (%rdx),%xmm9      # z(w)
+        movups  (%rdi),%xmm7      # d(w) / d(w+1)
+        movups  (%rsi),%xmm8      # t(w) / t(w+1)
+        movups  (%rdx),%xmm9      # z(w) / z(w+1)
+LOAD_QE:
 #       ------- load qe---------- #
         movlps  (%r12),%xmm3      # qe(w) & qe(w+1)
         unpcklps %xmm3,%xmm3      # duplicate & combine qe's

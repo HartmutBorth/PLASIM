@@ -1057,15 +1057,15 @@ end subroutine master
             write(nud,  '("* Total CPU time      : ", f10.3," sec *")') tmrun
             if (imem > 0) &
             write(nud,  '("* Memory usage        : ", f10.3," MB  *")') imem * 0.000001
-            if (ipr > 0) &
+            if (ipr > 0 .and. ipr < 1000000) &
             write(nud,  '("* Page reclaims       : ", i6," pages   *")') ipr
-            if (ipf > 0) &
+            if (ipf > 0 .and. ipf < 1000000) &
             write(nud,  '("* Page faults         : ", i6," pages   *")') ipf
-            if (isw > 0) &
+            if (isw > 0 .and. isw < 1000000) &
             write(nud,  '("* Page swaps          : ", i6," pages   *")') isw
-            if (idr > 0) &
+            if (idr > 0 .and. idr < 1000000) &
             write(nud,  '("* Disk read           : ", i6," blocks  *")') idr
-            if (idw > 0) &
+            if (idw > 0 .and. idw < 1000000) &
             write(nud,  '("* Disk write          : ", i6," blocks  *")') idw
             write(nud,'("****************************************")')
             if (zspy < 600.0) then

@@ -108,7 +108,7 @@ char *FullModelName[MODELS] =
 {
    "PUMA",
    "SAM",
-   "CAT",
+   "Computer Aided Turbulence",
    "Planet Simulator"
 };
 
@@ -208,7 +208,7 @@ struct SelStruct *SelCPU;
 struct SelStruct *SelMulti;
 struct SelStruct *SelLat2;
 
-#define DIMLOGO 3
+#define DIMLOGO 4
 
 struct SymbolStruct 
 {
@@ -1627,19 +1627,12 @@ void InitLogo(void)
    ++n;
    strcpy(Logo[n].t[0],FullModelName[PLASIM]);
 
-/*
-   Logo[n].x = 350;
-   Logo[n].y = 8;
-   Logo[n].w = DIMX_LOGO_PLASIM;
-   Logo[n].h = DIMY_LOGO_PLASIM;
-   Logo[n].b = Blue.pixel;
-   Logo[n].f = WhitePix;
-   strcpy(Logo[n].t[0],"Planet");
-   strcpy(Logo[n].t[1],"Simulator");
-   Logo[n].i    = pixelplasim;
-*/
+   // Cat
 
-   Logos = n;
+   ++n;
+   strcpy(Logo[n].t[0],FullModelName[CAT]);
+
+   Logos = n+1;
 }
 
 void GenerateNames(void)
@@ -4147,7 +4140,7 @@ int RedrawControlWindow(void)
    ShowOrography();
    ShowFrame1();
    ShowButtons();
-   for (l=0 ; l < 3 ; ++l)
+   for (l=0 ; l < Logos ; ++l)
    {
       XPutImage(display,Cow,gc,Logo[l].X,0,0,Logo[l].x,Logo[l].y,Logo[l].w,Logo[l].h);
    }
@@ -4363,7 +4356,8 @@ void InitGUI(void)
    InitLogo();
    ReadLogo(0,"images/KC-Logo_RGB.bmp");
    ReadLogo(1,"images/puma.bmp");
-   ReadLogo(2,"images/plasim.bmp");
+   ReadLogo(2,"images/cat.bmp");
+   ReadLogo(3,"images/plasim.bmp");
    ReadImage(&MapHRE,"images/earth.bmp");
    ReadImage(&MapHRM,"images/mars.bmp");
    ReadImage(&MapLRK,"images/Kepler-16.bmp");

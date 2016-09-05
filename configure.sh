@@ -272,9 +272,9 @@ mkdir -p plasim/bin
 mkdir -p plasim/run
 mkdir -p plasim/dat/T21_exo
 mkdir -p plasim/dat/T42_exo
-mkdir -p habitus/bld
-mkdir -p habitus/bin
-mkdir -p habitus/run
+mkdir -p cat/bld
+mkdir -p cat/bin
+mkdir -p cat/run
 
 #check FORTRAN I/O
 

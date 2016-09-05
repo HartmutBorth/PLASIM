@@ -54,7 +54,7 @@ String Buffer;
 
 #define PUMA    0
 #define SAM     1
-#define HABITUS 2
+#define CAT     2
 #define PLASIM  3
 #define MODELS  4
 
@@ -100,7 +100,7 @@ char *ShortModelName[MODELS] =
 {
    "puma",
    "sam",
-   "habitus",
+   "cat",
    "plasim"
 };
 
@@ -108,7 +108,7 @@ char *FullModelName[MODELS] =
 {
    "PUMA",
    "SAM",
-   "HABITUS",
+   "CAT",
    "Planet Simulator"
 };
 
@@ -336,7 +336,7 @@ int Preprocessed;
 int SAMindex;
 int ScreenHeight;
 int Expert = 1;
-int Habitus = 0;
+int Cat = 0;
 int LsgEnabled;
 int ModeRadiusSq;
 int ForceRebuild;
@@ -573,7 +573,7 @@ void ChangeModel(int NewMo)
       NewMo = PUMA; // default if none is specified
       for (i=0 , Sel = SelMod ; i < MODELS; ++i , Sel = Sel->Next)
       {
-         if (!Habitus && i == HABITUS) i++;
+         if (!Cat && i == CAT) i++;
          if (Sel->iv == 1) NewMo = i;
       }
    }
@@ -583,7 +583,7 @@ void ChangeModel(int NewMo)
 
    for (i=0 , Sel = SelMod ; i < MODELS; ++i , Sel = Sel->Next)
    {
-      if (!Habitus && i == HABITUS) i++;
+      if (!Cat && i == CAT) i++;
       if (i == NewMo) Sel->iv = 1;
       else            Sel->iv = 0;
    }
@@ -1013,9 +1013,9 @@ void InitNamelist(void)
    NL_r(PUMA,"puma","ROTSPD" ,  1.0);
    NL_r(PUMA,"puma","TGR"    , 288.0);
 
-   // WHABITUS
+   // CAT
 
-   NL_i(HABITUS,"habitus","KICK"   ,  1);
+   NL_i(CAT,"cat","KICK"   ,  1);
 }
 
 void NamelistSelector(int model)
@@ -1193,12 +1193,12 @@ void InitSelections(void)
    Sel = NewSel(Sel);
    InitNextSelection(Sel,dyn,"SAM");
 
-   // Habitus
+   // Cat
 
-   if (Habitus)
+   if (Cat)
    {
       Sel = NewSel(Sel);
-      InitNextSelection(Sel,dyn,FullModelName[HABITUS]);
+      InitNextSelection(Sel,dyn,FullModelName[CAT]);
    }
 
    // Planet Simulator
@@ -1646,10 +1646,10 @@ void GenerateNames(void)
 {
    Truncation = (2 * Latitudes - 1) / 3;
    sprintf(namelist_name,"%s_namelist",ShortModelName[Model]);
-   if (Model == HABITUS)
+   if (Model == CAT)
    {
-      if (Cores < 2) strcpy(exec_name,"habitus.x");
-      else           strcpy(exec_name,"habitus_mpi.x");
+      if (Cores < 2) strcpy(exec_name,"cat.x");
+      else           strcpy(exec_name,"cat_mpi.x");
    }
    else if (Model == PUMA)
    {
@@ -1685,7 +1685,7 @@ int WriteRunScript(int model)
 
    strcpy(exec_nam2,exec_name); // Duplicate exec name
 
-   if (model == HABITUS) // Add Dimensions
+   if (model == CAT) // Add Dimensions
    {
       sprintf(exec_name+strlen(exec_name)," %d %d",Latitudes,Latitude2);
    }
@@ -3291,12 +3291,12 @@ void BuildScripts(void)
       if (!Build(SAM)) Exit();
       WriteRunScript(SAM);
    }
-   if (Model == HABITUS)
+   if (Model == CAT)
    {
       GenerateNames();
-      // WriteHabitusNamelist();
-      if (!Build(HABITUS)) Exit();
-      WriteRunScript(HABITUS);
+      // WriteCatNamelist();
+      if (!Build(CAT)) Exit();
+      WriteRunScript(CAT);
    }
    if (Model == PLASIM)
    {
@@ -4327,10 +4327,10 @@ void InitGUI(void)
       fclose(xpp);
    }
 
-   xpp = fopen("Turbo","r"); // Habitus enabled
+   xpp = fopen("Cat","r"); // Cat enabled
    if (xpp)
    {
-      Habitus = 1;
+      Cat = 1;
       fclose(xpp);
    }
 
@@ -4469,7 +4469,7 @@ void OnMouseClick(void)
 
    for (i = PUMA , Sel = SelMod ; i < MODELS ; ++i , Sel = Sel->Next)
    {
-      if (!Habitus && i == HABITUS) i++;
+      if (!Cat && i == CAT) i++;
       if (HitBox(Sel) && Model != i)
       {
          if (Debug) printf("Change model from %d to %d\n",Model,i);

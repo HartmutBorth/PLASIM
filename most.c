@@ -108,7 +108,7 @@ char *FullModelName[MODELS] =
 {
    "PUMA",
    "SAM",
-   "Computer Aided Turbulence",
+   "CAT",
    "Planet Simulator"
 };
 

@@ -568,12 +568,11 @@ void ChangeModel(int NewMo)
    int i;
    struct SelStruct *Sel;
 
-   if (NewMo < 0) // locate actice model
+   if (NewMo < 0) // locate active model
    {
       NewMo = PUMA; // default if none is specified
       for (i=0 , Sel = SelMod ; i < MODELS; ++i , Sel = Sel->Next)
       {
-         if (!Cat && i == CAT) i++;
          if (Sel->iv == 1) NewMo = i;
       }
    }
@@ -583,7 +582,6 @@ void ChangeModel(int NewMo)
 
    for (i=0 , Sel = SelMod ; i < MODELS; ++i , Sel = Sel->Next)
    {
-      if (!Cat && i == CAT) i++;
       if (i == NewMo) Sel->iv = 1;
       else            Sel->iv = 0;
    }
@@ -1015,7 +1013,21 @@ void InitNamelist(void)
 
    // CAT
 
-   NL_i(CAT,"cat","KICK"   ,  1);
+   NL_t(CAT,"sim","J1"       ,  "JET");
+   NL_i(CAT,"sim","J1W1"     ,  8);
+   NL_i(CAT,"sim","J1W2"     ,  4);
+   NL_i(CAT,"sim","J1SCL"    ,  1);
+   NL_r(CAT,"sim","J1AMP"    ,  1.0);
+   NL_r(CAT,"cat","ALPHA"    ,  0.0);
+   NL_r(CAT,"cat","BETA"     ,  0.0);
+   NL_r(CAT,"cat","AFORC"    ,  0.001);
+   NL_r(CAT,"cat","TFORC"    ,  0.01);
+   NL_i(CAT,"cat","NFORC"    ,  0);
+   NL_i(CAT,"cat","NSIM"     ,  0);
+   NL_i(CAT,"cat","KFMIN"    ,  0);
+   NL_i(CAT,"cat","KFMAX"    ,  8);
+   NL_i(CAT,"cat","JACMTHD"  ,  1);
+   NL_i(CAT,"cat","NSTEPS"  ,   10000);
 }
 
 void NamelistSelector(int model)
@@ -1193,7 +1205,7 @@ void InitSelections(void)
    Sel = NewSel(Sel);
    InitNextSelection(Sel,dyn,"SAM");
 
-   // Cat
+   // CAT
 
    if (Cat)
    {
@@ -1641,8 +1653,8 @@ void GenerateNames(void)
    sprintf(namelist_name,"%s_namelist",ShortModelName[Model]);
    if (Model == CAT)
    {
-      if (Cores < 2) strcpy(exec_name,"cat.x");
-      else           strcpy(exec_name,"cat_mpi.x");
+      if (Cores < 2) strcpy(exec_name,"most_cat.x");
+      else           strcpy(exec_name,"most_cat_mpi.x");
    }
    else if (Model == PUMA)
    {
@@ -4369,10 +4381,11 @@ void InitGUI(void)
    
    ChangeModel(PLASIM);
    NamelistSelector(PLASIM);
+   ChangeModel(CAT);
+   NamelistSelector(CAT);
    ChangeModel(SAM);
    NamelistSelector(SAM);
    ChangeModel(PUMA);
-   //AddPumaNamelist();
    NamelistSelector(PUMA);
 
    if (ReadSettings(cfg_file))
@@ -4463,7 +4476,6 @@ void OnMouseClick(void)
 
    for (i = PUMA , Sel = SelMod ; i < MODELS ; ++i , Sel = Sel->Next)
    {
-      if (!Cat && i == CAT) i++;
       if (HitBox(Sel) && Model != i)
       {
          if (Debug) printf("Change model from %d to %d\n",Model,i);

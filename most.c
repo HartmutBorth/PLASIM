@@ -3130,7 +3130,7 @@ void ShowModeSelector(void)
    yp += dx;
    XDrawImageString(display,pix,gc,xp,yp,Text,len);
 
-   strcpy(Text,"MB 3: Toggle line");
+   strcpy(Text,"MB 3: Toggle row");
    len = strlen(Text);
    yp += dx;
    XDrawImageString(display,pix,gc,xp,yp,Text,len);

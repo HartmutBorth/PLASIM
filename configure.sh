@@ -96,7 +96,7 @@ fi
 #check for C compiler
 # put your favourite compiler in front if you have more than one
 
-for MOST_CC in cc gxlc gcc suncc cc NO_CC
+for MOST_CC in gcc cc gxlc suncc cc NO_CC
 do
    `hash 2>/dev/null $MOST_CC`
    if [ $? = 0 ] ; then break ; fi

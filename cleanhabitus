@@ -1,3 +1,0 @@
-rm -f -r habitus/bld/*
-rm -f -r habitus/bin/*
-rm -f -r habitus/run/*

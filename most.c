@@ -208,6 +208,13 @@ struct SelStruct *SelCPU;
 struct SelStruct *SelMulti;
 struct SelStruct *SelLat2;
 
+
+// Title lines for the entry of resolution
+
+char *DimText1;
+char *DimText2;
+char *DimText3;
+
 #define DIMLOGO 4
 
 struct SymbolStruct 
@@ -610,6 +617,34 @@ void ChangeModel(int NewMo)
           for (i=0 ; i < PLANETS ; ++i) SelPlanet[i]->no = 0;
        }
    }
+   if (Expert)
+   {
+      if (NewMo == CAT)
+      {
+         strcpy(DimText1,"NGX          ");
+         strcpy(DimText2,"NGY          ");
+      }
+      else
+      {
+         strcpy(DimText1,"Latitudes #1 ");
+         strcpy(DimText2,"Latitudes #2 ");
+      }
+   }
+   else
+   {
+      if (NewMo == CAT)
+      {
+         strcpy(DimText1,"[  64 x 64  ]");
+         strcpy(DimText2,"[ 256 x 256 ]");
+         strcpy(DimText3,"[1024 x 1024]");
+      }
+      else
+      {
+         strcpy(DimText1,"T21   [64x32]");
+         strcpy(DimText2,"T31   [96x48]");
+         strcpy(DimText3,"T42  [128x64]");
+      }
+   }
    Model = NewMo;
 }
 
@@ -698,7 +733,7 @@ void UpdateSelections(struct SelStruct *Sel)
          strcpy(Sel->teva,text);
       }
    }
-   if (SelLat2) SelLat2->no = (SelMulti->iv != 2) ;
+   // if (SelLat2) SelLat2->no = (SelMulti->iv != 2) ;
 }
 
 
@@ -1363,13 +1398,14 @@ void InitSelections(void)
       Sel->type = SEL_INT;
       Sel->div  = Sel->iv = Latitudes;
       Sel->piv  = &Latitudes;
+      DimText1  = Sel->text;
 
       Sel = NewSel(Sel);
       InitNextSelection(Sel,dys,"Latitudes #2");
       Sel->div  = Sel->iv = Latitudes;
       Sel->piv  = &Latitude2;
-      Sel->no   = 1;
       SelLat2   = Sel;
+      DimText2  = Sel->text;
    }
    else
    {
@@ -1381,6 +1417,7 @@ void InitSelections(void)
       Sel->yt   = Sel->y + FixFont->ascent + 1;
       Sel->div  = Sel->iv   =  1;
       SelRes    = Sel;
+      DimText1  = Sel->text;
 
       Sel = NewSel(Sel);
       InitNextSelection(Sel,dyn,"T31   [96x48]");
@@ -1388,6 +1425,7 @@ void InitSelections(void)
       Sel->h    = FixFontHeight + 1;
       Sel->w    = FixFontHeight + 1;
       Sel->div  = Sel->iv   =  0;
+      DimText2  = Sel->text;
 
       Sel = NewSel(Sel);
       InitNextSelection(Sel,dyn,"T42  [128x64]");
@@ -1395,6 +1433,7 @@ void InitSelections(void)
       Sel->h    = FixFontHeight + 1;
       Sel->w    = FixFontHeight + 1;
       Sel->div  = Sel->iv   =  0;
+      DimText3  = Sel->text;
    }
 
    // Vertical resolution
@@ -2136,10 +2175,13 @@ void FinishLine(void)
       FormatReal(CursorSel->fv,text);
       strcpy(CursorSel->teva,text);
    }
+
+/*
    if (CursorSel == SelMulti)  // Enable or disable Lat2
    {
       SelLat2->no = (SelMulti->iv != 2) ;
    }
+*/
    if (OldCores == 1 && Cores  > 1) ForceRebuild = 1;
    if (OldCores  > 1 && Cores == 1) ForceRebuild = 1;
    if (Model == PLASIM && OldCores != Cores) ForceRebuild = 1;
@@ -2212,6 +2254,43 @@ int CheckPumaNamelist(void)
       Multirun   = SelMulti->iv = 2;
       Cores = SelCPU->iv   = 1;
    }
+   return 0; /* Success */
+}
+
+
+int CheckCATNamelist(void)
+{
+   int i,safe_ntspd;
+   int *ntspd;
+   int *nyoden = NULL;
+   double s;
+   struct SelStruct *Sel;
+   FILE *fp;
+
+   FinishLine();
+
+/*
+   for (Sel = &SelStart ; Sel ; Sel = Sel->Next)
+   {
+      if (Sel->piv) *Sel->piv = Sel->iv;
+      if (!strcmp(Sel->text,"NTSPD"       )) ntspd    = &Sel->iv;
+      if (!strcmp(Sel->text,"NYODEN"      )) nyoden   = &Sel->iv;
+      if (!strcmp(Sel->text,"Orography"   )) nreadsr  = Sel->iv;
+      if (!strcmp(Sel->text,"Annual cycle")) nac      = Sel->iv;
+   }
+*/
+
+   // Check for resolution
+
+        if (Resolution == 1)
+      Latitudes = Latitude2 = 64;
+   else if (Resolution == 2)
+      Latitudes = Latitude2 = 256;
+   else if (Resolution == 3)
+      Latitudes = Latitude2 = 1024;
+
+   if (Debug) printf("NGX = NGY = %d\n",Latitudes);
+
    return 0; /* Success */
 }
 
@@ -3298,6 +3377,7 @@ void BuildScripts(void)
    }
    if (Model == CAT)
    {
+      if (CheckCATNamelist()) return;
       GenerateNames();
       // WriteCatNamelist();
       if (!Build(CAT)) Exit();

@@ -251,8 +251,8 @@ integer :: nforc = 0 ! forcing switch
                      ! 3 = forcing with constant wave numbers
                      !     but random uncorrelated phases (white noise)
 
-real(8) :: kfmin  = 4.0+1.0 ! min radius = sqrt(kfmin) of spectr. forcing
-real(8) :: kfmax  = 4.0-1.0 ! max radius = sqrt(kfmax) of spectr. forcing
+integer :: kfmin  = 0   ! min radius = sqrt(kfmin) of spectr. forcing
+integer :: kfmax  = 8   ! max radius = sqrt(kfmax) of spectr. forcing
 
 !--- Scaling
 real(8) :: jac_scale = 1.0 ! scaling factor for jacobian
@@ -280,7 +280,7 @@ integer :: nfy  = 42  ! 2*nky   (y-dimension in fourier domain)
 
 
 !--- Jacobian
-integer :: jac_mthd  = 1      ! approximation method of Jacobian
+integer :: jacmthd  = 1       ! approximation method of Jacobian
                               ! 0 : no Jacobian
                               ! 1 : divergence form
 
@@ -527,7 +527,7 @@ call get_restart_array ('tforc',tforc,1,1)
 call get_restart_iarray('myseed',myseed,mxseedlen,1)
 call get_restart_iarray('ntseri',ntseri,1,1)
 call get_restart_iarray('nstdout',nstdout,1,1)
-call get_restart_iarray('jac_mthd',jac_mthd,1,1)
+call get_restart_iarray('jacmthd',jacmthd,1,1)
 call get_restart_iarray('ndiag',ndiag,1,1)
 call get_restart_array ('jac_scale',jac_scale,1,1)
 
@@ -558,7 +558,7 @@ namelist /cat_nl/ nsteps    ,ngp       ,ngui    ,ingp    ,insp       , &
                   ly        ,sig       ,psig    ,rtsig    ,ksig      , &
                   lam       ,plam      ,rtlam   ,klam     ,diss_mthd , &
                   nforc     ,kfmin     ,kfmax   ,aforc    ,tforc     , &
-                  myseed    ,ntseri    ,nstdout ,jac_mthd ,ndiag     , &
+                  myseed    ,ntseri    ,nstdout ,jacmthd  ,ndiag     , &
                   jac_scale ,nsp       ,outgp   ,outsp    ,tstp_mthd , &
                   nsim      ,nuser     ,npost
 
@@ -992,7 +992,7 @@ do j = 0, nfy
   do i = 0, nkx
     k2 = ki2(i) + kj2(j)
     if (j.ne.0.or.i.ne.0) then
-      if (sqrt(k2).gt.kfmin.and.sqrt(k2).lt.kfmax) then
+      if (sqrt(k2).ge.kfmin.and.sqrt(k2).le.kfmax) then
         nk = nk + 1
         in(nk,1) = i
         in(nk,2) = j
@@ -1253,7 +1253,7 @@ do while (tstep <= tstop)
    if (nsim > 0) call simstep
    if (nuser > 0) call userstep
    tstep = tstep + 1
-   if (nstdout.ge.0 .and. mod(tstep,nstdout) == 0) then
+   if (nstdout.gt.0 .and. mod(tstep,nstdout) == 0) then
       write(*,*)' time step ',tstep
    endif
 enddo
@@ -1362,7 +1362,7 @@ call put_restart_array ('tforc',tforc,1,1)
 call put_restart_iarray('myseed',myseed,mxseedlen,1)
 call put_restart_iarray('ntseri',ntseri,1,1)
 call put_restart_iarray('nstdout',nstdout,1,1)
-call put_restart_iarray('jac_mthd',jac_mthd,1,1)
+call put_restart_iarray('jacmthd',jacmthd,1,1)
 call put_restart_iarray('ndiag',ndiag,1,1)
 call put_restart_array ('jac_scale',jac_scale,1,1)
 
@@ -1411,7 +1411,7 @@ implicit none
 
 integer    :: i,j
 
-select case (jac_mthd)
+select case (jacmthd)
 
 case (1)
    guq = gu*gq

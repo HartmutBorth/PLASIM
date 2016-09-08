@@ -22,35 +22,23 @@ real(8), allocatable :: sim_ftmp1(:,:)   ! temporary gridpoint field
 real(8), allocatable :: sim_ftmp2(:,:)   ! temporary gridpoint field
 
 !--- predefined experimets
-character (256) :: sim = "jet01" ! type of predefined simulation
+character (256) :: sim = "e00"   ! type of predefined simulation
                                  ! options are:
-                                 ! "jet01"   top hat jets
-                                 ! "jet02"   fourier jets
-                                 ! "vor01"   gaussian vortices
-                                 ! "dec01"   decaying turbulence
-                                 ! "for01"   forced decaying turbulence
+                                 ! "e00"   top hat jets
+                                 ! "e01"   fourier jets
 
 
-!--- parameters of jet01 (top hat jets)
-real(8) :: jet01_amp    = 1.0    ! amplitude of vortex sheets
-integer :: jet01_scl    = 1      ! scale
-integer :: jet01_w1     = 8      ! half width of jet center (in grid points)
-integer :: jet01_w2     = 4      ! width of vortex sheet (in grid points)
+!--- parameters of e01 (top hat jets)
+real(8) :: e00umax  = 1.0    ! amplitude of vortex sheets
+integer :: e00w1    = 8      ! half width of jet center (in grid points)
+integer :: e00w2    = 4      ! width of vortex sheet (in grid points)
+integer :: e00scl   = 1      ! horizontal scale of jet
 
-!--- parameters of jet02 (fourier jets)
+!--- parameters of e02 (fourier jets)
 
 
 
-!--- parameters of vor01 (gaussian vortices)
-
-
-
-!--- parameters of dec01 (decaying turbulence)
-
-
-
-!--- parameters of for01 (forced decaying turbulence)
-
+!--- parameters of e03 (gaussian vortices)
 
 
 end module simmod
@@ -78,9 +66,8 @@ use simmod
 implicit none
 
 !--- define sim_namelist
-namelist /sim_nl/ sim        ,                                      &
-                  jet01_amp  ,jet01_scl  ,jet01_w1  ,jet01_w2
-
+namelist /sim_nl/ sim        ,                                 &
+                  e00umax   ,e00w1     ,e00w2     ,e00scl    
 
 !--- check if sim_namelist is present
 inquire(file=sim_namelist,exist=lsimnl)
@@ -109,14 +96,23 @@ integer :: jy
 
 
 select case (sim)
-  case ("jet01")
-    allocate(sim_gtmp1(1:ngx,1:ngy)) ; sim_gtmp1(:,:) = 0.0
+  !--- top-hat jet
+  case ("e00")
+    allocate(sim_gtmp1(1:ngx,1:ngy))  
+    sim_gtmp1(:,:) = 0.0
     do jy = 1, ngy
+      if ( jy .ge. ngy/2+1-e00scl*(e00w1+e00w2) .and. & 
+           jy .le. ngy/2-e00scl*e00w1 ) then
+         sim_gtmp1(:,jy) =  e00umax
+      endif
+      if ( jy .ge. ngy/2+1+e00scl*e00w1 .and. & 
+           jy .le. ngy/2+e00scl*(e00w1+e00w2) ) then
+         sim_gtmp1(:,jy) = -e00umax  
+      endif
     enddo
     deallocate(sim_gtmp1)
-  case ("vor01")
-  case ("dec01")
-  case ("for01")
+  !--- gaussian jet
+  case ("e01")
   case default
 end select
 
@@ -144,6 +140,7 @@ implicit none
 
 return
 end subroutine simstop
+
 
 ! ************************
 ! * SUBROUTINE SIM_FNAME *

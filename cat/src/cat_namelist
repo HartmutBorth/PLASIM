@@ -1,5 +1,5 @@
  $cat_nl
- ngui = 0
+ ngui = 1
  diss_mthd = 1
  jac_scale = 1.0
  dt        = 1.0d-3

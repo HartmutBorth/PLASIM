@@ -82,6 +82,7 @@ integer, parameter :: nurstini    = 40  ! restart for reading initial state
 integer, parameter :: nurstfin    = 45  ! restart for writing final state
 integer, parameter :: nudiag      = 50  ! statistics of model run
 
+
 !--- i/o file names
 character (256) :: cat_namelist  = "cat_namelist"
 character (256) :: cat_tseri     = "cat_tseri"
@@ -96,6 +97,9 @@ character (256) :: cat_diag      = "cat_diag"
 integer :: ihead(8)
 
 
+!--- codes of variables
+integer, parameter :: q_kcode   = 138 
+
 !--- array with grid types
 integer, parameter      :: ngtp         = 2
 character(2), parameter :: gtp_ar(ngtp) = (/ "GP" , "SP" /)
@@ -104,11 +108,11 @@ character(2), parameter :: gtp_ar(ngtp) = (/ "GP" , "SP" /)
 integer, parameter :: ningp  = 5
 integer, parameter :: ninsp  = 5
 integer :: ingp(ningp) = &
-   (/ 138, &
-       0 , &     
-       0 , &     
-       0 , &     
-       0   &    
+   (/ q_kcode, &
+       0     , &     
+       0     , &     
+       0     , &     
+       0       &    
    /) 
 integer :: insp(ninsp) = &
    (/  0 , &
@@ -122,11 +126,11 @@ integer :: insp(ninsp) = &
 integer, parameter :: noutgp = 5
 integer, parameter :: noutsp = 5
 integer :: outgp(noutgp) = &
-   (/ 138, &
-       0 , &
-       0 , &
-       0 , &
-       0   &
+   (/ q_kcode, &
+       0     , &
+       0     , &
+       0     , &
+       0       &
    /)
 integer :: outsp(noutsp) = &
    (/  0  , &
@@ -640,9 +644,9 @@ implicit none
 
 integer :: j
 
-! *******************************
-! * 1D real and complex vectors *
-! *******************************
+!-----------------------------
+! 1D real and complex vectors
+!-----------------------------
 allocate(ki(0:nkx))   ; ki(:)   = [(j,j=0,nkx)]
 allocate(kj(0:nfy))   ; kj(:)   = [(j,j=0,nky),(j,j=-nky,-1)]
 allocate(ki2(0:nkx))  ; ki2(:)  = 0.0
@@ -650,9 +654,9 @@ allocate(kj2(0:nfy))  ; kj2(:)  = 0.0
 
 
 
-! ******************************
-! * 2D real and complex arrays *
-! ******************************
+!----------------------------
+! 2D real and complex arrays
+!----------------------------
 
 !--- grid point space
 allocate(gq(1:ngx,1:ngy))   ; gq(:,:)   = 0.0  ! vorticity
@@ -720,7 +724,7 @@ do jj = 1,ngtp
          call checkvar(kcode,gtp,lexist)
          if (lexist) then
             select case (kcode)
-            case (138)
+            case (q_kcode)
                select case (gtp)
                case ("GP")
                   call read_gp(kcode,gtp,gq)
@@ -855,7 +859,7 @@ end subroutine read_sp
 
 ! ******************
 ! * SUBROUTINE F2C *
-! *******************
+! ******************
 subroutine f2c(fvar,cvar)
 use catmod
 implicit none
@@ -946,9 +950,9 @@ return
 end subroutine init_ltprop
 
 
-! *************
-! * INIT_RAND *
-! *************
+! ************************
+! * SUBROUTINE INIT_RAND *
+! ************************
 subroutine init_rand
 use catmod
 implicit none
@@ -974,9 +978,9 @@ return
 end subroutine init_rand
 
 
-! *************
-! * INIT_FORC *
-! *************
+! ************************
+! * SUBROUTINE INIT_FORC *
+! ************************
 subroutine init_forc
 use catmod
 implicit none
@@ -1017,9 +1021,9 @@ return
 end subroutine init_forc
 
 
-! ********
-! * Q2GUV *
-! *********
+! ********************
+! * SUBROUTINE Q2GUV *
+! ********************
 subroutine q2guv
 use catmod
 implicit none
@@ -1032,9 +1036,9 @@ return
 end subroutine q2guv
 
 
-! **********
-! * Q2GQUV *
-! **********
+! *********************
+! * SUBROUTINE Q2GQUV *
+! *********************
 subroutine q2gquv
 use catmod
 implicit none
@@ -1048,10 +1052,10 @@ return
 end subroutine q2gquv
 
 
-! ****************
-! * WRITE_OUTPUT *
-! ****************
-subroutine write_output
+! *************************
+! * SUBROUTINE CAT_WRTOUT *
+! *************************
+subroutine cat_wrtout
 use catmod
 implicit none
 
@@ -1061,8 +1065,8 @@ if((ngp .gt. 0) .and. mod(tstep,ngp).eq.0)  then
    do kk = 1, noutgp
       kcode = outgp(kk)
       select case (kcode)
-      case (138)
-         call write_gp(nugp,gq,138,0)
+      case (q_kcode)
+         call cat_wrtgp(nugp,gq,q_kcode,0)
       end select
    enddo 
 endif
@@ -1071,9 +1075,9 @@ if((nsp .gt. 0) .and. mod(tstep,nsp).eq.0)  then
    do kk = 1, noutsp
       kcode = outsp(kk)
       select case (kcode)
-      case (138)
+      case (q_kcode)
          call c2f(cq,ftmp)
-         call write_sp(nusp,ftmp,138,0)
+         call cat_wrtsp(nusp,ftmp,q_kcode,0)
       end select
    enddo
 endif
@@ -1083,12 +1087,12 @@ if((ntseri .gt. 0) .and. mod(tstep,ntseri).eq.0) call write_tseri
 if((ncfl .gt. 0) .and. mod(tstep,ncfl).eq.0)   call write_cfl
 
 return
-end subroutine write_output
+end subroutine cat_wrtout
 
 
-! ****************
-! * GUI TRANSFER *
-! ****************
+! ***************************
+! * SUBROUTINE GUI_TRANSFER *
+! ***************************
 subroutine gui_transfer
 use catmod
 implicit none
@@ -1100,10 +1104,10 @@ return
 end subroutine gui_transfer
 
 
-! ************
-! * WRITE_GP *
-! ************
-subroutine write_gp(ku,gpvar,kcode,klev)
+! ************************
+! * SUBROUTINE CAT_WRTGP *
+! ************************
+subroutine cat_wrtgp(ku,gpvar,kcode,klev)
 use catmod
 implicit none
 
@@ -1135,13 +1139,13 @@ write (ku) ihead
 write (ku) gpvar(:,:)
 
 return
-end subroutine write_gp
+end subroutine cat_wrtgp
 
 
-! ************
-! * WRITE_SP *
-! ************
-subroutine write_sp(ku,spvar,kcode,klev)
+! ************************
+! * SUBROUTINE CAT_WRTSP *
+! ************************
+subroutine cat_wrtsp(ku,spvar,kcode,klev)
 use catmod
 implicit none
 
@@ -1171,7 +1175,7 @@ write (ku) ihead
 write (ku) spvar(:,:)
 
 return
-end subroutine write_sp
+end subroutine cat_wrtsp
 
 
 ! ************************
@@ -1201,7 +1205,7 @@ case (1)
    cjac1(:,:) = cjac0(:,:)
    cjac2(:,:) = cjac1(:,:)
 
-   call write_output
+   call cat_wrtout
    !--- euler-step with dt/2
    cq(:,:) = cli(:,:)*(cq(:,:)+dt2*cjac0(:,:))
 
@@ -1213,7 +1217,7 @@ case (1)
 
    call q2gquv
    call jacobian
-   call write_output
+   call cat_wrtout
 
    !--- adams-bashford method 2nd order
    cq(:,:) = cli(:,:) * (cq(:,:) + dt2 * (3.0 * cjac0(:,:) -            &
@@ -1243,7 +1247,7 @@ if (nshutdown > 0) return   ! if an error occured so far
 do while (tstep <= tstop)
    call q2gquv
    call jacobian
-   call write_output
+   call cat_wrtout
    if (ngui > 0 .and. mod(tstep,ngui) == 0) then
       call gui_transfer
       call guistep_cat
@@ -1395,16 +1399,16 @@ close(nurstfin)
 close(nudiag)
 if (ntseri .gt. 0)   close(nutseri)
 if (ncfl .gt. 0)     close(nucfl)
-if (ngp .gt. 0)      close (nugp)
-if (nsp .gt. 0)      close (nusp)
+if (ngp .gt. 0)      close(nugp)
+if (nsp .gt. 0)      close(nusp)
 
 return
 end subroutine close_files
 
 
-! ************
-! * JACOBIAN *
-! ************
+! ***********************
+! * SUBROUTINE JACOBIAN *
+! ***********************
 subroutine jacobian
 use catmod
 implicit none
@@ -1434,9 +1438,9 @@ return
 end subroutine jacobian
 
 
-! ********
-! * Q2UV *
-! ********
+! *******************
+! * SUBROUTINE Q2UV *
+! *******************
 subroutine q2uv
 use catmod
 implicit none
@@ -1456,9 +1460,9 @@ return
 end subroutine q2uv
 
 
-! ***************
-! * ADD_FORCING *
-! ***************
+! **************************
+! * SUBROUTINE ADD_FORCING *
+! **************************
 subroutine add_forc
 use catmod
 implicit none
@@ -1518,9 +1522,9 @@ return
 end subroutine add_forc
 
 
-! ***************
-! * WRITE_TSERI *
-! ***************
+! **************************
+! * SUBROUTINE WRITE_TSERI *
+! **************************
 subroutine write_tseri
 use catmod
 implicit none
@@ -1538,9 +1542,9 @@ return
 end subroutine write_tseri
 
 
-! *************
-! * WRITE_CFL *
-! *************
+! ************************
+! * SUBROUTINE WRITE_CFL *
+! ************************
 subroutine write_cfl
 use catmod
 implicit none
@@ -1561,9 +1565,9 @@ return
 end subroutine write_cfl
 
 
-! ************
-! * INIT_OPS *
-! ************
+! ***********************
+! * SUBROUTINE INIT_OPS *
+! ***********************
 subroutine init_ops
 use catmod
 implicit none
@@ -1589,9 +1593,9 @@ return
 end subroutine init_ops
 
 
-! ************
-! * INIT_RST *
-! ************
+! ***********************
+! * SUBROUTINE INIT_RST *
+! ***********************
 subroutine init_rst
 use catmod
 implicit none
@@ -1608,9 +1612,9 @@ end subroutine init_rst
 
 
 
-! **************
-! * CHECK_DIFF *
-! **************
+! *************************
+! * SUBROUTINE CHECK_DIFF *
+! *************************
 subroutine check_diff(cold,cnew,ytext)
 use catmod
 complex(8) :: cold(0:nkx,0:nfy)

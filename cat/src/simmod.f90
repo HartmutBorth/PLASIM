@@ -16,12 +16,10 @@ integer, parameter :: nusimsp    = 130  ! spectral fields
 character (256) :: sim_namelist = "sim_namelist"
 
 !--- temporary gridpoint fields (GP) 
-real(8), allocatable :: sim_gtmp1(:,:)   ! temporary gridpoint field
-real(8), allocatable :: sim_gtmp2(:,:)   ! temporary gridpoint field
+real(8), allocatable :: gqtmp(:,:)     ! temporary voticity field
 
 !--- temporary fourier fields in real representation (F)
-real(8), allocatable :: sim_ftmp1(:,:)   ! temporary gridpoint field
-real(8), allocatable :: sim_ftmp2(:,:)   ! temporary gridpoint field
+real(8), allocatable :: sim_tmp1(:,:)  ! temporary fourier field
 
 !--- predefined experimets
 character (256) :: sim = "e00"   ! type of predefined simulation
@@ -91,23 +89,24 @@ integer :: jy
 select case (sim)
   !--- top-hat jet
   case ("e00")
-    allocate(sim_gtmp1(1:ngx,1:ngy))  
-    sim_gtmp1(:,:) = 0.0
+    allocate(gqtmp(1:ngx,1:ngy))  
+    gqtmp(:,:) = 0.0
     do jy = 1, ngy
       if ( jy .ge. ngy/2+1-e00scl*(e00w1+e00w2) .and. & 
            jy .le. ngy/2-e00scl*e00w1 ) then
-         sim_gtmp1(:,jy) =  e00umax
+         gqtmp(:,jy) =  e00umax
       endif
       if ( jy .ge. ngy/2+1+e00scl*e00w1 .and. & 
            jy .le. ngy/2+e00scl*(e00w1+e00w2) ) then
-         sim_gtmp1(:,jy) = -e00umax  
+         gqtmp(:,jy) = -e00umax  
       endif
     enddo
+    call sim_wrtgp(gqtmp,qkcode,1)
+    deallocate(gqtmp)
   case default
 end select
 
 
-deallocate(sim_gtmp1)
 return
 end subroutine sim_cases
 
@@ -115,37 +114,38 @@ end subroutine sim_cases
 ! ************************
 ! * SUBROUTINE SIM_WRTGP *
 ! ************************
-subroutine sim_wrtgp(ku,gpvar,kcode,klev)
+subroutine sim_wrtgp(gpvar,kcode,klev)
 use simmod
 implicit none
 
-integer :: ku,kcode,klev
-integer :: yy,mo,dd,hh,mm,ii
-real(8) :: gpvar(ngx,ngy)
+character(2), parameter :: gtp = "GP"
+character(256)          :: fname
+integer                 :: kcode,klev
+integer                 :: yy,mo,dd,hh,mm,ii
+real(8)                 :: gpvar(ngx,ngy)
 
-! Build a header for service format
 
-mm = mod(tstep,60)
-ii = tstep / 60
-hh = mod(ii,24)
-ii = ii / 24
-dd = mod(ii,30) + 1
-ii = ii / 30
-mo = mod(ii,12) + 1
-yy = ii / 12
 
+!--- Build a header for service format
 ihead(1) = kcode
 ihead(2) = klev
-ihead(3) = dd + 100 * mo + 10000 * yy
-ihead(4) = mm + 100 * hh
+ihead(3) = 10101
+ihead(4) = 0 
 ihead(5) = ngx
 ihead(6) = ngy
 ihead(7) = 0
 ihead(8) = 0
 
-write (ku) ihead
-write (ku) gpvar(:,:)
+!--- open file 
+call sim_fname(gtp,qkcode,fname)
+open(nutmp,file=fname,form='unformatted')
 
+
+!--- write ouput
+write (nutmp) ihead
+write (nutmp) gpvar(:,:)
+
+close(nutmp)
 return
 end subroutine sim_wrtgp
 
@@ -153,35 +153,34 @@ end subroutine sim_wrtgp
 ! ************************
 ! * SUBROUTINE SIM_WRTSP *
 ! ************************
-subroutine sim_wrtsp(ku,spvar,kcode,klev)
+subroutine sim_wrtsp(spvar,kcode,klev)
 use simmod
 implicit none
 
-integer :: ku,kcode,klev
+character(2), parameter :: gtp = "SP"
+character(256)          :: fname
+integer :: kcode,klev
 integer :: yy,mo,dd,hh,mm,ii
 real(8) :: spvar(0:nfx,0:nfy)
 
-mm = mod(tstep,60)
-ii = tstep / 60
-hh = mod(ii,24)
-ii = ii / 24
-dd = mod(ii,30) + 1
-ii = ii / 30
-mo = mod(ii,12) + 1
-yy = ii / 12
-
 ihead(1) = kcode
 ihead(2) = klev
-ihead(3) = dd + 100 * mo + 10000 * yy
-ihead(4) = mm + 100 * hh
+ihead(3) = 10101
+ihead(4) = hh
 ihead(5) = nfx+1
 ihead(6) = nfy+1
 ihead(7) = 0
 ihead(8) = 0
 
-write (ku) ihead
-write (ku) spvar(:,:)
+!--- open file 
+call sim_fname(gtp,qkcode,fname)
+open(nutmp,file=fname,form='unformatted')
 
+!--- write data
+write (nutmp) ihead
+write (nutmp) spvar(:,:)
+
+close(nutmp)
 return
 end subroutine sim_wrtsp
 
@@ -211,7 +210,7 @@ end subroutine simstop
 ! ************************
 ! * SUBROUTINE SIM_FNAME *
 ! ************************
-subroutine sim_fname(kcode,gtp,fname)
+subroutine sim_fname(gtp,kcode,fname)
 use simmod
 implicit none
 

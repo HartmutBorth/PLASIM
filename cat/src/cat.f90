@@ -82,6 +82,8 @@ integer, parameter :: nurstini    = 40  ! restart for reading initial state
 integer, parameter :: nurstfin    = 45  ! restart for writing final state
 integer, parameter :: nudiag      = 50  ! statistics of model run
 
+integer, parameter :: nutmp       = 999 ! temporary unit
+
 
 !--- i/o file names
 character (256) :: cat_namelist  = "cat_namelist"
@@ -98,17 +100,17 @@ integer :: ihead(8)
 
 
 !--- codes of variables
-integer, parameter :: q_kcode   = 138 
+integer, parameter :: qkcode     = 138 
 
 !--- array with grid types
-integer, parameter      :: ngtp         = 2
-character(2), parameter :: gtp_ar(ngtp) = (/ "GP" , "SP" /)
+!integer, parameter      :: ngtp         = 2
+!character(2), parameter :: gtp_ar(ngtp) = (/ "GP" , "SP" /)
 
 !--- codes of variables to be read at initialization
 integer, parameter :: ningp  = 5
 integer, parameter :: ninsp  = 5
 integer :: ingp(ningp) = &
-   (/ q_kcode, &
+   (/ qkcode , &
        0     , &     
        0     , &     
        0     , &     
@@ -126,7 +128,7 @@ integer :: insp(ninsp) = &
 integer, parameter :: noutgp = 5
 integer, parameter :: noutsp = 5
 integer :: outgp(noutgp) = &
-   (/ q_kcode, &
+   (/ qkcode , &
        0     , &
        0     , &
        0     , &
@@ -703,6 +705,10 @@ integer         :: kcode,jj,kk,kkmax
 character(2)    :: gtp
 character(256)  :: fname
 
+integer, parameter      :: ngtp         = 2
+character(2), parameter :: gtp_ar(ngtp) = (/ "GP" , "SP" /)
+
+
 if (.not. (tstep .eq. 0) ) return
 
 do jj = 1,ngtp
@@ -724,7 +730,7 @@ do jj = 1,ngtp
          call checkvar(kcode,gtp,lexist)
          if (lexist) then
             select case (kcode)
-            case (q_kcode)
+            case (qkcode)
                select case (gtp)
                case ("GP")
                   call read_gp(kcode,gtp,gq)
@@ -736,7 +742,7 @@ do jj = 1,ngtp
                cq(0,0) = (0.0,0.0)
             end select
          else
-            call cat_fname(kcode,gtp,fname)
+            call cat_fname(gtp,kcode,fname)
             write(nudiag, &
             '(" *************************************************")')
             write(nudiag, &
@@ -755,7 +761,7 @@ end subroutine cat_input
 ! ************************
 ! * SUBROUTINE CAT_FNAME *
 ! ************************
-subroutine cat_fname(kcode,gtp,fname)
+subroutine cat_fname(gtp,kcode,fname)
 use catmod
 implicit none
 
@@ -788,7 +794,7 @@ character(2)   :: gtp
 character(256) :: fname
 integer :: kcode
 
-call cat_fname(kcode,gtp,fname)
+call cat_fname(gtp,kcode,fname)
 inquire(file=trim(fname),exist=lexist)
 
 return
@@ -807,7 +813,7 @@ character(256) :: fname
 integer        :: kcode
 real(8)        :: gpvar(1:ngx,1:ngy)
 
-call cat_fname(kcode,gtp,fname)
+call cat_fname(gtp,kcode,fname)
 
 open(nuin,file=fname,form='unformatted')
 
@@ -838,7 +844,7 @@ character(256) :: fname
 integer        :: kcode
 real(8)        :: spvar(0:nfx,0:nfy)
 
-call cat_fname(kcode,gtp,fname)
+call cat_fname(gtp,kcode,fname)
 
 open(nuin,file=fname,form='unformatted')
 
@@ -1065,8 +1071,8 @@ if((ngp .gt. 0) .and. mod(tstep,ngp).eq.0)  then
    do kk = 1, noutgp
       kcode = outgp(kk)
       select case (kcode)
-      case (q_kcode)
-         call cat_wrtgp(nugp,gq,q_kcode,0)
+      case (qkcode)
+         call cat_wrtgp(nugp,gq,qkcode,0)
       end select
    enddo 
 endif
@@ -1075,9 +1081,9 @@ if((nsp .gt. 0) .and. mod(tstep,nsp).eq.0)  then
    do kk = 1, noutsp
       kcode = outsp(kk)
       select case (kcode)
-      case (q_kcode)
+      case (qkcode)
          call c2f(cq,ftmp)
-         call cat_wrtsp(nusp,ftmp,q_kcode,0)
+         call cat_wrtsp(nusp,ftmp,qkcode,0)
       end select
    enddo
 endif

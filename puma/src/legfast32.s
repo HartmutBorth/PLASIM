@@ -514,7 +514,7 @@ LOOP_M_MKTEND:
         movlhps %xmm1,%xmm2       # xmm2  = tn:  0    / South
         addps   %xmm1,%xmm10      # nc + sc (lo)
         subps   %xmm2,%xmm10      # nc - sc (hi)
-        add     $8,-24(%rbp)      # tn += 2
+        addq    $8,-24(%rbp)      # tn += 2
 #       ------- fu -------------- #
         mov     -16(%rbp),%r10    # fu(:)
         movddup (%r10),%xmm11     # xmm11 = fu: North / North
@@ -522,7 +522,7 @@ LOOP_M_MKTEND:
         movlhps %xmm1,%xmm2       # xmm2 = fu:  0    / South
         addps   %xmm1,%xmm11      # nc + sc (lo)
         subps   %xmm2,%xmm11      # nc - sc (hi)
-        add     $8,-16(%rbp)      # fu += 2
+        addq    $8,-16(%rbp)      # fu += 2
 #       ------- fv -------------- #
         mov     -8(%rbp),%r10     # fv(:)
         movddup (%r10),%xmm12     # xmm12 = fv: North / North
@@ -530,7 +530,7 @@ LOOP_M_MKTEND:
         movlhps %xmm1,%xmm2       # xmm2 = fv:  0    / South
         subps   %xmm1,%xmm12      # nc - sc (lo)
         addps   %xmm2,%xmm12      # nc + sc (hi)
-        add     $8,-8(%rbp)       # fv += 2
+        addq    $8,-8(%rbp)       # fv += 2
 #       ------- ke -------------- #
         mov     16(%rbp),%r10     # ke(:)
         movddup (%r10),%xmm13     # xmm13 = ke: North / North
@@ -538,7 +538,7 @@ LOOP_M_MKTEND:
         movlhps %xmm1,%xmm2       # xmm2 = ke:  0    / South
         addps   %xmm1,%xmm13      # nc + sc (lo)
         subps   %xmm2,%xmm13      # nc - sc (hi)
-        add     $8,16(%rbp)       # ke += 2
+        addq    $8,16(%rbp)       # ke += 2
 #       ------- ut -------------- #
         mov     24(%rbp),%r10     # ut(:)
         movddup (%r10),%xmm5      # xmm5 = ut: North / North
@@ -549,7 +549,7 @@ LOOP_M_MKTEND:
         shufps  $177,%xmm5,%xmm5  # real <-> imag  2:3:0:1 = b1
         xorps   %xmm14,%xmm14     # xmm14 = ut
         subps   %xmm5,%xmm14
-        add     $8,24(%rbp)       # ut += 2
+        addq    $8,24(%rbp)       # ut += 2
 #       ------- vt -------------- #
         mov     32(%rbp),%r10     # vt(:)
         movddup (%r10),%xmm15     # xmm15 = vt: North / North
@@ -557,7 +557,7 @@ LOOP_M_MKTEND:
         movlhps %xmm1,%xmm2       # xmm2  = vt:  0    / South
         subps   %xmm1,%xmm15      # nc - sc (lo)
         addps   %xmm2,%xmm15      # nc + sc (hi)
-        add     $8,32(%rbp)       # vt += 2
+        addq    $8,32(%rbp)       # vt += 2
 #       ------------------------- #
         movl    %ecx, %ebx        # index n = m
         cmp     $1, %ecx          # last mode ?

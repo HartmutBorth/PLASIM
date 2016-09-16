@@ -491,7 +491,7 @@ LOOP_M_MKTEND:
         movapd   %xmm2,%xmm3         # xmm3 = ke: North
         addpd    %xmm1,%xmm2         # xmm2 = ke: North + South
         subpd    %xmm1,%xmm3         # xmm3 = ke: North - South
-        add      $16,16(%rbp)        # ke += 2
+        addq     $16,16(%rbp)        # ke += 2
 #       ---------------------------- #
         mov      -8(%rbp),%r10       # fv(:)
         movupd   (%r10),%xmm4        # xmm4 = fv: North
@@ -499,7 +499,7 @@ LOOP_M_MKTEND:
         movapd   %xmm4,%xmm5         # xmm5 = fv: North
         addpd    %xmm1,%xmm4         # xmm4 = fv: North + South
         subpd    %xmm1,%xmm5         # xmm5 = fv: North - South
-        add      $16,-8(%rbp)        # fv += 2
+        addq     $16,-8(%rbp)        # fv += 2
 #       ---------------------------- #
         mov      -16(%rbp),%r10      # fu(:)
         movupd   (%r10),%xmm6        # xmm6 = fu: North
@@ -507,7 +507,7 @@ LOOP_M_MKTEND:
         movapd   %xmm6,%xmm7         # xmm7 = fu: North
         addpd    %xmm1,%xmm6         # xmm6 = fu: North + South
         subpd    %xmm1,%xmm7         # xmm7 = fu: North - South
-        add      $16,-16(%rbp)       # fu += 2
+        addq     $16,-16(%rbp)       # fu += 2
 #       ---------------------------- #
         mov      24(%rbp),%r10       # ut(:)
         movupd   (%r10),%xmm1        # xmm1 = ut: North
@@ -518,7 +518,7 @@ LOOP_M_MKTEND:
         subpd    %xmm1,%xmm8         # xmm8 = ut: -North
         subpd    %xmm9,%xmm8         # xmm8 = ut: -North -South
         subpd    %xmm1,%xmm9         # xmm9 = ut: -North +South
-        add      $16,24(%rbp)        # ut += 2
+        addq     $16,24(%rbp)        # ut += 2
 #       ---------------------------- #
         mov      32(%rbp),%r10       # vt(:)
         movupd   (%r10),%xmm10       # xmm10 = fu: North
@@ -526,7 +526,7 @@ LOOP_M_MKTEND:
         movapd   %xmm10,%xmm11       # xmm11 = fu: North
         addpd    %xmm1,%xmm10        # xmm10 = fu: North + South
         subpd    %xmm1,%xmm11        # xmm11 = fu: North - South
-        add      $16,32(%rbp)        # vt += 2
+        addq     $16,32(%rbp)        # vt += 2
 #       ---------------------------- #
         mov      -24(%rbp),%r10      # tn(:)
         movupd   (%r10),%xmm12       # xmm12 = fu: North
@@ -534,7 +534,7 @@ LOOP_M_MKTEND:
         movapd   %xmm12,%xmm13       # xmm13 = fu: North
         addpd    %xmm1,%xmm12        # xmm12 = fu: North + South
         subpd    %xmm1,%xmm13        # xmm13 = fu: North - South
-        add      $16,-24(%rbp)       # tn += 2
+        addq     $16,-24(%rbp)       # tn += 2
 #       ---------------------------- #
         mov      %ecx,%ebx           
 #       ---------------------------- #

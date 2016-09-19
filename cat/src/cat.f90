@@ -100,21 +100,19 @@ integer :: ihead(8)
 
 
 !--- codes of variables
-integer, parameter :: qkcode     = 138 
+integer, parameter :: qcde       = 138     ! potential vorticity code
+integer, parameter :: qfrccde    = 1138    ! potential vorticity forcing code
 
-!--- array with grid types
-!integer, parameter      :: ngtp         = 2
-!character(2), parameter :: gtp_ar(ngtp) = (/ "GP" , "SP" /)
 
 !--- codes of variables to be read at initialization
 integer, parameter :: ningp  = 5
 integer, parameter :: ninsp  = 5
 integer :: ingp(ningp) = &
-   (/ qkcode , &
-       0     , &     
-       0     , &     
-       0     , &     
-       0       &    
+   (/ qcde       , &
+      qfrccde    , &     
+       0         , &     
+       0         , &     
+       0           &    
    /) 
 integer :: insp(ninsp) = &
    (/  0 , &
@@ -128,7 +126,7 @@ integer :: insp(ninsp) = &
 integer, parameter :: noutgp = 5
 integer, parameter :: noutsp = 5
 integer :: outgp(noutgp) = &
-   (/ qkcode , &
+   (/ qcde   , &
        0     , &
        0     , &
        0     , &
@@ -236,11 +234,21 @@ integer             :: nseedlen          = 0 ! seed length
 integer             :: myseed(mxseedlen) = 0 ! seed given by namelist
 integer,allocatable :: seed(:)               ! seed defined by clock
 
+!--- Perturbation of initial conditions
+integer :: npert = 0 ! initial perturbation switch
+                     ! 0 = no perturbation
+                     ! 1 = white noise forcing (zero mean-vorticity)
+                     ! 2 = white noise symmetricy about the axis
+                     !     y = pi (zero mean vorticity in the upper and
+                     !     lower part of the fluid domain) 
+                     ! 3 = white noise anti-symmetricy about the axis
+                     !     y = pi (zero mean vorticity in the upper and 
+                     !     lower power
+
 !--- Forcing
 real(8) :: aforc = 0.015     ! amplitude of forcing
 real(8) :: tforc = 0.001     ! memory time scale of forcing [s]
 
-integer :: idum
 integer :: in(1000,2)
 integer :: nk
 integer :: itau
@@ -317,16 +325,21 @@ integer :: ntseri    = 100     ! time steps between time-series output
  
 real(8) :: dt        = 1.d-3   ! length of time step [s]
 
-!--- variables in physical/gridpoint (GP) space
-real(8), allocatable :: gq(:,:)   ! vorticity            [1/s]
-real(8), allocatable :: gpsi(:,:) ! stream function      [m^2/s]
-real(8), allocatable :: gu(:,:)   ! velocity x-direction [m/s]
-real(8), allocatable :: gv(:,:)   ! velocity y-direction [m/s]
 
-real(8), allocatable :: guq(:,:)  ! u*vorticity
-real(8), allocatable :: gvq(:,:)  ! v*vorticity
+!--- variables in physical/gridpoint (GP) space
+real(8), allocatable :: gq(:,:)    ! vorticity            [1/s]
+real(8), allocatable :: gpsi(:,:)  ! stream function      [m^2/s]
+real(8), allocatable :: gu(:,:)    ! velocity x-direction [m/s]
+real(8), allocatable :: gv(:,:)    ! velocity y-direction [m/s]
+
+real(8), allocatable :: guq(:,:)   ! u*vorticity  [m/s^2]
+real(8), allocatable :: gvq(:,:)   ! v*vorticity  [m/s^2]
+
+real(8), allocatable :: gtmp(:,:)  ! temporary gridpoint field  
+
 
 real(4), allocatable :: ggui(:,:) ! single precision transfer
+
 
 !--- variables in Fourierspace, real representation (F)
 real(8), allocatable :: fpsi(:,:) ! stream function
@@ -339,18 +352,31 @@ real(8), allocatable :: fvq(:,:)  ! v*vorticity
 real(8), allocatable :: ftmp(:,:) ! temporary field for, e.g. i/o
 
 
-!--- variables in Fourierspace, complex representation (
+!--- variables in Fourierspace, complex representation
 complex(8), allocatable :: cq(:,:)     ! vorticity
-complex(8), allocatable :: cjac0(:,:)  ! Jacobian at time 0
+
+complex(8), allocatable :: cqfrc0(:,:) ! vorticity forcing at time  0
+complex(8), allocatable :: cqfrc1(:,:) ! vorticity forcing at time -1
+
+complex(8), allocatable :: cjac0(:,:)  ! Jacobian at time  0
 complex(8), allocatable :: cjac1(:,:)  ! Jacobian at time -1
-complex(8), allocatable :: cjac2(:,:)  ! Jaconbian at time -2
+complex(8), allocatable :: cjac2(:,:)  ! Jacobian at time -2
+
+
+!--- amplitude & phase of complex field
+real(8), allocatable :: ratmp(:,:) ! temporary amplitude for, e.g. i/o
+real(8), allocatable :: rptmp(:,:) ! temporary phase for, e.g. i/o
+
 
 !--- operators in Fourier Space
-integer   , allocatable :: ki(:),kj(:)  
-real(8)   , allocatable :: ki2(:), kj2(:) 
+integer   , allocatable :: ki(:),kj(:)
+real(8)   , allocatable :: ki2(:), kj2(:)
 real(8)   , allocatable :: k2n(:,:), rk2an(:,:)
 real(8)   , allocatable :: kirk2an(:,:),kjrk2an(:,:)
-complex(8), allocatable :: cli(:,:)                  ! linear time propagation
+
+
+!--- linear time propagation (dissipation and beta-term)
+complex(8), allocatable :: cli(:,:)    ! linear time propagation
 
 
 ! *******************
@@ -367,8 +393,8 @@ real(4) :: parc(5) = 0.0 ! timeseries display
 
 !--- predefined simulations (simmod)
 integer :: nsim  = 0 ! 1/0 predefined simulations on/off.
-                     ! Predefined simulations are specified in 
-                     ! <sim_namelist> of simmod. 
+                     ! Predefined simulations are specified in
+                     ! <sim_namelist> of simmod.
 
 !--- usermod (usermod)
 integer :: nuser = 0 ! 1/0 user mode is switched on/off.
@@ -378,7 +404,7 @@ integer :: nuser = 0 ! 1/0 user mode is switched on/off.
 
 
 !--- postprocessing (postmod)
-integer :: npost = 0 ! 1/0 post processing is switched on/off  
+integer :: npost = 0 ! 1/0 post processing is switched on/off
 
 
 end module catmod
@@ -430,10 +456,10 @@ call cat_open
 if (nsim > 0) call simstart
 if (nuser > 0) call userstart
 call cat_input
-call init_ltprop
+call init_lintstep
 call init_rand
 call init_forc
-call init_step
+call init_tstep
 
 if (ngui > 0) call guistart
 
@@ -526,6 +552,7 @@ call get_restart_array ('rtlam',rtlam,nlam,1)
 call get_restart_iarray('klam',klam,nlam,1)
 call get_restart_iarray('diss_mthd',diss_mthd,1,1)
 call get_restart_iarray('nforc',nforc,1,1)
+call get_restart_iarray('npert',npert,1,1)
 call get_restart_iarray('kfmin',kfmin,1,1)
 call get_restart_iarray('kfmax',kfmax,1,1)
 call get_restart_array ('aforc',aforc,1,1)
@@ -566,7 +593,7 @@ namelist /cat_nl/ nsteps    ,ngp       ,ngui    ,ingp    ,insp       , &
                   nforc     ,kfmin     ,kfmax   ,aforc    ,tforc     , &
                   myseed    ,ntseri    ,nstdout ,jacmthd  ,ndiag     , &
                   jac_scale ,nsp       ,outgp   ,outsp    ,tstp_mthd , &
-                  nsim      ,nuser     ,npost
+                  nsim      ,nuser     ,npost   ,npert
 
 inquire(file=cat_namelist,exist=lcatnl)
 
@@ -678,16 +705,20 @@ allocate(fuq(0:nfx,0:nfy))  ; fuq(:,:)  = 0.0 ! u*q
 allocate(fvq(0:nfx,0:nfy))  ; fvq(:,:)  = 0.0 ! v*q
 allocate(ftmp(0:nfx,0:nfy)) ; ftmp(:,:) = 0.0 ! temporary field for, e.g. i/o
 
-allocate(k2n(0:nkx,0:nfy))     ;k2n(:,:)     = 0.0 ! Laplacian
-allocate(rk2an(0:nkx,0:nfy))   ;rk2an(:,:)   = 0.0 ! modified Laplacian^-1
-allocate(kirk2an(0:nkx,0:nfy)) ;kirk2an(:,:) = 0.0 ! q --> v
-allocate(kjrk2an(0:nkx,0:nfy)) ;kjrk2an(:,:) = 0.0 ! q --> u
+allocate(k2n(0:nkx,0:nfy))     ; k2n(:,:)     = 0.0 ! Laplacian
+allocate(rk2an(0:nkx,0:nfy))   ; rk2an(:,:)   = 0.0 ! modified Laplacian^-1
+allocate(kirk2an(0:nkx,0:nfy)) ; kirk2an(:,:) = 0.0 ! q --> v
+allocate(kjrk2an(0:nkx,0:nfy)) ; kjrk2an(:,:) = 0.0 ! q --> u
 
 allocate(cli(0:nkx,0:nfy))  ; cli(:,:)   = (0.0,0.0) ! linear time propagator 
 allocate(cq(0:nkx,0:nfy))   ; cq(:,:)    = (0.0,0.0) ! vorticity
 allocate(cjac0(0:nkx,0:nfy)); cjac0(:,:) = (0.0,0.0) ! Jacobian at time level  0
 allocate(cjac1(0:nkx,0:nfy)); cjac1(:,:) = (0.0,0.0) ! Jacobian at time level -1
 allocate(cjac2(0:nkx,0:nfy)); cjac2(:,:) = (0.0,0.0) ! Jacobian at time level -2
+
+allocate(ratmp(0:nkx,0:nfy)); ratmp(:,:) = 0.0 ! real amplitude of complex field
+allocate(rptmp(0:nkx,0:nfy)); rptmp(:,:) = 0.0 ! real phase of complex field
+
 
 return
 end subroutine cat_alloc
@@ -730,7 +761,7 @@ do jj = 1,ngtp
          call checkvar(kcode,gtp,lexist)
          if (lexist) then
             select case (kcode)
-            case (qkcode)
+            case (qcde)
                select case (gtp)
                case ("GP")
                   call read_gp(kcode,gtp,gq)
@@ -908,10 +939,10 @@ return
 end subroutine c2f
 
 
-! **************************
-! * SUBROUTINE INIT_LTPROP *
-! **************************
-subroutine init_ltprop
+! ****************************
+! * SUBROUTINE INIT_LINTSTEP *
+! ****************************
+subroutine init_lintstep
 use catmod
 implicit none
 
@@ -953,7 +984,7 @@ enddo
 cli(0,0) = (0.0,0.0)
 
 return
-end subroutine init_ltprop
+end subroutine init_lintstep
 
 
 ! ************************
@@ -1020,11 +1051,38 @@ if (tforc.le.dt) then
     itau=tforc/dt
 endif
 
-idum=-12895673
-
 print *, "the forcing ring contains ",nk," wavevectors."
 return
 end subroutine init_forc
+
+
+! *************************
+! * SUBROUTINE INIT_FORC1 *
+! *************************
+subroutine init_forc1
+use catmod
+implicit none
+
+if (nforc .eq. 0) return
+
+
+
+!--- introduce default forcing in init_forc1
+!--- can be overwritten by input file
+
+!--- introduce markovian time-scale
+
+!--- forcing is specified by input files
+
+!--- examples are produced in simmod.f90 
+
+!--- produce masks
+
+!--- normalize forcing
+
+
+return
+end subroutine init_forc1
 
 
 ! ********************
@@ -1071,8 +1129,8 @@ if((ngp .gt. 0) .and. mod(tstep,ngp).eq.0)  then
    do kk = 1, noutgp
       kcode = outgp(kk)
       select case (kcode)
-      case (qkcode)
-         call cat_wrtgp(nugp,gq,qkcode,0)
+      case (qcde)
+         call cat_wrtgp(nugp,gq,qcde,0)
       end select
    enddo 
 endif
@@ -1081,9 +1139,9 @@ if((nsp .gt. 0) .and. mod(tstep,nsp).eq.0)  then
    do kk = 1, noutsp
       kcode = outsp(kk)
       select case (kcode)
-      case (qkcode)
+      case (qcde)
          call c2f(cq,ftmp)
-         call cat_wrtsp(nusp,ftmp,qkcode,0)
+         call cat_wrtsp(nusp,ftmp,qcde,0)
       end select
    enddo
 endif
@@ -1184,10 +1242,10 @@ return
 end subroutine cat_wrtsp
 
 
-! ************************
-! * SUBROUTINE INIT_STEP *
-! ************************
-subroutine init_step
+! *************************
+! * SUBROUTINE INIT_TSTEP *
+! *************************
+subroutine init_tstep
 use catmod
 implicit none
 
@@ -1237,7 +1295,7 @@ case (1)
 end select
 
 return
-end subroutine init_step
+end subroutine init_tstep
 
 
 ! *************************
@@ -1365,6 +1423,7 @@ call put_restart_array ('rtlam',rtlam,nlam,1)
 call put_restart_iarray('klam',klam,nlam,1)
 call put_restart_iarray('diss_mthd',diss_mthd,1,1)
 call put_restart_iarray('nforc',nforc,1,1)
+call put_restart_iarray('npert',npert,1,1)
 call put_restart_iarray('kfmin',kfmin,1,1)
 call put_restart_iarray('kfmax',kfmax,1,1) 
 call put_restart_array ('aforc',aforc,1,1)
@@ -1466,9 +1525,9 @@ return
 end subroutine q2uv
 
 
-! **************************
-! * SUBROUTINE ADD_FORCING *
-! **************************
+! ***********************
+! * SUBROUTINE ADD_FORC *
+! ***********************
 subroutine add_forc
 use catmod
 implicit none
@@ -1526,6 +1585,30 @@ end select
 
 return
 end subroutine add_forc
+
+
+! ************************
+! * SUBROUTINE ADD_FORC1 *
+! ************************
+subroutine add_forc1
+use catmod
+implicit none
+
+
+select case (nforc)
+   case(1)
+
+   case(2)
+
+   case(3)
+
+   case default
+      return
+end select
+
+return
+end subroutine add_forc1
+
 
 
 ! **************************

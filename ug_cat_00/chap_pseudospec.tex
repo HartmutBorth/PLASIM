@@ -950,10 +950,10 @@ a centerd wave-number grid
 \end{equation}
 Visualized are the amplitudes $amp(c)$ and phases $pha(c)$ of the
 complex fields
-\begin{equation} \label{eq_amppha}
-   amp(c) = \sqrt{\mathcal{R}^{2}(c) + I^{2}(c)}
+\begin{equation} \label{eq_c2amppha}
+   amp(k_{x},k_{y}) = \sqrt{\mathcal{R}^{2}(c) + I^{2}(c)}
    \ \ \mbox{and} \ \ 
-   pha(c) = \tan^{-1}(\frac{I(c)}{\mathcal{R}(c)}).
+   pha(k_{x},k_{y}) = \tan^{-1}(\frac{I(c)}{\mathcal{R}(c)}).
 \end{equation}
 By the symmetry properties \ref{eq_symfourier} of spectral fields $c$
 the amplitudes $amp(c)$ are symmetric with respect to the $k_{y}$-axis
@@ -962,6 +962,17 @@ $(0,0)$ of the grid of wave numbers. For visualization amplitudes $amp$
 and phases $pha$ are thus represented on the left half space of centered
 wave numbers denoted by the solid bold black grid given in plate (b)
 of figure \ref{fig_cspecgrid} including the $k_{y}$-axis.
+
+
+Using the amplitudes $amp(k_{x},k_{y})$ and phases $pha(k_{x},k_{y})$ 
+defined on the grid (\ref{eq_ncentwgrid}) one can represent a complex 
+field $c(k_{x},k_{y})$ as follows
+\begin{equation} \label{eq_amppha2c}
+   c(k_{x},k_{y}) = amp(c(k_{x},k_{y})) \ 
+       exp \left[ \ i \ pha(c(k_{x},k_{y})) \right].
+\end{equation} 
+This representation is used to define forcing fields in 
+spectral space.  
 %
 \section{Evolution equations in Fourier space}
 %

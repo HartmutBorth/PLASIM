@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2016.7.18)  2 SEP 2016 17:10
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2016.7.18)  15 SEP 2016 11:31
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -324,7 +324,7 @@ File: figures/cmplx_cent_grid.pdf Graphic file (type pdf)
 Package pdftex.def Info: figures/cmplx_cent_grid.pdf used on input line 934.
 (pdftex.def)             Requested size: 417.6533pt x 312.9803pt.
  [22 <./figures/cmplx_cent_grid.pdf>]
-Overfull \hbox (0.47232pt too wide) in paragraph at lines 978--984
+Overfull \hbox (0.47232pt too wide) in paragraph at lines 989--995
 \OT1/cmr/m/n/12 and the cor-re-spond-ing ve-loc-ity fields $[](\OML/cmm/m/it/12
  k[]; k[]; t\OT1/cmr/m/n/12 )$ and $[](\OML/cmm/m/it/12 k[]; k[]; t\OT1/cmr/m/n
 /12 )$ once the vor-tic-ity field $[](\OML/cmm/m/it/12 k[]; k[]; t\OT1/cmr/m/n/
@@ -335,7 +335,7 @@ Overfull \hbox (0.47232pt too wide) in paragraph at lines 978--984
 File: figures/diss_mask.pdf Graphic file (type pdf)
 
 <use figures/diss_mask.pdf>
-Package pdftex.def Info: figures/diss_mask.pdf used on input line 1407.
+Package pdftex.def Info: figures/diss_mask.pdf used on input line 1418.
 (pdftex.def)             Requested size: 379.68704pt x 284.52756pt.
 ) (./chap_sims.tex [26] [27 <./figures/diss_mask.pdf>] [28
 
@@ -399,10 +399,10 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 2717 strings out of 494953
- 38611 string characters out of 6180977
- 117239 words of memory out of 5000000
- 5925 multiletter control sequences out of 15000+600000
+ 2718 strings out of 494953
+ 38626 string characters out of 6180977
+ 117251 words of memory out of 5000000
+ 5926 multiletter control sequences out of 15000+600000
  11515 words of font info for 45 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  38i,12n,32p,424b,256s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -421,7 +421,7 @@ usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/sh
 are/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/tex
 live/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/share/texlive/t
 exmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on ug_cat.pdf (49 pages, 327872 bytes).
+Output written on ug_cat.pdf (49 pages, 328058 bytes).
 PDF statistics:
  304 PDF objects out of 1000 (max. 8388607)
  204 compressed objects within 3 object streams

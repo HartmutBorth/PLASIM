@@ -655,6 +655,14 @@
      &            ,(dq(:,NLEV)+zkdiff(:)*dq(:,NLEP))/(1.+zkdiff(:)))
 
 !
+!     limit evporation to available water
+!
+      where(dls(:) > 0.)
+       zqn(:)=AMIN1(zqn(:)                                              &
+     &             ,dwatc(:)/deltsec*1000./dp(:)/zkonst2+dq(:,NLEV))
+      endwhere
+
+!
 !*    add tendency
 !
 

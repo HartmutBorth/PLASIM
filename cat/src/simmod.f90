@@ -15,22 +15,36 @@ integer, parameter :: nusimsp    = 130  ! spectral fields
 !--- i/o file names
 character (256) :: sim_namelist = "sim_namelist"
 
-!--- temporary gridpoint fields (GP) 
-real(8), allocatable :: gqtmp(:,:)     ! temporary voticity field
-
-!--- temporary fourier fields in real representation (F)
-real(8), allocatable :: sim_tmp1(:,:)  ! temporary fourier field
-
 !--- predefined experimets
-character (256) :: sim = "e00"   ! type of predefined simulation
+character (256) :: sim = "iv00"  ! type of predefined simulation
                                  ! options are:
-                                 ! "e00"   top hat jets
 
-!--- parameters of e01 (top hat jets)
-integer :: e00w1    = 8      ! half width of jet center (in grid points)
-integer :: e00w2    = 4      ! width of vortex sheet (in grid points)
-integer :: e00scl   = 1      ! horizontal scale of jet
-real(8) :: e00umax  = 1.0    ! amplitude of vortex sheets
+                                 !----------------------------------!
+                                 ! Initial Value Problems (decaying !
+                                 ! flows)                           !
+                                 !----------------------------------!
+           
+                                 ! "iv00"   top hat jet
+
+                                 !-----------------------! 
+                                 ! Forced decaying Flows !
+                                 !-----------------------! 
+          
+                                 ! "fd00"   top hat wind forcing 
+
+
+
+!--- parameters of iv01 (initial top hat jet)
+integer :: iv00w1    = 8      ! half width of jet center (in grid points)
+integer :: iv00w2    = 4      ! width of vortex sheet (in grid points)
+integer :: iv00scl   = 1      ! horizontal scale of jet
+real(8) :: iv00qmax  = 1.0    ! amplitude of vortex sheets
+
+!--- parameters of fd01 (forced decaying top hat jet)
+integer :: fd00w1    = 8      ! half width of jet center (in grid points)
+integer :: fd00w2    = 4      ! width of vortex sheet (in grid points)
+integer :: fd00scl   = 1      ! horizontal scale of jet
+real(8) :: fd00qmax  = 1.0d-4 ! amplitude of vortex sheets
 
 end module simmod
 
@@ -58,7 +72,8 @@ implicit none
 
 !--- define sim_namelist
 namelist /sim_nl/ sim        ,                                 &
-                  e00umax   ,e00w1     ,e00w2     ,e00scl    
+                  iv00qmax   ,iv00w1     ,iv00w2     ,iv00scl, & 
+                  fd00qmax   ,fd00w1     ,fd00w2     ,fd00scl   
 
 !--- check if sim_namelist is present
 inquire(file=sim_namelist,exist=lsimnl)
@@ -70,6 +85,7 @@ if (lsimnl) then
 else
   return
 endif
+
 
 return
 end subroutine sim_readnl
@@ -85,27 +101,48 @@ implicit none
 integer :: jx
 integer :: jy
 
+real(8) :: gpvar(1:ngx,1:ngy)
 
-select case (sim)
+select case(sim)
+  !------------------------!
+  ! initial value problems !
+  !------------------------!
+
   !--- top-hat jet
-  case ("e00")
-    allocate(gqtmp(1:ngx,1:ngy))  
-    gqtmp(:,:) = 0.0
-    do jy = 1, ngy
-      if ( jy .ge. ngy/2+1-e00scl*(e00w1+e00w2) .and. & 
-           jy .le. ngy/2-e00scl*e00w1 ) then
-         gqtmp(:,jy) =  e00umax
-      endif
-      if ( jy .ge. ngy/2+1+e00scl*e00w1 .and. & 
-           jy .le. ngy/2+e00scl*(e00w1+e00w2) ) then
-         gqtmp(:,jy) = -e00umax  
-      endif
-    enddo
-    call sim_wrtgp(gqtmp,qkcode,1)
-    deallocate(gqtmp)
+  case("iv00")
+     gpvar(:,:) = 0.0
+     do jy = 1, ngy
+        if ( jy .ge. ngy/2+1-iv00scl*(iv00w1+iv00w2) .and. & 
+           jy .le. ngy/2-iv00scl*iv00w1 ) then
+           gpvar(:,jy) = -iv00qmax
+        endif
+        if ( jy .ge. ngy/2+1+iv00scl*iv00w1 .and. & 
+           jy .le. ngy/2+iv00scl*(iv00w1+iv00w2) ) then
+           gpvar(:,jy) =  iv00qmax
+        endif
+     enddo
+     call sim_wrtgp(gpvar,qcde,1)
+  !-------------------!
+  ! forced turbulence !
+  !-------------------!
+
+  !--- top-hat jet
+  case("fd00")
+     gpvar(:,:) = 0.0
+     do jy = 1, ngy
+        if ( jy .ge. ngy/2+1-fd00scl*(fd00w1+fd00w2) .and. & 
+           jy .le. ngy/2-fd00scl*fd00w1 ) then
+           gpvar(:,jy) = -fd00qmax
+        endif
+        if ( jy .ge. ngy/2+1+fd00scl*fd00w1 .and. & 
+           jy .le. ngy/2+fd00scl*(fd00w1+fd00w2) ) then
+           gpvar(:,jy) =  fd00qmax
+        endif
+     enddo
+     call sim_wrtgp(gpvar,qfrccde,1)
+
   case default
 end select
-
 
 return
 end subroutine sim_cases
@@ -137,7 +174,7 @@ ihead(7) = 0
 ihead(8) = 0
 
 !--- open file 
-call sim_fname(gtp,qkcode,fname)
+call sim_fname(gtp,kcode,fname)
 open(nutmp,file=fname,form='unformatted')
 
 
@@ -173,7 +210,7 @@ ihead(7) = 0
 ihead(8) = 0
 
 !--- open file 
-call sim_fname(gtp,qkcode,fname)
+call sim_fname(gtp,kcode,fname)
 open(nutmp,file=fname,form='unformatted')
 
 !--- write data
@@ -226,7 +263,6 @@ else
   write(fname,'(a2,i4.4,"_var",i4.4,".srv")') gtp,ngx,kcode
 endif
 
-fname = trim(fname)
 
 return
 end subroutine sim_fname

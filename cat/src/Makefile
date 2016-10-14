@@ -54,6 +54,6 @@ rsttest:
 	csh cat_restart_test.csh
 	rm -f cat_restart_test.csh
 cleanrsttest:
-	cp ../../tools/clean_cat_restart_test.csh .       
+	cp ../../cat_tools/clean_cat_restart_test.csh .       
 	csh clean_cat_restart_test.csh
 	rm -f clean_cat_restart_test.csh

@@ -1,17 +1,18 @@
  $cat_nl
- ngui = 1
+ ngui = 0
+ nsim = 1
  diss_mthd = 1
  jac_scale = 1.0
  dt        = 1.0d-3
  myseed    = 1,2,3,4,5,6,7,8
- ingp      = 138
- insp      = 0 
  outsp     = 138
- nsteps    = 50000
- ngp       = 250 
+ nsteps = 10000
+ ngp       = 250
  nstdout   = 10000 
  ncfl      = 500
- nforc     = 0
+ npert     = 2
+ apert     = 0.00001
+ nforc     = 4
  kfmin     = 5
  kfmax     = 7
  aforc     = 0.0001

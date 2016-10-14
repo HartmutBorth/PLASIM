@@ -115,11 +115,11 @@ integer :: ingp(ningp) = &
        0           &    
    /) 
 integer :: insp(ninsp) = &
-   (/  0 , &
-       0 , &     
-       0 , &     
-       0 , &     
-       0   &    
+   (/  qcde      , &
+       qfrccde   , &
+       0         , &     
+       0         , &     
+       0           &
    /) 
 
 !--- codes of variables to be written to cat_gp or cat_sp 
@@ -206,8 +206,8 @@ real(8) :: rtsig(nsig) =      & ! 1/time-scale of different powers
           1.d+2               & 
        /)
 integer :: ksig (nsig) =      & ! lower "cut-off" wave number of different
-       (/ 32,                 & ! powers of Laplacian
-          32                  &
+       (/ 320,                & ! powers of Laplacian
+          100                 &
        /)
 
 !--- definition of dissipation on large scales
@@ -236,14 +236,18 @@ integer,allocatable :: seed(:)               ! seed defined by clock
 
 !--- Perturbation of initial conditions
 integer :: npert = 0 ! initial perturbation switch
+                     ! all perturbations have zero mean-vorticity
+                     !
                      ! 0 = no perturbation
-                     ! 1 = white noise forcing (zero mean-vorticity)
-                     ! 2 = white noise symmetricy about the axis
+                     ! 1 = white noise perturbation
+                     ! 2 = white noise symmetric perturbation about the axis
                      !     y = pi (zero mean vorticity in the upper and
-                     !     lower part of the fluid domain) 
-                     ! 3 = white noise anti-symmetricy about the axis
-                     !     y = pi (zero mean vorticity in the upper and 
-                     !     lower power
+                     !     lower part of the fluid domain separately)
+                     ! 3 = white noise anti-symmetricy perturbation about 
+                     !     the axis y = pi (zero mean vorticity in the upper 
+                     !     and lower power separately)
+real(8) :: apert = 0.015d-4 ! amplitude of perturbation
+
 
 !--- Forcing
 real(8) :: aforc = 0.015     ! amplitude of forcing
@@ -268,7 +272,7 @@ integer :: nforc = 0 ! forcing switch
 integer :: kfmin  = 0   ! min radius = sqrt(kfmin) of spectr. forcing
 integer :: kfmax  = 8   ! max radius = sqrt(kfmax) of spectr. forcing
 
-!--- Scaling
+!--- Scaling factors for different parts of the evolution equation
 real(8) :: jac_scale = 1.0 ! scaling factor for jacobian
 
 
@@ -286,7 +290,7 @@ real(8) :: rny  = 1.56250000000000000E-002  ! 1/ngy
 real(8) :: rnxy = 2.44140625000000000E-004  ! 1/nxy
 
 
-!--- grid in Fourier space
+!--- grid in spectral space
 integer :: nkx  = 21  ! ngx/3 (max. wave number in x-direction)
 integer :: nky  = 21  ! ngy/3 (max. wave number in y-direction)
 integer :: nfx  = 43  ! 2*nkx+1 (x-dimension in fourier domain)
@@ -326,7 +330,7 @@ integer :: ntseri    = 100     ! time steps between time-series output
 real(8) :: dt        = 1.d-3   ! length of time step [s]
 
 
-!--- variables in physical/gridpoint (GP) space
+!--- variables in physical/gridpoint space (GP)
 real(8), allocatable :: gq(:,:)    ! vorticity            [1/s]
 real(8), allocatable :: gpsi(:,:)  ! stream function      [m^2/s]
 real(8), allocatable :: gu(:,:)    ! velocity x-direction [m/s]
@@ -335,13 +339,11 @@ real(8), allocatable :: gv(:,:)    ! velocity y-direction [m/s]
 real(8), allocatable :: guq(:,:)   ! u*vorticity  [m/s^2]
 real(8), allocatable :: gvq(:,:)   ! v*vorticity  [m/s^2]
 
-real(8), allocatable :: gtmp(:,:)  ! temporary gridpoint field  
-
 
 real(4), allocatable :: ggui(:,:) ! single precision transfer
 
 
-!--- variables in Fourierspace, real representation (F)
+!--- variables in spectral space, representation as imaginary and real part (F)
 real(8), allocatable :: fpsi(:,:) ! stream function
 real(8), allocatable :: fu(:,:)   ! velocity x-direction
 real(8), allocatable :: fv(:,:)   ! velocity y-direction
@@ -349,24 +351,18 @@ real(8), allocatable :: fv(:,:)   ! velocity y-direction
 real(8), allocatable :: fuq(:,:)  ! u*vorticity
 real(8), allocatable :: fvq(:,:)  ! v*vorticity
 
-real(8), allocatable :: ftmp(:,:) ! temporary field for, e.g. i/o
 
-
-!--- variables in Fourierspace, complex representation
+!--- variables in spectral space, complex representation (C)
 complex(8), allocatable :: cq(:,:)     ! vorticity
-
-complex(8), allocatable :: cqfrc0(:,:) ! vorticity forcing at time  0
-complex(8), allocatable :: cqfrc1(:,:) ! vorticity forcing at time -1
+complex(8), allocatable :: cqfrc(:,:) ! external vorticity forcing
 
 complex(8), allocatable :: cjac0(:,:)  ! Jacobian at time  0
 complex(8), allocatable :: cjac1(:,:)  ! Jacobian at time -1
 complex(8), allocatable :: cjac2(:,:)  ! Jacobian at time -2
 
-
-!--- amplitude & phase of complex field
-real(8), allocatable :: ratmp(:,:) ! temporary amplitude for, e.g. i/o
-real(8), allocatable :: rptmp(:,:) ! temporary phase for, e.g. i/o
-
+!--- variables in spectral space, amplitudes (AP) and phases (PA)
+!real(8), allocatable :: aptmp(:,:) ! temporary amplitude for, e.g. i/o
+!real(8), allocatable :: patmp(:,:) ! temporary phase for, e.g. i/o
 
 !--- operators in Fourier Space
 integer   , allocatable :: ki(:),kj(:)
@@ -459,6 +455,7 @@ call cat_input
 call init_lintstep
 call init_rand
 call init_forc
+call add_pert
 call init_tstep
 
 if (ngui > 0) call guistart
@@ -551,8 +548,9 @@ call get_restart_array ('plam',plam,nlam,1)
 call get_restart_array ('rtlam',rtlam,nlam,1)
 call get_restart_iarray('klam',klam,nlam,1)
 call get_restart_iarray('diss_mthd',diss_mthd,1,1)
-call get_restart_iarray('nforc',nforc,1,1)
 call get_restart_iarray('npert',npert,1,1)
+call get_restart_array ('apert',apert,1,1)
+call get_restart_iarray('nforc',nforc,1,1)
 call get_restart_iarray('kfmin',kfmin,1,1)
 call get_restart_iarray('kfmax',kfmax,1,1)
 call get_restart_array ('aforc',aforc,1,1)
@@ -593,7 +591,7 @@ namelist /cat_nl/ nsteps    ,ngp       ,ngui    ,ingp    ,insp       , &
                   nforc     ,kfmin     ,kfmax   ,aforc    ,tforc     , &
                   myseed    ,ntseri    ,nstdout ,jacmthd  ,ndiag     , &
                   jac_scale ,nsp       ,outgp   ,outsp    ,tstp_mthd , &
-                  nsim      ,nuser     ,npost   ,npert
+                  nsim      ,nuser     ,npost   ,npert    ,apert
 
 inquire(file=cat_namelist,exist=lcatnl)
 
@@ -703,7 +701,6 @@ allocate(fu(0:nfx,0:nfy))   ; fu(:,:)   = 0.0 ! u
 allocate(fv(0:nfx,0:nfy))   ; fv(:,:)   = 0.0 ! v 
 allocate(fuq(0:nfx,0:nfy))  ; fuq(:,:)  = 0.0 ! u*q
 allocate(fvq(0:nfx,0:nfy))  ; fvq(:,:)  = 0.0 ! v*q
-allocate(ftmp(0:nfx,0:nfy)) ; ftmp(:,:) = 0.0 ! temporary field for, e.g. i/o
 
 allocate(k2n(0:nkx,0:nfy))     ; k2n(:,:)     = 0.0 ! Laplacian
 allocate(rk2an(0:nkx,0:nfy))   ; rk2an(:,:)   = 0.0 ! modified Laplacian^-1
@@ -711,14 +708,16 @@ allocate(kirk2an(0:nkx,0:nfy)) ; kirk2an(:,:) = 0.0 ! q --> v
 allocate(kjrk2an(0:nkx,0:nfy)) ; kjrk2an(:,:) = 0.0 ! q --> u
 
 allocate(cli(0:nkx,0:nfy))  ; cli(:,:)   = (0.0,0.0) ! linear time propagator 
+
 allocate(cq(0:nkx,0:nfy))   ; cq(:,:)    = (0.0,0.0) ! vorticity
+allocate(cqfrc(0:nkx,0:nfy)); cqfrc(:,:) = (0.0,0.0) ! ext. vorticity force
 allocate(cjac0(0:nkx,0:nfy)); cjac0(:,:) = (0.0,0.0) ! Jacobian at time level  0
 allocate(cjac1(0:nkx,0:nfy)); cjac1(:,:) = (0.0,0.0) ! Jacobian at time level -1
 allocate(cjac2(0:nkx,0:nfy)); cjac2(:,:) = (0.0,0.0) ! Jacobian at time level -2
 
-allocate(ratmp(0:nkx,0:nfy)); ratmp(:,:) = 0.0 ! real amplitude of complex field
-allocate(rptmp(0:nkx,0:nfy)); rptmp(:,:) = 0.0 ! real phase of complex field
 
+!allocate(aptmp(0:nkx,0:nfy)); aptmp(:,:) = 0.0 ! amplitude of complex field
+!allocate(patmp(0:nkx,0:nfy)); patmp(:,:) = 0.0 ! phase of complex field
 
 return
 end subroutine cat_alloc
@@ -733,6 +732,9 @@ implicit none
 
 logical         :: lexist
 integer         :: kcode,jj,kk,kkmax
+real(8)         :: gtmp(1:ngx,1:ngy)
+real(8)         :: ftmp(0:nfx,0:nfy) ! temporary field for i/o
+
 character(2)    :: gtp
 character(256)  :: fname
 
@@ -771,6 +773,16 @@ do jj = 1,ngtp
                   call f2c(ftmp,cq)
                end select
                cq(0,0) = (0.0,0.0)
+            case (qfrccde)
+               select case (gtp)
+               case ("GP")
+                  call read_gp(kcode,gtp,gtmp)
+                  call grid_to_fourier(gtmp,cqfrc,nfx,nfy,ngx,ngy)
+               case ("SP")
+                  call read_sp(kcode,gtp,ftmp)
+                  call f2c(ftmp,cqfrc)
+               end select
+               cqfrc(0,0) = (0.0,0.0)
             end select
          else
             call cat_fname(gtp,kcode,fname)
@@ -955,12 +967,12 @@ integer    :: i,j,n
 !
 ! cli = exp(arg)                      with
 !
-! arg = -dt*[diss_sig*k^2 + diss_lam*k^2 + beta_term]/(k^2+alpha)
+! arg = -dt*[diss_sig + diss_lam + beta_term]
 !
 !  with 
-!     diss_sig  = sum_j=1,nsig sig(j)*k^(2*psig(j))
-!     diss_lam  = sum_j=1,nlam lam(j)*k^(2*plam(j))
-!     b_term    = i*beta*kx
+!     diss_sig  = -sum_j=1,nsig sig(j)*k^(2*psig(j))
+!     diss_lam  = -sum_j=1,nlam lam(j)*k^(2*plam(j))
+!     b_term    = i*beta*kx/(k^2 + alpha)
 !--------------------------------------------------------------
 do j = 0, nfy
    do i = 0, nkx
@@ -968,10 +980,10 @@ do j = 0, nfy
       diss_lam = 0.0
       k2       = ki2(i)+kj2(j)
       do n = 1,nsig
-         diss_sig = diss_sig - sig(n)*k2**psig(n)*k2/(k2+alpha)
+         diss_sig = diss_sig - sig(n)*k2**psig(n)
       enddo
       do n = 1,nlam
-         diss_lam = diss_lam - lam(n)*k2**plam(n)*k2/(k2+alpha)
+         diss_lam = diss_lam - lam(n)*k2**plam(n)
       enddo
       b_term    = cmplx(0.0,beta * ki(i) / (k2+alpha))
 
@@ -1085,6 +1097,63 @@ return
 end subroutine init_forc1
 
 
+! ***********************
+! * SUBROUTINE ADD_PERT *
+! ***********************
+subroutine add_pert
+use catmod
+implicit none
+
+
+integer :: jj                  ! loop index
+
+real(8) :: gqpert(1:ngx,1:ngy) ! vorticity perturbation [1/s]
+real(8) :: randtmp(1:ngx)      ! temporary random vector
+
+complex(8) :: cqpert(0:nkx,0:nfy)  ! spectral vorticiy perturbation [1/s]
+
+if ( .not. (tstep .eq. 0) .and. npert .eq. 0) return
+
+
+
+select case(npert)
+ 
+ !--- zero-mean grid point white noise perturbations
+ case(1)
+   !--- without symmetry
+   call random_number(gqpert)
+   gqpert = 2.0*apert*(gqpert - sum(gqpert)*rnxy)
+   call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
+   cqpert(0,0) = (0.0d0,0.0d0)
+   cq = cq + cqpert
+ case(2)
+   !--- symmetric about channel center
+   do jj = 1,ngy/2
+      call random_number(randtmp)
+      randtmp = 2.0*apert*(randtmp - sum(randtmp)*rnx)
+      gqpert(:,jj)       = randtmp(:)   
+      gqpert(:,ngy+1-jj) = randtmp(:)
+   enddo
+   call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
+   cqpert(0,0) = (0.0,0.0)
+   cq = cq + cqpert
+ case(3)
+   !--- anti-symmetric about channel center
+   do jj = 1,ngy/2
+      call random_number(randtmp)
+      randtmp = 2.0*apert*(randtmp - sum(randtmp)*rnx)
+      gqpert(:,jj)       =  randtmp(:)   
+      gqpert(:,ngy+1-jj) = -randtmp(:)
+   enddo
+   call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
+   cqpert(0,0) = (0.0,0.0)
+   cq = cq + cqpert
+end select
+
+return
+end subroutine add_pert
+
+
 ! ********************
 ! * SUBROUTINE Q2GUV *
 ! ********************
@@ -1122,6 +1191,9 @@ end subroutine q2gquv
 subroutine cat_wrtout
 use catmod
 implicit none
+
+real(8)  :: ftmp(0:nfx,0:nfy) ! temporary field for i/o
+
 
 integer :: kk,kcode
 
@@ -1422,8 +1494,9 @@ call put_restart_array ('plam',plam,nlam,1)
 call put_restart_array ('rtlam',rtlam,nlam,1)
 call put_restart_iarray('klam',klam,nlam,1)
 call put_restart_iarray('diss_mthd',diss_mthd,1,1)
-call put_restart_iarray('nforc',nforc,1,1)
 call put_restart_iarray('npert',npert,1,1)
+call put_restart_array ('apert',apert,1,1)
+call put_restart_iarray('nforc',nforc,1,1)
 call put_restart_iarray('kfmin',kfmin,1,1)
 call put_restart_iarray('kfmax',kfmax,1,1) 
 call put_restart_array ('aforc',aforc,1,1)
@@ -1580,6 +1653,9 @@ select case (nforc)
          cq(i,j) = cq(i,j)-k2*psif*rnxy
          enf=enf+(cq(i,j)*cq(i,j))/k2
       enddo
+
+   case (4) 
+      cq = cq + cqfrc
 
 end select
 

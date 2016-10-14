@@ -1,0 +1,77 @@
+\chapter{Namelists and parameters}
+To set-up a CAT simulation different types of namelists are available. 
+A CAT namelist cat{\_}nl to control the numerics and physics of CAT
+simulations in general and a simulation namelist sim{\_}nl which specifies 
+a list of predefined simulations.\\ 
+
+\noindent
+{\bf \Large CAT control: cat{\_}nl} \\
+\noindent
+We have subdivided the control parameters of CAT into a group of model
+numerics and model physics. \\
+
+\noindent
+{\bf Model set-up} \\ 
+\noindent
+\begin{tabular}{|l|r|l|}
+ \hline
+ parameter & default & options, description and type \\
+ \hline
+ nx      &   64       & grid points in x-direction (integer) \\
+ ny      &   64       & grid points in y-direction (integer) [not active ny = nx] \\
+ nl      &   1        & number of layers (integer) [not active]  \\
+ nsteps  &   10000    & number of time steps to be integrated (integer) \\
+ ngp     &   100      & time steps between output of grid-point  \\
+         &            & fields (integer) \\
+ nsp     &   100      & time steps between output of spectral  \\
+         &            & fields (integer) \\
+ ngui    &   1        & 1/0 graphical user interface on/off (integer) \\
+ \hline
+\end{tabular} 
+
+\vspace{0.5cm}
+
+\noindent
+{\bf Physics} \\ 
+\noindent
+\begin{tabular}{|l|r|l|}
+ \hline
+ parameter & default & options and description \\
+ \hline
+ jac{\_}mthd  &  1       & approximation method of Jacobian  \\
+              &          & 0 : no Jacobian  \\
+              &          & 1 : divergence form \\
+ \hline
+\end{tabular}
+
+\vspace{0.5cm}
+
+\noindent
+{\bf Postprocessing} \\
+\noindent
+\begin{tabular}{|l|r|l|}
+ \hline
+ parameter & default & options and description \\
+ \hline
+ npost        &  0       & 1/0 additional postprocessing on/off \\
+ \hline
+\end{tabular}
+
+\vspace{0.5cm}
+\noindent
+{\bf \Large Predefined simulations: sim{\_}nl} \\
+With activated predefined     
+
+{\bf Simulations} \\
+\noindent
+\begin{tabular}{|l|r|l|}
+ \hline
+ parameter & default & options and description \\
+ \hline
+ sim          &  \tt{"dec01"} & class of predefined simulations (character array) \\
+              &                & \tt{"dec01"} : decaying turbulence \\
+              &                & \tt{"for01"} : forced decaying turbulence \\
+              &                & \tt{"jet01"} : top-hat jet \\
+              &                & \tt{"vor01"} : gaussian elliptical vortex \\
+ \hline
+\end{tabular}

@@ -6,13 +6,13 @@
  dt        = 1.0d-3
  myseed    = 1,2,3,4,5,6,7,8
  outsp     = 138
- nsteps = 10000
+ nsteps = 200000
  ngp       = 250
  nstdout   = 10000 
  ncfl      = 500
  npert     = 2
  apert     = 0.00001
- nforc     = 4
+ nforc     = 0
  kfmin     = 5
  kfmax     = 7
  aforc     = 0.0001

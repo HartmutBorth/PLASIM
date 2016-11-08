@@ -16,35 +16,42 @@ integer, parameter :: nusimsp    = 130  ! spectral fields
 character (256) :: sim_namelist = "sim_namelist"
 
 !--- predefined experimets
-character (256) :: sim = "iv00"  ! type of predefined simulation
-                                 ! options are:
+character (256) :: ysim = "djet01" ! type of predefined simulation
+                                           ! options are:
 
                                  !----------------------------------!
                                  ! Initial Value Problems (decaying !
                                  ! flows)                           !
                                  !----------------------------------!
            
-                                 ! "iv00"   top hat jet
+                                 ! "djet01"   decaying top hat jet
 
                                  !-----------------------! 
                                  ! Forced decaying Flows !
                                  !-----------------------! 
           
-                                 ! "fd00"   top hat wind forcing 
+                                 ! "fjet01"   forced top hat jet 
 
 
+!--- parameters of djet01 (initial top hat jet)
+integer :: w1     = 8      ! half width of jet center (in grid points)
+integer :: w2     = 4      ! width of vortex sheet (in grid points)
+integer :: scl    = 1      ! horizontal scale of jet
+real(8) :: qmax   = 1.0    ! amplitude of vortex sheets
 
-!--- parameters of iv01 (initial top hat jet)
-integer :: iv00w1    = 8      ! half width of jet center (in grid points)
-integer :: iv00w2    = 4      ! width of vortex sheet (in grid points)
-integer :: iv00scl   = 1      ! horizontal scale of jet
-real(8) :: iv00qmax  = 1.0    ! amplitude of vortex sheets
 
-!--- parameters of fd01 (forced decaying top hat jet)
-integer :: fd00w1    = 8      ! half width of jet center (in grid points)
-integer :: fd00w2    = 4      ! width of vortex sheet (in grid points)
-integer :: fd00scl   = 1      ! horizontal scale of jet
-real(8) :: fd00qmax  = 1.0d-4 ! amplitude of vortex sheets
+!--- sim_namelist parameters to overwrite cat_namelist parameters
+
+!---------------------------------------------------------------!
+! A sim_namelist parameter sXXXXX corresponds to a cat_namelist !
+! parameter XXXXX. The sim_namelist parameters sXXXXX can only  !
+! take the same values as the corresponding cat_namelist        !
+! parameter.                                                    !
+!---------------------------------------------------------------!
+
+integer :: snforc = -1  ! type of forcing
+integer :: snpert = -1  ! type of perturbation
+integer :: snpost = -1  ! type of post processing
 
 end module simmod
 
@@ -71,9 +78,9 @@ use simmod
 implicit none
 
 !--- define sim_namelist
-namelist /sim_nl/ sim        ,                                 &
-                  iv00qmax   ,iv00w1     ,iv00w2     ,iv00scl, & 
-                  fd00qmax   ,fd00w1     ,fd00w2     ,fd00scl   
+namelist /sim_nl/ ysim       ,                       &
+                  qmax       ,w1     ,w2     ,scl   ,& 
+                  snpert     ,snforc ,snpost
 
 !--- check if sim_namelist is present
 inquire(file=sim_namelist,exist=lsimnl)
@@ -86,6 +93,10 @@ else
   return
 endif
 
+!--- overwrite cat_namelist parameters
+if (snpert .ge. 0)  npert = snpert
+if (snforc .ge. 0)  nforc = snforc
+if (snpost .ge. 0)  npost = snpost
 
 return
 end subroutine sim_readnl
@@ -103,40 +114,41 @@ integer :: jy
 
 real(8) :: gpvar(1:ngx,1:ngy)
 
-select case(sim)
+select case(ysim)
   !------------------------!
   ! initial value problems !
   !------------------------!
 
   !--- top-hat jet
-  case("iv00")
+  case("djet01")
      gpvar(:,:) = 0.0
      do jy = 1, ngy
-        if ( jy .ge. ngy/2+1-iv00scl*(iv00w1+iv00w2) .and. & 
-           jy .le. ngy/2-iv00scl*iv00w1 ) then
-           gpvar(:,jy) = -iv00qmax
+        if ( jy .ge. ngy/2+1-scl*(w1+w2) .and. & 
+           jy .le. ngy/2-scl*w1 ) then
+           gpvar(:,jy) = -qmax
         endif
-        if ( jy .ge. ngy/2+1+iv00scl*iv00w1 .and. & 
-           jy .le. ngy/2+iv00scl*(iv00w1+iv00w2) ) then
-           gpvar(:,jy) =  iv00qmax
+        if ( jy .ge. ngy/2+1+scl*w1 .and. & 
+           jy .le. ngy/2+scl*(w1+w2) ) then
+           gpvar(:,jy) =  qmax
         endif
      enddo
      call sim_wrtgp(gpvar,qcde,1)
+
   !-------------------!
   ! forced turbulence !
   !-------------------!
 
   !--- top-hat jet
-  case("fd00")
+  case("fjet01")
      gpvar(:,:) = 0.0
      do jy = 1, ngy
-        if ( jy .ge. ngy/2+1-fd00scl*(fd00w1+fd00w2) .and. & 
-           jy .le. ngy/2-fd00scl*fd00w1 ) then
-           gpvar(:,jy) = -fd00qmax
+        if ( jy .ge. ngy/2+1-scl*(w1+w2) .and. & 
+           jy .le. ngy/2-scl*w1 ) then
+           gpvar(:,jy) = -qmax
         endif
-        if ( jy .ge. ngy/2+1+fd00scl*fd00w1 .and. & 
-           jy .le. ngy/2+fd00scl*(fd00w1+fd00w2) ) then
-           gpvar(:,jy) =  fd00qmax
+        if ( jy .ge. ngy/2+1+scl*w1 .and. & 
+           jy .le. ngy/2+scl*(w1+w2) ) then
+           gpvar(:,jy) =  qmax
         endif
      enddo
      call sim_wrtgp(gpvar,qfrccde,1)

@@ -263,10 +263,12 @@ complex(8) :: phi
 
 integer :: nforc = 0 ! forcing switch
                      ! 0 = no forcing
-                     ! 1 = constant forcing with
-                     ! spectral forcing ring
-                     ! 2 = markov chain
-                     ! 3 = forcing with constant wave numbers
+                     !
+                     ! 1 = constant frocing defined by external field
+                     ! 2 = spectral forcing with constant amplitudes
+                     !     forcing ring and random phases
+                     ! 3 = markov chain
+                     ! 4 = forcing with constant wave numbers
                      !     but random uncorrelated phases (white noise)
 
 integer :: kfmin  = 0   ! min radius = sqrt(kfmin) of spectr. forcing
@@ -387,8 +389,17 @@ integer :: ndatim(6) = 1 ! date/time display
 real(4) :: parc(5) = 0.0 ! timeseries display
 
 
-!--- predefined simulations (simmod)
-integer :: nsim  = 0 ! 1/0 predefined simulations on/off.
+!--- code of predefined simulations (simmod)
+integer :: nsim  = 0 ! 0 no predefined simulation is specified 
+                     ! nsim > 0 predefined simulation is run
+                     ! 
+                     ! available predefined simulations (experiments):
+                     ! -----------------------------------------------
+                     !    code       name
+                     !
+                     !    1          decaying_jet01
+                     ! ----------------------------------------------- 
+                     ! 
                      ! Predefined simulations are specified in
                      ! <sim_namelist> of simmod.
 
@@ -1613,7 +1624,10 @@ eni=0.d0
 enf=0.d0
 
 select case (nforc)
-   case (1)
+   case (1) 
+      cq = cq + cqfrc
+ 
+   case (2)
       do ifk = 1,nk
          i = in(ifk,1)
          j = in(ifk,2)
@@ -1625,7 +1639,7 @@ select case (nforc)
          enf = enf+(cq(i,j)*cq(i,j))/k2
       enddo
 
-   case (2)
+   case (3)
       ic=tstep+1
       if (mod(ic,itau).eq.0.) then
          call random_number(ran4)
@@ -1642,7 +1656,7 @@ select case (nforc)
          enf=enf+(cq(i,j)*cq(i,j))/k2
       enddo
 
-   case (3)
+   case (4)
       do ifk=1,nk
          i = in(ifk,1)
          j = in(ifk,2)
@@ -1653,9 +1667,6 @@ select case (nforc)
          cq(i,j) = cq(i,j)-k2*psif*rnxy
          enf=enf+(cq(i,j)*cq(i,j))/k2
       enddo
-
-   case (4) 
-      cq = cq + cqfrc
 
 end select
 

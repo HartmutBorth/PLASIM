@@ -343,7 +343,7 @@ int Preprocessed;
 int SAMindex;
 int ScreenHeight;
 int Expert = 1;
-int Cat = 0;
+int Cats = 0;
 int LsgEnabled;
 int ModeRadiusSq;
 int ForceRebuild;
@@ -1048,11 +1048,6 @@ void InitNamelist(void)
 
    // CAT
 
-   NL_t(CAT,"sim","J1"       ,  "JET");
-   NL_i(CAT,"sim","J1W1"     ,  8);
-   NL_i(CAT,"sim","J1W2"     ,  4);
-   NL_i(CAT,"sim","J1SCL"    ,  1);
-   NL_r(CAT,"sim","J1AMP"    ,  1.0);
    NL_r(CAT,"cat","ALPHA"    ,  0.0);
    NL_r(CAT,"cat","BETA"     ,  0.0);
    NL_r(CAT,"cat","AFORC"    ,  0.001);
@@ -1242,10 +1237,15 @@ void InitSelections(void)
 
    // CAT
 
-   if (Cat)
+   Sel = NewSel(Sel);
+   InitNextSelection(Sel,dyn,FullModelName[CAT]);
+
+   // Hide CAT until released
+
+   if (!Cats)
    {
-      Sel = NewSel(Sel);
-      InitNextSelection(Sel,dyn,FullModelName[CAT]);
+      Sel->no = 1;
+      Sel->lt = 0;
    }
 
    // Planet Simulator
@@ -2550,6 +2550,51 @@ int WritePumaNamelist(void)  /* also used for model SAM */
 
 
 /* ================ */
+/* WriteCatNamelist */
+/* ================ */
+
+int WriteCatNamelist(void)
+{
+   int i,j,k,sum,val;
+   FILE *fp;
+   char backup_name[256];
+   char nln[256];
+   struct SelStruct *Sel;
+
+   FinishLine();
+
+   // Write file <cat_namelist>
+
+   strcpy(nln,ShortModelName[Model]);
+   strcat(nln,"/run/");
+   strcat(nln,namelist_name);
+   fp = fopen(nln,"w");
+   if (fp == NULL)
+   {
+      printf("Could not open file <%s> for writing\n",nln);
+      return 0; /* Failure */
+   }
+
+   fprintf(fp," &%s_nl\n",ShortModelName[Model]);
+
+   fprintf(fp," %-8s=%6d\n","NGUI"    ,ngui);
+
+   for (Sel = ComEnd->Next ; Sel ; Sel = Sel->Next)
+   {
+      if (Sel->type == SEL_INT)
+         fprintf(fp," %-8s=%6d\n",Sel->text,Sel->iv);
+      if (Sel->type == SEL_REAL)
+         fprintf(fp," %-8s=%s\n",Sel->text,Sel->teva);
+   }
+
+   fprintf(fp," /END\n");
+   fclose(fp);
+
+   return 1; /* Success */
+}
+
+
+/* ================ */
 /* WritePPPNamelist */
 /* ================ */
 
@@ -3379,7 +3424,7 @@ void BuildScripts(void)
    {
       if (CheckCATNamelist()) return;
       GenerateNames();
-      // WriteCatNamelist();
+      WriteCatNamelist();
       if (!Build(CAT)) Exit();
       WriteRunScript(CAT);
    }
@@ -4412,10 +4457,10 @@ void InitGUI(void)
       fclose(xpp);
    }
 
-   xpp = fopen("Cat","r"); // Cat enabled
+   xpp = fopen("Cats","r"); // Cat enabled
    if (xpp)
    {
-      Cat = 1;
+      Cats = 1;
       fclose(xpp);
    }
 
@@ -4558,6 +4603,7 @@ void OnMouseClick(void)
    {
       if (HitBox(Sel) && Model != i)
       {
+         if (i == CAT && Cats == 0) return; // Hide CAT
          if (Debug) printf("Change model from %d to %d\n",Model,i);
          ChangeModel(i);
          CalcFrame(Latitudes);

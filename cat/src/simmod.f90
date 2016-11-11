@@ -49,9 +49,13 @@ real(8) :: qmax   = 1.0    ! amplitude of vortex sheets
 ! parameter.                                                    !
 !---------------------------------------------------------------!
 
-integer :: snforc = -1  ! type of forcing
-integer :: snpert = -1  ! type of perturbation
-integer :: snpost = -1  ! type of post processing
+real(8) :: sdt     = -1.0 ! length of time step [s]
+
+integer :: snsteps = -1   ! total number of time steps
+integer :: sngui   = -1   ! time steps between GUI calls
+integer :: snforc  = -1   ! type of forcing
+integer :: snpert  = -1   ! type of perturbation
+integer :: snpost  = -1   ! type of post processing
 
 end module simmod
 
@@ -78,9 +82,10 @@ use simmod
 implicit none
 
 !--- define sim_namelist
-namelist /sim_nl/ ysim       ,                       &
-                  qmax       ,w1     ,w2     ,scl   ,& 
-                  snpert     ,snforc ,snpost
+namelist /sim_nl/ ysim       ,                        &
+                  qmax       ,w1      ,w2     ,scl   ,& 
+                  sdt        ,snsteps ,sngui  ,       &
+                  snpert     ,snforc  ,snpost
 
 !--- check if sim_namelist is present
 inquire(file=sim_namelist,exist=lsimnl)
@@ -94,9 +99,12 @@ else
 endif
 
 !--- overwrite cat_namelist parameters
-if (snpert .ge. 0)  npert = snpert
-if (snforc .ge. 0)  nforc = snforc
-if (snpost .ge. 0)  npost = snpost
+if (sdt     .ge. 0)     dt = sdt
+if (snsteps .ge. 0) nsteps = snsteps
+if (sngui   .ge. 0)   ngui = sngui
+if (snpert  .ge. 0)  npert = snpert
+if (snforc  .ge. 0)  nforc = snforc
+if (snpost  .ge. 0)  npost = snpost
 
 return
 end subroutine sim_readnl
@@ -153,6 +161,19 @@ select case(ysim)
      enddo
      call sim_wrtgp(gpvar,qfrccde,1)
 
+  case("fjet02")
+     gpvar(:,:) = 0.0
+     do jx = 1, ngx
+        if ( jx .ge. ngx/2+1-scl*(w1+w2) .and. & 
+           jx .le. ngx/2-scl*w1 ) then
+           gpvar(jx,:) = -qmax
+        endif
+        if ( jx .ge. ngx/2+1+scl*w1 .and. & 
+           jx .le. ngx/2+scl*(w1+w2) ) then
+           gpvar(jx,:) =  qmax
+        endif
+     enddo
+     call sim_wrtgp(gpvar,qfrccde,1)
   case default
 end select
 

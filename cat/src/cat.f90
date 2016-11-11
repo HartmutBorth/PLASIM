@@ -246,6 +246,13 @@ integer :: npert = 0 ! initial perturbation switch
                      ! 3 = white noise anti-symmetricy perturbation about 
                      !     the axis y = pi (zero mean vorticity in the upper 
                      !     and lower power separately)
+                     ! 4 = white noise symmetric perturbation about the axis
+                     !     x = pi (zero mean vorticity in the upper and
+                     !     lower part of the fluid domain separately)
+                     ! 5 = white noise anti-symmetricy perturbation about 
+                     !     the axis x = pi (zero mean vorticity in the upper 
+                     !     and lower power separately)
+ 
 real(8) :: apert = 0.015d-4 ! amplitude of perturbation
 
 
@@ -382,7 +389,12 @@ complex(8), allocatable :: cli(:,:)    ! linear time propagation
 ! *******************
 
 !--- gui communication (guimod)
-integer :: ngui    = 1   ! global switch 1 = on
+integer :: ngui    = 1   ! global switch and parameter 
+                         ! ngui > 0 GUI = on  
+                         ! ngui specifies moreover the number of 
+                         ! time-steps between two calls of gui_transfer 
+                         ! which exchanges data between GUI and CAT
+
 integer :: nguidbg = 0   ! GUI debug mode
 
 integer :: ndatim(6) = 1 ! date/time display
@@ -397,11 +409,17 @@ integer :: nsim  = 0 ! 0 no predefined simulation is specified
                      ! -----------------------------------------------
                      !    code       name
                      !
-                     !    1          decaying_jet01
+                     !     1    decaying_jet01
+                     !    51    top-hat wind-forcing
+                     !    52    top-hat wind-forcing
                      ! ----------------------------------------------- 
                      ! 
-                     ! Predefined simulations are specified in
-                     ! <sim_namelist> of simmod.
+                     ! Predefined simulations are given in the dat
+                     ! directory as sim_XXXX.nl with XXXX the code  
+                     ! To activate a given simulation one has to copy
+                     ! a given sim_XXXX.nl to sim_namelist in the run 
+                     ! directory.
+                     ! ----------------------------------------------- 
 
 !--- usermod (usermod)
 integer :: nuser = 0 ! 1/0 user mode is switched on/off.
@@ -608,7 +626,7 @@ inquire(file=cat_namelist,exist=lcatnl)
 
 if (lcatnl) then
   open(nucatnl,file=cat_namelist,iostat=ios_catnl)
-  read(nucatnl,cat_nl) 
+  read(nucatnl,cat_nl)
 endif
 
 return
@@ -1076,6 +1094,8 @@ endif
 
 print *, "the forcing ring contains ",nk," wavevectors."
 return
+
+
 end subroutine init_forc
 
 
@@ -1116,10 +1136,11 @@ use catmod
 implicit none
 
 
-integer :: jj                  ! loop index
+integer :: jx,jy               ! loop index
 
 real(8) :: gqpert(1:ngx,1:ngy) ! vorticity perturbation [1/s]
-real(8) :: randtmp(1:ngx)      ! temporary random vector
+real(8) :: randxtmp(1:ngx)      ! temporary random vector (x-dir)
+real(8) :: randytmp(1:ngy)      ! temporary random vector (y-dir)
 
 complex(8) :: cqpert(0:nkx,0:nfy)  ! spectral vorticiy perturbation [1/s]
 
@@ -1139,22 +1160,44 @@ select case(npert)
    cq = cq + cqpert
  case(2)
    !--- symmetric about channel center
-   do jj = 1,ngy/2
-      call random_number(randtmp)
-      randtmp = 2.0*apert*(randtmp - sum(randtmp)*rnx)
-      gqpert(:,jj)       = randtmp(:)   
-      gqpert(:,ngy+1-jj) = randtmp(:)
+   do jy = 1,ngy/2
+      call random_number(randxtmp)
+      randxtmp = 2.0*apert*(randxtmp - sum(randxtmp)*rnx)
+      gqpert(:,jy)       = randxtmp(:)   
+      gqpert(:,ngy+1-jy) = randxtmp(:)
    enddo
    call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
    cqpert(0,0) = (0.0,0.0)
    cq = cq + cqpert
  case(3)
    !--- anti-symmetric about channel center
-   do jj = 1,ngy/2
-      call random_number(randtmp)
-      randtmp = 2.0*apert*(randtmp - sum(randtmp)*rnx)
-      gqpert(:,jj)       =  randtmp(:)   
-      gqpert(:,ngy+1-jj) = -randtmp(:)
+   do jy = 1,ngy/2
+      call random_number(randxtmp)
+      randxtmp = 2.0*apert*(randxtmp - sum(randxtmp)*rnx)
+      gqpert(:,jy)       =  randxtmp(:)   
+      gqpert(:,ngy+1-jy) = -randxtmp(:)
+   enddo
+   call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
+   cqpert(0,0) = (0.0,0.0)
+   cq = cq + cqpert
+ case(4)
+   !--- symmetric about x = pi 
+   do jx = 1,ngx/2
+      call random_number(randytmp)
+      randytmp = 2.0*apert*(randytmp - sum(randytmp)*rny)
+      gqpert(jx,:)       = randytmp(:)   
+      gqpert(ngx+1-jx,:) = randytmp(:)
+   enddo
+   call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
+   cqpert(0,0) = (0.0,0.0)
+   cq = cq + cqpert
+ case(5)
+   !--- symmetric about x = pi 
+   do jx = 1,ngx/2
+      call random_number(randytmp)
+      randytmp = 2.0*apert*(randytmp - sum(randytmp)*rny)
+      gqpert(jx,:)       =  randytmp(:)   
+      gqpert(ngx+1-jx,:) = -randytmp(:)
    enddo
    call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
    cqpert(0,0) = (0.0,0.0)

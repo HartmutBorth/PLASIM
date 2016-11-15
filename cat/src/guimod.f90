@@ -51,8 +51,8 @@ end interface
 
 integer (kind=4) idatim(6)
 
-parc(1)   = 1.0
-parc(2)   = 2.0
+parc(1)   = ngui
+! parc(2)   = qmax * 1.0e7
 parc(3)   = 3.0
 parc(4)   = 4.0
 parc(5)   = 5.0
@@ -60,6 +60,9 @@ parc(5)   = 5.0
 idatim(:) = 0
 idatim(1) = tstep
 nshutdown = iguistep(parc,idatim)    ! GUI event handler
+
+if (parc(1) >= 1.0) ngui = parc(1)
+! qmax = parc(2) * 1.0e-7
    
 return
 end subroutine guistep_cat

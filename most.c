@@ -1991,6 +1991,7 @@ int Build(int model)
    {
       putenv("GUIMOD=guimod_stub");
       putenv("PUMAX=pumax_stub");
+      putenv("GUIX11=guix11_stub");
       putenv("GUILIB=");    
    }
    if (Planet == MARS) putenv("PLAMOD=p_mars");

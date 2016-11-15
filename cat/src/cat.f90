@@ -1444,7 +1444,7 @@ do while (tstep <= tstop)
    if (nsim > 0) call simstep
    if (nuser > 0) call userstep
    tstep = tstep + 1
-   if (nstdout.gt.0 .and. mod(tstep,nstdout) == 0) then
+   if (nstdout.gt.0 .and. ngui == 0 .and. mod(tstep,nstdout) == 0) then
       write(*,*)' time step ',tstep
    endif
    if (nshutdown > 0) return

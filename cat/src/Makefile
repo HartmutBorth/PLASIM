@@ -10,8 +10,8 @@ DEBOPTS=-g -ffpe-trap=invalid,zero,overflow -ffpe-summary=none -fcheck=all -fini
 %.o : %.f90
 	$(F90) -c $(OPTS) $<
 
-cat.x:	cat.o fftfor.o fftasm.o rstmod.o simmod.o usermod.o guimod.o pumax.o
-	$(F90) -o cat.x $(OPTS) cat.o fftfor.o fftasm.o rstmod.o simmod.o usermod.o guimod.o pumax.o -L/opt/X11 -lX11
+cat.x:	cat.o fftfor.o fftasm.o rstmod.o simmod.o usermod.o guimod.o guix11.o
+	$(F90) -o cat.x $(OPTS) cat.o fftfor.o fftasm.o rstmod.o simmod.o usermod.o guimod.o guix11.o -L/opt/X11 -lX11
 cat.o:	cat.f90
 fftfor.o:	fftfor.f90
 
@@ -26,7 +26,7 @@ usermod.o:	usermod.f90
 
 guimod.o:	guimod.f90
 
-pumax.o:	pumax.c
+gui.x11.o:	gui.x11.c
 
 clean:
 	rm -f cat.x *.o *.mod

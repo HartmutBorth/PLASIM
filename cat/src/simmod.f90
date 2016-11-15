@@ -166,11 +166,11 @@ select case(ysim)
      do jx = 1, ngx
         if ( jx .ge. ngx/2+1-scl*(w1+w2) .and. & 
            jx .le. ngx/2-scl*w1 ) then
-           gpvar(jx,:) = -qmax
+           gpvar(jx,:) =  qmax
         endif
         if ( jx .ge. ngx/2+1+scl*w1 .and. & 
            jx .le. ngx/2+scl*(w1+w2) ) then
-           gpvar(jx,:) =  qmax
+           gpvar(jx,:) = -qmax
         endif
      enddo
      call sim_wrtgp(gpvar,qfrccde,1)

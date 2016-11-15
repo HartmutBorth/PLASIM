@@ -1639,10 +1639,20 @@ void ShowStep(void)
    XSetFont(display, gc, BigFont->fid);
    XSetForeground(display,gc,BlackPix);
    XSetBackground(display,gc,Grey.pixel);
-   ntocdat();
-   if (ndatim[5] == 6) XSetForeground(display,gc,Red.pixel); // sunday
-   XDrawImageString(display,Cow,gc,10,BigFontHeight,datch,strlen(datch));
-   XSetForeground(display,gc,BlackPix);
+
+   if (Model == CAT) // CAT shows timestep
+   {
+      sprintf(Text,"GUI step %9d",ndatim[0]);
+      XDrawImageString(display,Cow,gc,10,BigFontHeight,Text,strlen(Text));
+   }
+   else // PUMA & PLASIM show date and time
+   {
+      ntocdat();
+      if (ndatim[5] == 6) XSetForeground(display,gc,Red.pixel); // sunday
+      XDrawImageString(display,Cow,gc,10,BigFontHeight,datch,strlen(datch));
+      XSetForeground(display,gc,BlackPix);
+   }
+
    if (ShowQueue)
    {
       sprintf(Text,"%8d Events   ",XPending(display));

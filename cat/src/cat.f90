@@ -1431,9 +1431,6 @@ subroutine cat_master
 use catmod
 implicit none
 
-if (nshutdown > 0) return   ! if an error occured so far
-
-
 do while (tstep <= tstop)
    call q2gquv
    call jacobian
@@ -1450,6 +1447,7 @@ do while (tstep <= tstop)
    if (nstdout.gt.0 .and. mod(tstep,nstdout) == 0) then
       write(*,*)' time step ',tstep
    endif
+   if (nshutdown > 0) return
 enddo
 
 return

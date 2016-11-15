@@ -349,7 +349,8 @@ int ModeRadiusSq;
 int ForceRebuild;
 int dxsh;
 int dxs2;
-int Yoden;
+int Yoden;                // PUMA setup for Yoden experiment
+int CatSim = 51;          // simulation setup number for CAT
 
 /* Special parameter */
 
@@ -2044,6 +2045,16 @@ int Build(int model)
    sprintf(command,"cp %s/bin/%s %s/run\n",shomo,exec_name,shomo);
    system(command);
 
+   // copy CAT simulation namelist to run directory
+
+   if (model == CAT)
+   {
+      sprintf(command,"cp cat/dat/sim_%4.4d.nl cat/run/sim_namelist\n",CatSim);
+      system(command);
+   }
+
+   // copy hires background bitmap for Earth or Mars
+
    if (model == PUMA || model == PLASIM )
    {
        if (model == PLASIM && Planet == MARS)
@@ -2057,6 +2068,9 @@ int Build(int model)
           system(command);
        }
    }
+
+   // copy surface data in matching resolution to run directory
+
    if (model == PLASIM)
    {
       if (Planet == MARS)
@@ -2066,8 +2080,8 @@ int Build(int model)
       else
          sprintf(command,"cp plasim/dat/T%d/* plasim/run/\n",Truncation);
       system(command);
-      system(command);
-      if (Lsg)
+
+      if (Lsg) // copy data for LSG ocean model and select LSG GUI configuration
       {    
          sprintf(command,"cp lsg/dat/* %s/run\n",shomo);
          system(command);
@@ -2085,6 +2099,9 @@ int Build(int model)
       sprintf(command,"cp %s/dat/GUI.cfg %s/run\n",shomo,shomo);
       system(command);
    }
+
+   // copy second GUI configuration for two-instances run
+
    if (Multirun > 1)
    {
       sprintf(command,"cp %s/dat/GUI_0?.cfg %s/run\n",shomo,shomo);
@@ -2585,6 +2602,10 @@ int WriteCatNamelist(void)
          fprintf(fp," %-8s=%6d\n",Sel->text,Sel->iv);
       if (Sel->type == SEL_REAL)
          fprintf(fp," %-8s=%s\n",Sel->text,Sel->teva);
+      if (!strncmp(Sel->text,"NSIM",4))
+      {
+         if (Sel->iv > 0) CatSim = Sel->iv;
+      }
    }
 
    fprintf(fp," /END\n");

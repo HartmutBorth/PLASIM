@@ -56,7 +56,9 @@ parc(2)   = 2.0
 parc(3)   = 3.0
 parc(4)   = 4.0
 parc(5)   = 5.0
-idatim(:) = ndatim(:)
+
+idatim(:) = 0
+idatim(1) = tstep
 nshutdown = iguistep(parc,idatim)    ! GUI event handler
    
 return

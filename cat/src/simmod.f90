@@ -36,7 +36,7 @@ character (256) :: ysim = "djet01" ! type of predefined simulation
 !--- parameters of djet01 (initial top hat jet)
 integer :: w1     = 8      ! half width of jet center (in grid points)
 integer :: w2     = 4      ! width of vortex sheet (in grid points)
-integer :: scl    = 1      ! horizontal scale of jet
+integer :: hscl   = 1      ! horizontal scale of jet
 real(8) :: qmax   = 1.0    ! amplitude of vortex sheets
 
 
@@ -83,7 +83,7 @@ implicit none
 
 !--- define sim_namelist
 namelist /sim_nl/ ysim       ,                        &
-                  qmax       ,w1      ,w2     ,scl   ,& 
+                  qmax       ,w1      ,w2     ,hscl  ,& 
                   sdt        ,snsteps ,sngui  ,       &
                   snpert     ,snforc  ,snpost
 
@@ -131,12 +131,12 @@ select case(ysim)
   case("djet01")
      gpvar(:,:) = 0.0
      do jy = 1, ngy
-        if ( jy .ge. ngy/2+1-scl*(w1+w2) .and. & 
-           jy .le. ngy/2-scl*w1 ) then
+        if ( jy .ge. ngy/2+1-hscl*(w1+w2) .and. & 
+           jy .le. ngy/2-hscl*w1 ) then
            gpvar(:,jy) = -qmax
         endif
-        if ( jy .ge. ngy/2+1+scl*w1 .and. & 
-           jy .le. ngy/2+scl*(w1+w2) ) then
+        if ( jy .ge. ngy/2+1+hscl*w1 .and. & 
+           jy .le. ngy/2+hscl*(w1+w2) ) then
            gpvar(:,jy) =  qmax
         endif
      enddo
@@ -150,12 +150,12 @@ select case(ysim)
   case("fjet01")
      gpvar(:,:) = 0.0
      do jy = 1, ngy
-        if ( jy .ge. ngy/2+1-scl*(w1+w2) .and. & 
-           jy .le. ngy/2-scl*w1 ) then
+        if ( jy .ge. ngy/2+1-hscl*(w1+w2) .and. & 
+           jy .le. ngy/2-hscl*w1 ) then
            gpvar(:,jy) = -qmax
         endif
-        if ( jy .ge. ngy/2+1+scl*w1 .and. & 
-           jy .le. ngy/2+scl*(w1+w2) ) then
+        if ( jy .ge. ngy/2+1+hscl*w1 .and. & 
+           jy .le. ngy/2+hscl*(w1+w2) ) then
            gpvar(:,jy) =  qmax
         endif
      enddo
@@ -164,13 +164,13 @@ select case(ysim)
   case("fjet02")
      gpvar(:,:) = 0.0
      do jx = 1, ngx
-        if ( jx .ge. ngx/2+1-scl*(w1+w2) .and. & 
-           jx .le. ngx/2-scl*w1 ) then
-           gpvar(jx,:) =  qmax
-        endif
-        if ( jx .ge. ngx/2+1+scl*w1 .and. & 
-           jx .le. ngx/2+scl*(w1+w2) ) then
+        if ( jx .ge. ngx/2+1-hscl*(w1+w2) .and. & 
+           jx .le. ngx/2-hscl*w1 ) then
            gpvar(jx,:) = -qmax
+        endif
+        if ( jx .ge. ngx/2+1+hscl*w1 .and. & 
+           jx .le. ngx/2+hscl*(w1+w2) ) then
+           gpvar(jx,:) =  qmax
         endif
      enddo
      call sim_wrtgp(gpvar,qfrccde,1)
@@ -261,6 +261,11 @@ end subroutine sim_wrtsp
 subroutine simstep
 use simmod
 implicit none
+
+
+
+
+
 
 return
 end subroutine simstep

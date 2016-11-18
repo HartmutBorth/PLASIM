@@ -405,9 +405,9 @@ complex(8), allocatable :: cqfrc(:,:) ! external vorticity forcing
 
 !--- operators in Fourier Space
 integer   , allocatable :: kx(:),ky(:)
-real(8)   , allocatable :: ki2(:), kj2(:)
-real(8)   , allocatable :: k2n(:,:), rk2an(:,:)
-real(8)   , allocatable :: kirk2an(:,:),kjrk2an(:,:)
+real(8)   , allocatable :: kx2(:), ky2(:)
+real(8)   , allocatable :: k2(:,:), k2pa(:,:), rk2pa(:,:)
+real(8)   , allocatable :: kxrk2pa(:,:),kyrk2pa(:,:)
 
 
 !--- linear time propagation (dissipation and beta-term)
@@ -660,6 +660,19 @@ if (lcatnl) then
   read(nucatnl,cat_nl)
 endif
 
+!--- check consistency of namelist parameters   
+if (jacmthd .lt. 0 .or. jacmthd .gt. 3) then
+   write(nudiag, &
+   '(/," ************************************************")')
+   write(nudiag,*) "jacmthd = ", jacmthd ," does not exist"
+   write(nudiag,*) "use default instead (jacmthd = 1)"
+   write(nudiag,'("                         ")')
+   write(nudiag, &
+   '(" ************************************************",/)')
+   jacmthd = 1
+endif
+
+
 return
 end subroutine cat_readnl
 
@@ -736,8 +749,8 @@ integer :: j
 !-----------------------------
 allocate(kx(0:nkx))   ; kx(:)   = [(j,j=0,nkx)]
 allocate(ky(0:nfy))   ; ky(:)   = [(j,j=0,nky),(j,j=-nky,-1)]
-allocate(ki2(0:nkx))  ; ki2(:)  = 0.0
-allocate(kj2(0:nfy))  ; kj2(:)  = 0.0
+allocate(kx2(0:nkx))  ; kx2(:)  = 0.0
+allocate(ky2(0:nfy))  ; ky2(:)  = 0.0
 
 
 
@@ -758,10 +771,11 @@ allocate(ggui(1:ngx,1:ngy)) ; ggui(:,:)  = 0.0  ! GUI transfer
 allocate(fu(0:nfx,0:nfy))   ; fu(:,:)   = 0.0 ! u 
 allocate(fv(0:nfx,0:nfy))   ; fv(:,:)   = 0.0 ! v 
 
-allocate(k2n(0:nkx,0:nfy))     ; k2n(:,:)     = 0.0 ! Laplacian
-allocate(rk2an(0:nkx,0:nfy))   ; rk2an(:,:)   = 0.0 ! modified Laplacian^-1
-allocate(kirk2an(0:nkx,0:nfy)) ; kirk2an(:,:) = 0.0 ! q --> v
-allocate(kjrk2an(0:nkx,0:nfy)) ; kjrk2an(:,:) = 0.0 ! q --> u
+allocate(k2(0:nkx,0:nfy))     ; k2(:,:)     = 0.0 ! Laplacian
+allocate(k2pa(0:nkx,0:nfy))    ; k2pa(:,:)    = 0.0 ! modified Laplacian
+allocate(rk2pa(0:nkx,0:nfy))   ; rk2pa(:,:)   = 0.0 ! modified Laplacian^-1
+allocate(kxrk2pa(0:nkx,0:nfy)) ; kxrk2pa(:,:) = 0.0 ! q --> v
+allocate(kyrk2pa(0:nkx,0:nfy)) ; kyrk2pa(:,:) = 0.0 ! q --> u
 
 allocate(cli(0:nkx,0:nfy))  ; cli(:,:)   = (0.0,0.0) ! linear time propagator 
 
@@ -847,6 +861,28 @@ case (1)
    !--- spetral fields 
    deallocate(fuq)
    deallocate(fvq)
+
+case (2)
+   !--- deallocate fields used by jacobian
+
+   !--- grid point fields 
+   deallocate(guqxoqx)
+   deallocate(gvqyoqy)
+
+   !--- spetral fields 
+   deallocate(fuqxoqx)
+   deallocate(fvqyoqy)
+
+case (3)
+   !--- deallocate fields used by jacobian
+
+   !--- grid point fields 
+   deallocate(gv2mu2)
+   deallocate(guv)
+
+   !--- spetral fields 
+   deallocate(fv2mu2)
+   deallocate(fuv)
 
 end select
 
@@ -1089,7 +1125,7 @@ subroutine init_lintstep
 use catmod
 implicit none
 
-real(8)    :: k2,diss_sig,diss_lam,b_term
+real(8)    :: diss_sig,diss_lam,b_term
 complex(8) :: arg
 integer    :: jx,jy,n
 
@@ -1110,15 +1146,14 @@ do jy = 0, nfy
    do jx = 0, nkx
       diss_sig = 0.0
       diss_lam = 0.0
-      k2       = ki2(jx)+kj2(jy)
       do n = 1,nsig
-         diss_sig = diss_sig - sig(n)*k2**psig(n)
+         diss_sig = diss_sig - sig(n)*k2(jx,jy)**psig(n)
       enddo
       do n = 1,nlam
-         diss_lam = diss_lam - lam(n)*k2**plam(n)
+         diss_lam = diss_lam - lam(n)*k2(jx,jy)**plam(n)
       enddo
-      b_term    = beta * kx(jx)/(k2+alpha)
-      arg       = dt* cmplx(diss_sig+diss_lam,b_term)
+      b_term    = beta * kxrk2pa(jx,jy)
+      arg       = dt * cmplx(diss_sig+diss_lam,b_term)
       cli(jx,jy)  = exp(arg)
    enddo
 enddo
@@ -1164,22 +1199,24 @@ subroutine init_forc
 use catmod
 implicit none
 
-real(8) :: k2,ent
-integer :: i,j
+real(8) :: k2tmp,ent
+integer :: jx,jy
 
 if (nforc .eq. 0) return
 
 !---     
 ent=0.d0
-do j = 0, nfy
-  do i = 0, nkx
-    k2 = ki2(i) + kj2(j)
-    if (j.ne.0.or.i.ne.0) then
-      if (sqrt(k2).ge.kfmin.and.sqrt(k2).le.kfmax) then
+do jy = 0, nfy
+  do jx = 0, nkx
+!   k2 = kx2(i) + ky2(j)
+    k2tmp = k2(jx,jy)
+    if (jy.ne.0.or.jx.ne.0) then
+      if (sqrt(k2tmp).ge.kfmin.and.sqrt(k2tmp).le.kfmax) then
         nk = nk + 1
-        in(nk,1) = i
-        in(nk,2) = j
-        ent=ent+k2+alpha
+        in(nk,1) = jx 
+        in(nk,2) = jy
+!       ent=ent+k2+alpha
+        ent=ent+k2pa(jy,jx)
       endif
     endif
   enddo
@@ -1715,32 +1752,37 @@ implicit none
 integer    :: jx,jy
 
 select case (jacmthd)
+case (0)
+   !--- Jacobian switched off
+   cjac0(:,:) = cmplx(0.0d0,0.0d0)
 
 case (1)
-   !--- comment Jacobian has different sign in CAT-UG   
-   !--- and case 1 is second representation of Jacobian
+   !--- Jacobian in divergence form (second representation in CAT-UG)
    guq = gu*gq
    gvq = gv*gq
 
    call grid_to_fourier(guq,fuq,nfx,nfy,ngx,ngy)
    call grid_to_fourier(gvq,fvq,nfx,nfy,ngx,ngy)
 
+   !--- (!!! Jacobian has different sign than in CAT-UG !!!)
    do jy = 0, nfy
       do jx = 0, nkx
          cjac0(jx,jy) = & 
-          cmplx(kx(jx)*fuq(jx+jx+1,jy)+ky(jy)*fvq(jx+jx+1,jy), &
-              - kx(jx)*fuq(jx+jx,jy)-ky(jy)*fvq(jx+jx,jy))
+          cmplx(kx(jx)*fuq(2*jx+1,jy) + ky(jy)*fvq(2*jx+1,jy), &
+              - kx(jx)*fuq(2*jx  ,jy) - ky(jy)*fvq(2*jx  ,jy))
       enddo
    enddo
 
 case (2)
-
+   !--- Jacobian in standard form (first representation in CAT-UG)
+    
 
 case (3)
       
 end select
 
-if (jac_scale .ne. 1.0) cjac0(:,:) = jac_scale*cjac0(:,:)
+if (jac_scale .ne. 1.0 .or. jac_scale .ne. 0.0)  &
+                           cjac0(:,:) = jac_scale*cjac0(:,:)
 
 return
 end subroutine jacobian
@@ -1757,10 +1799,10 @@ integer :: i,j
 
 do j = 0, nfy
    do i = 0, nkx
-      fu(i+i  ,j) = -aimag(cq(i,j)) * kjrk2an(i,j)
-      fu(i+i+1,j) =  real (cq(i,j)) * kjrk2an(i,j)
-      fv(i+i  ,j) =  aimag(cq(i,j)) * kirk2an(i,j)
-      fv(i+i+1,j) = -real (cq(i,j)) * kirk2an(i,j)
+      fu(i+i  ,j) = -aimag(cq(i,j)) * kyrk2pa(i,j)
+      fu(i+i+1,j) =  real (cq(i,j)) * kyrk2pa(i,j)
+      fv(i+i  ,j) =  aimag(cq(i,j)) * kxrk2pa(i,j)
+      fv(i+i+1,j) = -real (cq(i,j)) * kxrk2pa(i,j)
    enddo
 enddo
 
@@ -1775,7 +1817,7 @@ subroutine add_forc
 use catmod
 implicit none
 integer :: i,j,ic,ifk
-real(8) :: k2
+real(8) :: k2tmp
 complex(8) :: psif
 real(8) :: eni,enf,ran4
 
@@ -1792,10 +1834,10 @@ select case (nforc)
          j = in(ifk,2)
 !        psif = ampcoeff*exp(ci*twopi*0.1525125)
          psif = ampcoeff*exp(ci*twopi)
-         k2 = ki2(i)+kj2(j)+alpha
-         eni = eni+(cq(i,j)*cq(i,j))/k2
-         cq(i,j) = cq(i,j)-k2*psif*rnxy
-         enf = enf+(cq(i,j)*cq(i,j))/k2
+         k2tmp = k2pa(i,j)
+         eni = eni+(cq(i,j)*cq(i,j))/k2tmp
+         cq(i,j) = cq(i,j)-k2tmp*psif*rnxy
+         enf = enf+(cq(i,j)*cq(i,j))/k2tmp
       enddo
 
    case (3)
@@ -1805,14 +1847,14 @@ select case (nforc)
          phi=ran4*twopi*ci
       endif
       psif=ampcoeff*exp(phi)
-      ! add the forcing to the spectral vorticity q -> q+ k2 *psif
+      ! add the forcing to the spectral vorticity q -> q+ k2tmp *psif
       do ifk=1,nk
          i = in(ifk,1)
          j = in(ifk,2)
-         k2 = ki2(i)+kj2(j)+alpha
-         eni=eni+(cq(i,j)*cq(i,j))/k2
-         cq(i,j) = cq(i,j)-k2*psif*rnxy
-         enf=enf+(cq(i,j)*cq(i,j))/k2
+         k2tmp = k2pa(i,j)
+         eni=eni+(cq(i,j)*cq(i,j))/k2tmp
+         cq(i,j) = cq(i,j)-k2tmp*psif*rnxy
+         enf=enf+(cq(i,j)*cq(i,j))/k2tmp
       enddo
 
    case (4)
@@ -1821,10 +1863,10 @@ select case (nforc)
          j = in(ifk,2)
          call random_number(ran4)
          psif = ampcoeff*exp(ci*twopi*ran4)
-         k2 = ki2(i)+kj2(j)+alpha
-         eni=eni+(cq(i,j)*cq(i,j))/k2
-         cq(i,j) = cq(i,j)-k2*psif*rnxy
-         enf=enf+(cq(i,j)*cq(i,j))/k2
+         k2tmp = k2pa(i,j)
+         eni=eni+(cq(i,j)*cq(i,j))/k2tmp
+         cq(i,j) = cq(i,j)-k2tmp*psif*rnxy
+         enf=enf+(cq(i,j)*cq(i,j))/k2tmp
       enddo
 
 end select
@@ -1907,20 +1949,20 @@ subroutine init_ops
 use catmod
 implicit none
 
-integer :: i,j    
+integer :: jx,jy    
  
-ki2    = kx*kx
-ki2(0) = 1.0    
+kx2    = kx*kx
+kx2(0) = 1.0    
 
+ky2    = ky*ky
 
-kj2    = ky*ky
-
-do j = 0, nfy
-   do i = 0, nkx
-      k2n(i,j)     = (ki2(i)+kj2(j))
-      rk2an(i,j)   = 1.0d0/(k2n(i,j)+alpha)
-      kirk2an(i,j) = kx(i)*rk2an(i,j)
-      kjrk2an(i,j) = ky(j)*rk2an(i,j)
+do jy = 0, nfy
+   do jx = 0, nkx
+      k2     (jx,jy) = (kx2(jx)+ky2(jy))        ! - Laplacian      psi --> -q
+      k2pa   (jx,jy) = (kx2(jx)+ky2(jy))+alpha  ! - mod Laplacian  psi --> -q
+      rk2pa  (jx,jy) = 1.0d0/(k2(jx,jy)+alpha)  ! 1/mod Laplacian    q --> -psi
+      kxrk2pa(jx,jy) = kx(jx)*rk2pa(jx,jy)      ! q ---> v/i  
+      kyrk2pa(jx,jy) = ky(jy)*rk2pa(jx,jy)      ! q ---> u/i
    enddo
 enddo
 

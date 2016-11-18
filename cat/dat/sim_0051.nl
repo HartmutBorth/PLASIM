@@ -1,5 +1,5 @@
  $sim_nl
- ysim    = "fjet02"
+ ysim    = "fjet01"
  w1      = 8
  w2      = 2
  hscl    = 1

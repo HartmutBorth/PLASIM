@@ -8,5 +8,5 @@
  sdt     = 1.0d-3
  sngui   = 250
  snforc  = 1
- snpert  = 4
+ snpert  = 2
  /

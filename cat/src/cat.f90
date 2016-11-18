@@ -253,7 +253,7 @@ integer :: npert = 0 ! initial perturbation switch
                      !     the axis x = pi (zero mean vorticity in the upper 
                      !     and lower power separately)
  
-real(8) :: apert = 0.015d-4 ! amplitude of perturbation
+real(8) :: apert = 1.0d-5 ! amplitude of perturbation
 
 
 !--- Forcing
@@ -338,43 +338,73 @@ integer :: ntseri    = 100     ! time steps between time-series output
  
 real(8) :: dt        = 1.d-3   ! length of time step [s]
 
+!--------------------------------------------!
+! variables in physical/gridpoint space (GP) !
+!--------------------------------------------!
 
-!--- variables in physical/gridpoint space (GP)
+!--- basic model variables
 real(8), allocatable :: gq(:,:)    ! vorticity            [1/s]
 real(8), allocatable :: gpsi(:,:)  ! stream function      [m^2/s]
 real(8), allocatable :: gu(:,:)    ! velocity x-direction [m/s]
 real(8), allocatable :: gv(:,:)    ! velocity y-direction [m/s]
 
-real(8), allocatable :: guq(:,:)   ! u*vorticity  [m/s^2]
-real(8), allocatable :: gvq(:,:)   ! v*vorticity  [m/s^2]
 
+!--- jacobian (utility variables)
 
+!--- case 1
+real(8), allocatable :: guq(:,:)    ! u*q  [m/s^2]
+real(8), allocatable :: gvq(:,:)    ! v*q  [m/s^2]
+
+!--- case 2 (!! variables contain different fields depending on context)
+real(8), allocatable :: guqxoqx(:,:) ! u*dq/dx [s^-2] or dq/dx [1/ms] 
+real(8), allocatable :: gvqyoqy(:,:) ! v*dq/dy [s^-2] or dq/dy [1/ms]
+
+!--- case 3
+real(8), allocatable :: gv2mu2(:,:) ! v^2-u^2 [m^2/s^2]
+real(8), allocatable :: guv(:,:)    ! u*v     [m^2/s^2]
+
+!--- gui
 real(4), allocatable :: ggui(:,:) ! single precision transfer
 
 
-!--- variables in spectral space, representation as imaginary and real part (F)
+!----------------------------------------------------------!
+! variables in spectral space, representation as imaginary !
+! and real part (prefix f) used for fourier transformation ! 
+! and complex representation (prefix c) used for time      !
+! evolution                                                !
+!----------------------------------------------------------!
+
+!--- basic model variables (format used for fourier transform)
 real(8), allocatable :: fpsi(:,:) ! stream function
 real(8), allocatable :: fu(:,:)   ! velocity x-direction
 real(8), allocatable :: fv(:,:)   ! velocity y-direction
 
-real(8), allocatable :: fuq(:,:)  ! u*vorticity
-real(8), allocatable :: fvq(:,:)  ! v*vorticity
+!--- jacobian (utility variables)
+
+!--- case 1
+real(8), allocatable :: fuq(:,:)    ! u*q  [m/s^2]
+real(8), allocatable :: fvq(:,:)    ! v*q  [m/s^2]
+
+!--- case 2 (!! variables contain different fields depending on context)
+real(8), allocatable :: fuqxoqx(:,:) ! u*dq/dx [s^-2] or dq/dx [1/ms]
+real(8), allocatable :: fvqyoqy(:,:) ! v*dq/dy [s^-2] or dq/dy [1/ms]
+
+!--- case 3
+real(8), allocatable :: fv2mu2(:,:) ! v^2-u^2 [m^2/s^2]
+real(8), allocatable :: fuv(:,:)    ! u*v     [m^2/s^2]
 
 
-!--- variables in spectral space, complex representation (C)
+!--- basic model variables (format used for time propagation)
 complex(8), allocatable :: cq(:,:)     ! vorticity
-complex(8), allocatable :: cqfrc(:,:) ! external vorticity forcing
 
 complex(8), allocatable :: cjac0(:,:)  ! Jacobian at time  0
 complex(8), allocatable :: cjac1(:,:)  ! Jacobian at time -1
 complex(8), allocatable :: cjac2(:,:)  ! Jacobian at time -2
 
-!--- variables in spectral space, amplitudes (AP) and phases (PA)
-!real(8), allocatable :: aptmp(:,:) ! temporary amplitude for, e.g. i/o
-!real(8), allocatable :: patmp(:,:) ! temporary phase for, e.g. i/o
+complex(8), allocatable :: cqfrc(:,:) ! external vorticity forcing
 
 !--- operators in Fourier Space
-integer   , allocatable :: ki(:),kj(:)
+integer   , allocatable :: kx(:),ky(:)
 real(8)   , allocatable :: ki2(:), kj2(:)
 real(8)   , allocatable :: k2n(:,:), rk2an(:,:)
 real(8)   , allocatable :: kirk2an(:,:),kjrk2an(:,:)
@@ -471,6 +501,7 @@ call init_diag
 call read_resol
 call init_pars
 call cat_alloc
+call init_jacobian
 call init_ops
 if (lrst) then
    call check_rst
@@ -703,8 +734,8 @@ integer :: j
 !-----------------------------
 ! 1D real and complex vectors
 !-----------------------------
-allocate(ki(0:nkx))   ; ki(:)   = [(j,j=0,nkx)]
-allocate(kj(0:nfy))   ; kj(:)   = [(j,j=0,nky),(j,j=-nky,-1)]
+allocate(kx(0:nkx))   ; kx(:)   = [(j,j=0,nkx)]
+allocate(ky(0:nfy))   ; ky(:)   = [(j,j=0,nky),(j,j=-nky,-1)]
 allocate(ki2(0:nkx))  ; ki2(:)  = 0.0
 allocate(kj2(0:nfy))  ; kj2(:)  = 0.0
 
@@ -720,16 +751,12 @@ allocate(gu(1:ngx,1:ngy))   ; gu(:,:)   = 0.0  ! velocity in x-dir.
 allocate(gv(1:ngx,1:ngy))   ; gv(:,:)   = 0.0  ! velocity in y-dir.
 
 allocate(gpsi(1:ngx,1:ngy)) ; gpsi(:,:) = 0.0  ! stream function
-allocate(guq(1:ngx,1:ngy))  ; guq(:,:)  = 0.0  ! u*vorticity
-allocate(gvq(1:ngx,1:ngy))  ; gvq(:,:)  = 0.0  ! v*vorticity
 
 allocate(ggui(1:ngx,1:ngy)) ; ggui(:,:)  = 0.0  ! GUI transfer
 
 !--- spetral space 
 allocate(fu(0:nfx,0:nfy))   ; fu(:,:)   = 0.0 ! u 
 allocate(fv(0:nfx,0:nfy))   ; fv(:,:)   = 0.0 ! v 
-allocate(fuq(0:nfx,0:nfy))  ; fuq(:,:)  = 0.0 ! u*q
-allocate(fvq(0:nfx,0:nfy))  ; fvq(:,:)  = 0.0 ! v*q
 
 allocate(k2n(0:nkx,0:nfy))     ; k2n(:,:)     = 0.0 ! Laplacian
 allocate(rk2an(0:nkx,0:nfy))   ; rk2an(:,:)   = 0.0 ! modified Laplacian^-1
@@ -750,6 +777,81 @@ allocate(cjac2(0:nkx,0:nfy)); cjac2(:,:) = (0.0,0.0) ! Jacobian at time level -2
 
 return
 end subroutine cat_alloc
+
+
+! ****************************
+! * SUBROUTINE INIT_JACOBIAN *
+! ****************************
+subroutine init_jacobian
+use catmod
+implicit none
+
+select case (jacmthd)
+
+   case (1)
+      !--- allocate fields used by jacobian
+ 
+      !--- grid point fields 
+      allocate(guq(1:ngx,1:ngy)) ; guq(:,:) = 0.0  ! u*q
+      allocate(gvq(1:ngx,1:ngy)) ; gvq(:,:) = 0.0  ! v*q
+
+      !--- spetral fields  
+      allocate(fuq(0:nfx,0:nfy)) ; fuq(:,:) = 0.0  ! u*q
+      allocate(fvq(0:nfx,0:nfy)) ; fvq(:,:) = 0.0  ! v*q
+
+   case (2)
+      !--- allocate fields used by jacobian
+      
+      !--- grid point fields 
+      allocate(guqxoqx(1:ngx,1:ngy)) ; guqxoqx(:,:) = 0.0  ! u*qx or qx
+      allocate(gvqyoqy(1:ngx,1:ngy)) ; gvqyoqy(:,:) = 0.0  ! v*qy or qy
+   
+      !--- spetral fields  
+      allocate(fuqxoqx(0:nfx,0:nfy)) ; fuqxoqx(:,:) = 0.0  ! u*qx or qx
+      allocate(fvqyoqy(0:nfx,0:nfy)) ; fvqyoqy(:,:) = 0.0  ! v*qy or qy
+
+   case (3)
+      !--- allocate fields used by jacobian
+
+      !--- grid point fields 
+      allocate(gv2mu2(1:ngx,1:ngy)) ; gv2mu2(:,:) = 0.0  ! v^2-u^2 
+      allocate(guv   (1:ngx,1:ngy)) ; guv   (:,:) = 0.0  ! u*v 
+
+      !--- spetral fields  
+      allocate(fv2mu2(0:nfx,0:nfy)) ; fv2mu2(:,:) = 0.0  ! v^2-u^2
+      allocate(fuv   (0:nfx,0:nfy)) ; fuv   (:,:) = 0.0  ! u*v
+
+end select
+
+
+return
+end subroutine init_jacobian
+
+
+! ****************************
+! * SUBROUTINE STOP_JACOBIAN *
+! ****************************
+subroutine stop_jacobian
+use catmod
+implicit none
+
+select case (jacmthd)
+
+case (1)
+   !--- deallocate fields used by jacobian
+
+   !--- grid point fields 
+   deallocate(guq)
+   deallocate(gvq)
+
+   !--- spetral fields 
+   deallocate(fuq)
+   deallocate(fvq)
+
+end select
+
+return
+end subroutine stop_jacobian
 
 
 ! ************************
@@ -989,7 +1091,7 @@ implicit none
 
 real(8)    :: k2,diss_sig,diss_lam,b_term
 complex(8) :: arg
-integer    :: i,j,n
+integer    :: jx,jy,n
 
 !--------------------------------------------------------------
 ! Time propagator of linear part of differential equation
@@ -1003,22 +1105,21 @@ integer    :: i,j,n
 !     diss_lam  = -sum_j=1,nlam lam(j)*k^(2*plam(j))
 !     b_term    = i*beta*kx/(k^2 + alpha)
 !--------------------------------------------------------------
-do j = 0, nfy
-   do i = 0, nkx
+
+do jy = 0, nfy
+   do jx = 0, nkx
       diss_sig = 0.0
       diss_lam = 0.0
-      k2       = ki2(i)+kj2(j)
+      k2       = ki2(jx)+kj2(jy)
       do n = 1,nsig
          diss_sig = diss_sig - sig(n)*k2**psig(n)
       enddo
       do n = 1,nlam
          diss_lam = diss_lam - lam(n)*k2**plam(n)
       enddo
-      b_term    = cmplx(0.0,beta * ki(i) / (k2+alpha))
-
-      arg       = dt*(diss_sig + diss_lam + b_term)
-
-      cli(i,j)  = exp(arg)
+      b_term    = beta * kx(jx)/(k2+alpha)
+      arg       = dt* cmplx(diss_sig+diss_lam,b_term)
+      cli(jx,jy)  = exp(arg)
    enddo
 enddo
 
@@ -1136,72 +1237,78 @@ use catmod
 implicit none
 
 
-integer :: jx,jy               ! loop index
-
-real(8) :: gqpert(1:ngx,1:ngy) ! vorticity perturbation [1/s]
-real(8) :: randxtmp(1:ngx)      ! temporary random vector (x-dir)
-real(8) :: randytmp(1:ngy)      ! temporary random vector (y-dir)
+integer :: jx,jy                ! loop index
+real(8) :: anglex,delx          ! angle and grid distance in x-direction
+real(8) :: angley,dely          ! angle and grid distance in y-direction
+real(8) :: gqpert(1:ngx,1:ngy)  ! vorticity perturbation [1/s]
+real(8) :: xtmp(1:ngx)          ! temporary vector (x-direction)
+real(8) :: ytmp(1:ngy)          ! temporary vector (y-direction)
 
 complex(8) :: cqpert(0:nkx,0:nfy)  ! spectral vorticiy perturbation [1/s]
 
 if ( .not. (tstep .eq. 0) .and. npert .eq. 0) return
 
-
+delx = 4.0*asin(1.0)/ngx
+dely = 4.0*asin(1.0)/ngy
 
 select case(npert)
- 
- !--- zero-mean grid point white noise perturbations
- case(1)
-   !--- without symmetry
-   call random_number(gqpert)
-   gqpert = 2.0*apert*(gqpert - sum(gqpert)*rnxy)
-   call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
-   cqpert(0,0) = (0.0d0,0.0d0)
-   cq = cq + cqpert
- case(2)
-   !--- symmetric about channel center
-   do jy = 1,ngy/2
-      call random_number(randxtmp)
-      randxtmp = 2.0*apert*(randxtmp - sum(randxtmp)*rnx)
-      gqpert(:,jy)       = randxtmp(:)   
-      gqpert(:,ngy+1-jy) = randxtmp(:)
-   enddo
-   call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
-   cqpert(0,0) = (0.0,0.0)
-   cq = cq + cqpert
- case(3)
-   !--- anti-symmetric about channel center
-   do jy = 1,ngy/2
-      call random_number(randxtmp)
-      randxtmp = 2.0*apert*(randxtmp - sum(randxtmp)*rnx)
-      gqpert(:,jy)       =  randxtmp(:)   
-      gqpert(:,ngy+1-jy) = -randxtmp(:)
-   enddo
-   call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
-   cqpert(0,0) = (0.0,0.0)
-   cq = cq + cqpert
- case(4)
-   !--- symmetric about x = pi 
-   do jx = 1,ngx/2
-      call random_number(randytmp)
-      randytmp = 2.0*apert*(randytmp - sum(randytmp)*rny)
-      gqpert(jx,:)       = randytmp(:)   
-      gqpert(ngx+1-jx,:) = randytmp(:)
-   enddo
-   call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
-   cqpert(0,0) = (0.0,0.0)
-   cq = cq + cqpert
- case(5)
-   !--- symmetric about x = pi 
-   do jx = 1,ngx/2
-      call random_number(randytmp)
-      randytmp = 2.0*apert*(randytmp - sum(randytmp)*rny)
-      gqpert(jx,:)       =  randytmp(:)   
-      gqpert(ngx+1-jx,:) = -randytmp(:)
-   enddo
-   call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
-   cqpert(0,0) = (0.0,0.0)
-   cq = cq + cqpert
+   !--- zero-mean grid point white noise perturbations
+   case(1)
+      !--- without symmetry
+      call random_number(gqpert)
+      gqpert = 2.0*apert*(gqpert - sum(gqpert)*rnxy)
+      call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
+      cqpert(0,0) = (0.0d0,0.0d0)
+      cq = cq + cqpert
+   case(2)
+      !--- symmetric about channel center
+      do jy = 1,ngy/2
+         call random_number(xtmp)
+         xtmp = 2.0*apert*(xtmp - sum(xtmp)*rnx)
+         gqpert(:,jy)       = xtmp(:)   
+         gqpert(:,ngy+1-jy) = xtmp(:)
+      enddo
+      call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
+      cqpert(0,0) = (0.0,0.0)
+      cq = cq + cqpert
+   case(3)
+      !--- anti-symmetric about channel center
+      do jy = 1,ngy/2
+         call random_number(xtmp)
+         xtmp = 2.0*apert*(xtmp - sum(xtmp)*rnx)
+         gqpert(:,jy)       =  xtmp(:)   
+         gqpert(:,ngy+1-jy) = -xtmp(:)
+      enddo
+      call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
+      cqpert(0,0) = (0.0,0.0)
+      cq = cq + cqpert
+   case(4)
+      !--- symmetric about x = pi 
+      do jx = 1,ngx/2
+         call random_number(ytmp)
+         ytmp = 2.0*apert*(ytmp - sum(ytmp)*rny)
+         gqpert(jx,:)       = ytmp(:)   
+         gqpert(ngx+1-jx,:) = ytmp(:)
+      enddo
+      call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
+      cqpert(0,0) = (0.0,0.0)
+      cq = cq + cqpert
+   case(5)
+      !--- symmetric about x = pi 
+      do jx = 1,ngx/2
+         call random_number(ytmp)
+         ytmp = 2.0*apert*(ytmp - sum(ytmp)*rny)
+         gqpert(jx,:)       =  ytmp(:)   
+         gqpert(ngx+1-jx,:) = -ytmp(:)
+      enddo
+      call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
+      cqpert(0,0) = (0.0,0.0)
+      cq = cq + cqpert
+   case(6)
+      cqpert = (0.0d0,0.0d0)
+      cqpert(1,nky/2) = 0.5d0*apert*cmplx(1.0d0,0.0d0)
+      cqpert(nkx/2+1,1) = 0.5d0*apert*cmplx(1.0d0,0.0d0)
+      cq = cq + cqpert
 end select
 
 return
@@ -1412,11 +1519,12 @@ case (1)
    !--- adams-bashford method 2nd order
    cq(:,:) = cli(:,:) * (cq(:,:) + dt2 * (3.0 * cjac0(:,:) -            &
              cli(:,:) * cjac1(:,:)))
-
    cq(0,0) = (0.0,0.0)
 
    if (nforc .ge. 1) call add_forc
+
    cjac1(:,:) = cjac0(:,:)
+
    tstep=tstep+1
 end select
 
@@ -1506,6 +1614,7 @@ write(nudiag,'("  Time steps per second: ",i12)') tsps
 write(nudiag, &
  '(" *************************************************")')
 
+call stop_jacobian
 if (nsim > 0) call simstop
 if (nuser > 0) call userstop
 call close_files
@@ -1603,23 +1712,32 @@ subroutine jacobian
 use catmod
 implicit none
 
-integer    :: i,j
+integer    :: jx,jy
 
 select case (jacmthd)
 
 case (1)
+   !--- comment Jacobian has different sign in CAT-UG   
+   !--- and case 1 is second representation of Jacobian
    guq = gu*gq
    gvq = gv*gq
 
    call grid_to_fourier(guq,fuq,nfx,nfy,ngx,ngy)
    call grid_to_fourier(gvq,fvq,nfx,nfy,ngx,ngy)
 
-   do j = 0, nfy
-      do i = 0, nkx
-         cjac0(i,j) = cmplx(  ki(i) * fuq(i+i+1,j) + kj(j)*fvq(i+i+1,j),  &
-                            - ki(i) * fuq(i+i  ,j) - kj(j)*fvq(i+i  ,j) )
+   do jy = 0, nfy
+      do jx = 0, nkx
+         cjac0(jx,jy) = & 
+          cmplx(kx(jx)*fuq(jx+jx+1,jy)+ky(jy)*fvq(jx+jx+1,jy), &
+              - kx(jx)*fuq(jx+jx,jy)-ky(jy)*fvq(jx+jx,jy))
       enddo
    enddo
+
+case (2)
+
+
+case (3)
+      
 end select
 
 if (jac_scale .ne. 1.0) cjac0(:,:) = jac_scale*cjac0(:,:)
@@ -1791,18 +1909,18 @@ implicit none
 
 integer :: i,j    
  
-ki2    = ki*ki
+ki2    = kx*kx
 ki2(0) = 1.0    
 
 
-kj2    = kj*kj
+kj2    = ky*ky
 
 do j = 0, nfy
    do i = 0, nkx
       k2n(i,j)     = (ki2(i)+kj2(j))
       rk2an(i,j)   = 1.0d0/(k2n(i,j)+alpha)
-      kirk2an(i,j) = ki(i)*rk2an(i,j)
-      kjrk2an(i,j) = kj(j)*rk2an(i,j)
+      kirk2an(i,j) = kx(i)*rk2an(i,j)
+      kjrk2an(i,j) = ky(j)*rk2an(i,j)
    enddo
 enddo
 

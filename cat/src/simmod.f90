@@ -174,6 +174,23 @@ select case(ysim)
         endif
      enddo
      call sim_wrtgp(gpvar,qfrccde,1)
+
+  case("fjet03")
+     gpvar(:,:) = 0.0
+!     do jx = 1, ngx
+!        do jy = 1,ngy
+!        if ( jx .ge. ngx/2+1-hscl*(w1+w2) .and. & 
+!           jx .le. ngx/2-hscl*w1 ) then
+!           gpvar(jx,:) = -qmax
+!        endif
+!        if ( jx .ge. ngx/2+1+hscl*w1 .and. & 
+!           jx .le. ngx/2+hscl*(w1+w2) ) then
+!           gpvar(jx,:) =  qmax
+!        endif
+!        enddo
+!     enddo
+     call sim_wrtgp(gpvar,qfrccde,1)
+
   case default
 end select
 

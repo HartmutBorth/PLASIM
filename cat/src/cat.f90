@@ -667,7 +667,8 @@ namelist /cat_nl/ nsteps    ,ngp       ,ngui    ,ingp    ,insp       , &
                   nforc     ,kfmin     ,kfmax   ,aforc    ,tforc     , &
                   myseed    ,ntseri    ,nstdout ,jacmthd  ,ndiag     , &
                   jac_scale ,nsp       ,outgp   ,outsp    ,tstp_mthd , &
-                  nsim      ,nuser     ,npost   ,npert    ,apert
+                  nsim      ,nuser     ,npost   ,npert    ,apert     , &
+                  nguidbg
 
 inquire(file=cat_namelist,exist=lcatnl)
 
@@ -1453,16 +1454,16 @@ call guiput("GQ" // char(0), ggui, ngx, ngy, 1)
 if (npost > 0) then
    !--- zonal means
    gguixm(:) = gqxm(:)   ! double -> single
-   call guiput("GQXM" // char(0), gguixm, 1, ngy, 1)   ! q 
+   call guiput("GQXM" // char(0), gguixm, ngy, 1, 1)   ! q 
 
    gguixm(:) = gpsixm(:) ! double -> single
-   call guiput("GPSIXM" // char(0), gguixm, 1, ngy, 1) ! psi 
+   call guiput("GPSIXM" // char(0), gguixm, ngy, 1, 1) ! psi 
 
    gguixm(:) = guxm(:) ! double -> single
-   call guiput("GUXM" // char(0), gguixm, 1, ngy, 1)   ! u
+   call guiput("GUXM" // char(0), gguixm, ngy, 1, 1)   ! u
 
    gguixm(:) = gvxm(:) ! double -> single
-   call guiput("GVXM" // char(0), gguixm, 1, ngy, 1)   ! v
+   call guiput("GVXM" // char(0), gguixm, ngy, 1, 1)   ! v
 
 
    !--- meridional means

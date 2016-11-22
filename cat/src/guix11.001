@@ -82,7 +82,6 @@ int Debug = 0; // set in initgui
 #define ISOROT 10
 #define MAPHOR 11
 #define MAPTRA 12
-#define LINE   13
 
 /* Models */
 
@@ -103,8 +102,7 @@ char *IsoNames[] =
    "ISOCOL",
    "ISOROT",
    "MAPHOR",
-   "MAPTRA",
-   "LINE"
+   "MAPTRA"
 };
 
 int IsoTypes = sizeof(IsoNames) / sizeof(char *);
@@ -303,8 +301,8 @@ REAL *TSdata[NUMWIN];
 REAL *Dmin[NUMWIN];
 REAL *Dmax[NUMWIN];
 REAL *SpeedScale;
-XPoint *TSxp[NUMWIN];       // data for timeseries
-XPoint *LIxp[NUMWIN];       // data for line plots
+XPoint *TSxp[NUMWIN];
+
 
 #define MAXPAR 16384
 float pax[MAXPAR];
@@ -2568,55 +2566,6 @@ void IsoLines(struct ColorStrip Strip[],int Colored)
    }
 }
 
-
-/* ======== */
-/* LinePlot */
-/* ======== */
-
-void LinePlot(int w)
-{
-   int i;
-   REAL zmin,zmax,zrange,zdelta,f;
-
-   // allocate space for plot data
-
-   if (LIxp[w] == NULL) LIxp[w] = SizeAlloc(DimX, sizeof(XPoint),"LIxp");
-
-   // compute minimum & maximum for auto scaling
-
-   zmin = zmax = Field[0];
-   for (i=1 ; i < DimX ; ++i)
-   {
-      zmin = MIN(zmin,Field[i]);
-      zmax = MAX(zmax,Field[i]);
-   }
-   zrange = zmax - zmin;
-   if (zrange < 1e-10) f = 1.0;
-   else                f = (InYSize-2) / zrange;
-
-   // scale plot data
-
-   for (i=0 ; i < DimX ; ++i)
-   {
-      LIxp[w]->x = VGAX * i;
-      LIxp[w]->y = InYSize - 1 - f * (Field[i] - zmin);
-   }
-
-   // fill plot area with black
-
-   XSetForeground(display,gc,BlackPix);
-   XFillRectangle(display,pix,gc,0,0,WinXSize,InYSize);
-
-   // draw data
-
-   XDrawLines(display,pix,gc,LIxp[w],DimX,CoordModeOrigin);
-}
-
-
-/* ======== */
-/* AziPoint */
-/* ======== */
-
 int AziPoint(int fpx, int fpy, int *x2, int *y2)
 {
    int xc,yc;
@@ -4648,13 +4597,6 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
    if (PicType == ISOSH)
    {
       AmplitudePlot();     
-   }
-
-   // line plot
-
-   if (PicType == LINE)
-   {
-      LinePlot(w);     
    }
 
    if (Grid && PicType == ISOCS) ShowGridCS();

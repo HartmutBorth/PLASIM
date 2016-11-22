@@ -1054,6 +1054,8 @@ void InitNamelist(void)
    NL_r(CAT,"cat","AFORC"    ,  0.001);
    NL_r(CAT,"cat","TFORC"    ,  0.01);
    NL_i(CAT,"cat","NFORC"    ,  0);
+   NL_i(CAT,"cat","NGUIDBG"  ,  0);
+   NL_i(CAT,"cat","NPOST"    ,  0);
    NL_i(CAT,"cat","NSIM"     ,  0);
    NL_i(CAT,"cat","KFMIN"    ,  0);
    NL_i(CAT,"cat","KFMAX"    ,  8);

@@ -470,6 +470,9 @@ real(8), allocatable :: gpsixm(:) ! mean stream function allong x-dir [m^2/s]
 real(8), allocatable :: gpsiym(:) ! mean stream function allong y-dir [m^2/s]
 
 real(8), allocatable :: guxm(:)   ! mean x-velocity allong x-dir [m/s]
+real(8), allocatable :: guym(:)   ! mean x-velocity allong y-dir [m/s]
+
+real(8), allocatable :: gvxm(:)   ! mean y-velocity allong x-dir [m/s]
 real(8), allocatable :: gvym(:)   ! mean y-velocity allong y-dir [m/s]
 
 real(4), allocatable :: gguixm(:) ! single precision mean in x-dir for gui 
@@ -1447,6 +1450,36 @@ implicit none
 ggui(:,:) = gq(:,:) ! double precision -> single
 call guiput("GQ" // char(0), ggui, ngx, ngy, 1)
 
+if (npost > 0) then
+   !--- zonal means
+   gguixm(:) = gqxm(:)   ! double -> single
+   call guiput("GQXM" // char(0), gguixm, 1, ngy, 1)   ! q 
+
+   gguixm(:) = gpsixm(:) ! double -> single
+   call guiput("GPSIXM" // char(0), gguixm, 1, ngy, 1) ! psi 
+
+   gguixm(:) = guxm(:) ! double -> single
+   call guiput("GUXM" // char(0), gguixm, 1, ngy, 1)   ! u
+
+   gguixm(:) = gvxm(:) ! double -> single
+   call guiput("GVXM" // char(0), gguixm, 1, ngy, 1)   ! v
+
+
+   !--- meridional means
+   gguiym(:) = gqym(:)   ! double -> single
+   call guiput("GQYM" // char(0), gguiym, ngx, 1, 1) ! q 
+
+   gguiym(:) = gpsiym(:) ! double -> single
+   call guiput("GPSIYM" // char(0), gguiym, ngx, 1, 1) ! psi 
+
+   gguiym(:) = guym(:) ! double -> single
+   call guiput("GUYM" // char(0), gguiym, ngx, 1, 1)   ! u
+
+   gguiym(:) = gvym(:) ! double -> single
+   call guiput("GVYM" // char(0), gguiym, 1, ngx, 1)   ! v
+
+endif
+
 return
 end subroutine gui_transfer
 
@@ -1595,6 +1628,9 @@ allocate(gpsixm(1:ngy)) ; gpsixm(:) = 0.0 ! psi-mean in x-dir [m^2/s]
 allocate(gpsiym(1:ngx)) ; gpsiym(:) = 0.0 ! psi-mean in y-dir [m^2/s]
 
 allocate(guxm(1:ngy))   ; guxm(:)   = 0.0 ! u-mean in x-dir [m/s]
+allocate(guym(1:ngx))   ; guym(:)   = 0.0 ! u-mean in y-dir [m/s]
+
+allocate(gvxm(1:ngy))   ; gvxm(:)   = 0.0 ! v-mean in x-dir [m/s]
 allocate(gvym(1:ngx))   ; gvym(:)   = 0.0 ! v-mean in y-dir [m/s]
 
 allocate(gguixm(1:ngy)) ; gguixm(:) = 0.0 ! single precision mean in x-dir  
@@ -1602,6 +1638,35 @@ allocate(gguiym(1:ngx)) ; gguiym(:) = 0.0 ! single precision mean in y-dir
 
 return
 end subroutine init_post
+
+
+! ************************
+! * SUBROUTINE STOP_POST *
+! ************************
+subroutine stop_post
+use catmod
+implicit none
+
+if (npost > 0) then
+   deallocate(gqxm) 
+   deallocate(gqym) 
+
+   deallocate(gpsixm)
+   deallocate(gpsiym) 
+
+   deallocate(guxm)
+   deallocate(guym)
+
+   deallocate(gvxm)
+   deallocate(gvym)
+
+   deallocate(gguixm)
+   deallocate(gguiym)
+endif
+
+return
+end subroutine stop_post
+
 
 ! *************************
 ! * SUBROUTINE CAT_MASTER *
@@ -1613,6 +1678,7 @@ implicit none
 do while (tstep <= tstop)
    call cq2gquv
    call jacobian
+   call post
    call cat_wrtout
    if (ngui > 0 .and. mod(tstep,ngui) == 0) then
       call gui_transfer
@@ -1622,7 +1688,6 @@ do while (tstep <= tstop)
    if (nforc .ge. 1) call add_forc
    if (nsim > 0) call simstep
    if (nuser > 0) call userstep
-!  if (npost > 0) call poststep
    tstep = tstep + 1
    if (nstdout.gt.0 .and. ngui == 0 .and. mod(tstep,nstdout) == 0) then
       write(*,*)' time step ',tstep
@@ -1632,6 +1697,29 @@ enddo
 
 return
 end subroutine cat_master
+
+
+! *******************
+! * SUBROUTINE POST *
+! *******************
+subroutine post
+use catmod
+implicit none
+
+!--- calculate zonal means
+gqxm   = sum(gq  ,1)*rnx
+gpsixm = sum(gpsi,1)*rnx
+guxm   = sum(gq  ,1)*rnx
+gvxm   = sum(gq  ,1)*rnx
+
+!--- calculate meridional means
+gqym   = sum(gq  ,2)*rny
+gpsiym = sum(gpsi,2)*rny
+guym   = sum(gq  ,2)*rny
+gvym   = sum(gq  ,2)*rny
+
+return
+end subroutine post
 
 
 ! *******************
@@ -1687,9 +1775,9 @@ write(nudiag, &
  '(" *************************************************")')
 
 call stop_jacobian
+call stop_post
 if (nsim > 0) call simstop
 if (nuser > 0) call userstop
-!if (npost > 0) call poststop
 call close_files
 
 return
@@ -1821,7 +1909,6 @@ if (jac_scale .ne. 1.0 .or. jac_scale .ne. 0.0)  &
 return
 end subroutine jacobian
 
-
 ! *********************
 ! * SUBROUTINE CQ2FUV *
 ! *********************
@@ -1840,6 +1927,27 @@ enddo
 
 return
 end subroutine cq2fuv
+
+
+! *********************
+! * SUBROUTINE CQ2FQX *
+! *********************
+subroutine cq2fqx
+use catmod
+implicit none
+
+integer :: jx
+
+do jx = 0, nkx
+    fuqxoqx(2*jx  ,:) =  aimag(cq(jx,:) * kx(:))
+    fuqxoqx(2*jx+1,:) = -real (cq(jx,:) * kx(:))
+
+    fvqyoqy(2*jx  ,:) =  aimag(cq(jx,:) * ky(:))
+    fvqyoqy(2*jx+1,:) = -real (cq(jx,:) * ky(:))
+enddo
+
+return
+end subroutine cq2fqx
 
 
 ! ***********************

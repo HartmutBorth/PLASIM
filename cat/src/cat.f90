@@ -458,9 +458,22 @@ integer :: nuser = 0 ! 1/0 user mode is switched on/off.
                      ! CAT> in the User's Guide).
 
 
-!--- postprocessing (postmod)
+!--- postprocessing (included in cat)
 integer :: npost = 0 ! 1/0 post processing is switched on/off
 
+
+!--- grid point fields
+real(8), allocatable :: gqxm(:)   ! mean vorticity allong x-dir [1/s]
+real(8), allocatable :: gqym(:)   ! mean vorticity allong y-dir [1/s]
+
+real(8), allocatable :: gpsixm(:) ! mean stream function allong x-dir [m^2/s]
+real(8), allocatable :: gpsiym(:) ! mean stream function allong y-dir [m^2/s]
+
+real(8), allocatable :: guxm(:)   ! mean x-velocity allong x-dir [m/s]
+real(8), allocatable :: gvym(:)   ! mean y-velocity allong y-dir [m/s]
+
+real(4), allocatable :: gguixm(:) ! single precision mean in x-dir for gui 
+real(4), allocatable :: gguiym(:) ! single precision mean in y-dir for gui 
 
 end module catmod
 
@@ -517,7 +530,7 @@ call init_rand
 call init_forc
 call add_pert
 call init_tstep
-
+call init_post
 if (ngui > 0) call guistart
 
 return
@@ -1352,35 +1365,35 @@ return
 end subroutine add_pert
 
 
-! ********************
-! * SUBROUTINE Q2GUV *
-! ********************
-subroutine q2guv
+! *********************
+! * SUBROUTINE CQ2GUV *
+! *********************
+subroutine cq2guv
 use catmod
 implicit none
 
-call q2uv
+call cq2fuv
 call fourier_to_grid(fu,gu,nfx,nfy,ngx,ngy)
 call fourier_to_grid(fv,gv,nfx,nfy,ngx,ngy)
 
 return
-end subroutine q2guv
+end subroutine cq2guv
 
 
-! *********************
-! * SUBROUTINE Q2GQUV *
-! *********************
-subroutine q2gquv
+! **********************
+! * SUBROUTINE CQ2GQUV *
+! **********************
+subroutine cq2gquv
 use catmod
 implicit none
 
-call q2uv
+call cq2fuv
 call fourier_to_grid(cq,gq,nfx,nfy,ngx,ngy)
 call fourier_to_grid(fu,gu,nfx,nfy,ngx,ngy)
 call fourier_to_grid(fv,gv,nfx,nfy,ngx,ngy)
 
 return
-end subroutine q2gquv
+end subroutine cq2gquv
 
 
 ! *************************
@@ -1534,7 +1547,7 @@ endif
 
 select case (tstp_mthd)
 case (1)
-   call q2gquv
+   call cq2gquv
    call jacobian
    cjac1(:,:) = cjac0(:,:)
    cjac2(:,:) = cjac1(:,:)
@@ -1543,13 +1556,13 @@ case (1)
    !--- euler-step with dt/2
    cq(:,:) = cli(:,:)*(cq(:,:)+dt2*cjac0(:,:))
 
-   call q2gquv
+   call cq2gquv
    call jacobian
    !--- euler-step with dt
    cq(:,:) = cli(:,:)*(cq(:,:)+dt*cjac0(:,:))
    tstep=tstep+1
 
-   call q2gquv
+   call cq2gquv
    call jacobian
    call cat_wrtout
 
@@ -1568,6 +1581,27 @@ end select
 return
 end subroutine init_tstep
 
+! ************************
+! * SUBROUTINE INIT_POST *
+! ************************
+subroutine init_post
+use catmod
+implicit none
+
+allocate(gqxm(1:ngy))   ; gqxm(:)   = 0.0 ! q-mean in x-dir [1/s]
+allocate(gqym(1:ngx))   ; gqym(:)   = 0.0 ! q-mean in y-dir [1/s]
+
+allocate(gpsixm(1:ngy)) ; gpsixm(:) = 0.0 ! psi-mean in x-dir [m^2/s]
+allocate(gpsiym(1:ngx)) ; gpsiym(:) = 0.0 ! psi-mean in y-dir [m^2/s]
+
+allocate(guxm(1:ngy))   ; guxm(:)   = 0.0 ! u-mean in x-dir [m/s]
+allocate(gvym(1:ngx))   ; gvym(:)   = 0.0 ! v-mean in y-dir [m/s]
+
+allocate(gguixm(1:ngy)) ; gguixm(:) = 0.0 ! single precision mean in x-dir  
+allocate(gguiym(1:ngx)) ; gguiym(:) = 0.0 ! single precision mean in y-dir  
+
+return
+end subroutine init_post
 
 ! *************************
 ! * SUBROUTINE CAT_MASTER *
@@ -1577,7 +1611,7 @@ use catmod
 implicit none
 
 do while (tstep <= tstop)
-   call q2gquv
+   call cq2gquv
    call jacobian
    call cat_wrtout
    if (ngui > 0 .and. mod(tstep,ngui) == 0) then
@@ -1588,6 +1622,7 @@ do while (tstep <= tstop)
    if (nforc .ge. 1) call add_forc
    if (nsim > 0) call simstep
    if (nuser > 0) call userstep
+!  if (npost > 0) call poststep
    tstep = tstep + 1
    if (nstdout.gt.0 .and. ngui == 0 .and. mod(tstep,nstdout) == 0) then
       write(*,*)' time step ',tstep
@@ -1654,6 +1689,7 @@ write(nudiag, &
 call stop_jacobian
 if (nsim > 0) call simstop
 if (nuser > 0) call userstop
+!if (npost > 0) call poststop
 call close_files
 
 return
@@ -1765,13 +1801,11 @@ case (1)
    call grid_to_fourier(gvq,fvq,nfx,nfy,ngx,ngy)
 
    !--- (!!! Jacobian has different sign than in CAT-UG !!!)
-   do jy = 0, nfy
-      do jx = 0, nkx
-         cjac0(jx,jy) = & 
-          cmplx(kx(jx)*fuq(2*jx+1,jy) + ky(jy)*fvq(2*jx+1,jy), &
-              - kx(jx)*fuq(2*jx  ,jy) - ky(jy)*fvq(2*jx  ,jy))
-      enddo
-   enddo
+    do jx = 0, nkx
+       cjac0(jx,:) = & 
+        cmplx( kx(jx)*fuq(jx+jx+1,:)+ky(:)*fvq(jx+jx+1,:), &
+              -kx(jx)*fuq(jx+jx  ,:)-ky(:)*fvq(jx+jx  ,:))
+    enddo
 
 case (2)
    !--- Jacobian in standard form (first representation in CAT-UG)
@@ -1788,26 +1822,24 @@ return
 end subroutine jacobian
 
 
-! *******************
-! * SUBROUTINE Q2UV *
-! *******************
-subroutine q2uv
+! *********************
+! * SUBROUTINE CQ2FUV *
+! *********************
+subroutine cq2fuv
 use catmod
 implicit none
 
-integer :: i,j
+integer :: jx
 
-do j = 0, nfy
-   do i = 0, nkx
-      fu(i+i  ,j) = -aimag(cq(i,j)) * kyrk2pa(i,j)
-      fu(i+i+1,j) =  real (cq(i,j)) * kyrk2pa(i,j)
-      fv(i+i  ,j) =  aimag(cq(i,j)) * kxrk2pa(i,j)
-      fv(i+i+1,j) = -real (cq(i,j)) * kxrk2pa(i,j)
-   enddo
+do jx = 0, nkx
+   fu(2*jx  ,:) = -aimag(cq(jx,:)) * kyrk2pa(jx,:)
+   fu(2*jx+1,:) =  real (cq(jx,:)) * kyrk2pa(jx,:)
+   fv(2*jx  ,:) =  aimag(cq(jx,:)) * kxrk2pa(jx,:)
+   fv(2*jx+1,:) = -real (cq(jx,:)) * kxrk2pa(jx,:)
 enddo
 
 return
-end subroutine q2uv
+end subroutine cq2fuv
 
 
 ! ***********************

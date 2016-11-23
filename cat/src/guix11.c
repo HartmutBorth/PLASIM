@@ -2594,12 +2594,18 @@ void LinePlot(int w)
    if (zrange < 1e-10) f = 1.0;
    else                f = (InYSize-2) / zrange;
 
+   if (Debug)
+   {
+      printf("LinePlot: %6d %10.4e %10.4e %10.4e %10.4e \n",
+             DimX, zmin,zmax,zrange,f);
+   }
+
    // scale plot data
 
    for (i=0 ; i < DimX ; ++i)
    {
-      LIxp[w]->x = VGAX * i;
-      LIxp[w]->y = InYSize - 1 - f * (Field[i] - zmin);
+      LIxp[w][i].x = VGAX * i;
+      LIxp[w][i].y = InYSize - 1 - f * (Field[i] - zmin);
    }
 
    // fill plot area with black
@@ -2609,6 +2615,7 @@ void LinePlot(int w)
 
    // draw data
 
+   XSetForeground(display,gc,WhitePix);
    XDrawLines(display,pix,gc,LIxp[w],DimX,CoordModeOrigin);
 }
 

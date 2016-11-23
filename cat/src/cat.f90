@@ -309,7 +309,9 @@ integer :: nfy  = 42  ! 2*nky   (y-dimension in fourier domain)
 !--- Jacobian
 integer :: jacmthd  = 1       ! approximation method of Jacobian
                               ! 0 : no Jacobian
-                              ! 1 : divergence form
+                              ! 1 : divergence form (uq)_x + (vq)_y
+                              ! 2 : advection form   uq_x  + vq_y
+                              ! 3 : invariant form   
 
 !--- time integration
 integer :: nsteps    = 10000  ! number of time steps to be integrated
@@ -356,8 +358,9 @@ real(8), allocatable :: guq(:,:)    ! u*q  [m/s^2]
 real(8), allocatable :: gvq(:,:)    ! v*q  [m/s^2]
 
 !--- case 2 (!! variables contain different fields depending on context)
-real(8), allocatable :: guqxoqx(:,:) ! u*dq/dx [s^-2] or dq/dx [1/ms] 
-real(8), allocatable :: gvqyoqy(:,:) ! v*dq/dy [s^-2] or dq/dy [1/ms]
+real(8), allocatable :: gqx (:,:) ! dq/dx [1/ms] 
+real(8), allocatable :: gqy (:,:) ! dq/dy [1/ms]
+real(8), allocatable :: gjac(:,:) ! jacobian [s^-2]
 
 !--- case 3
 real(8), allocatable :: gv2mu2(:,:) ! v^2-u^2 [m^2/s^2]
@@ -382,16 +385,16 @@ real(8), allocatable :: fv(:,:)   ! velocity y-direction
 !--- jacobian (utility variables)
 
 !--- case 1
-real(8), allocatable :: fuq(:,:)    ! u*q  [m/s^2]
-real(8), allocatable :: fvq(:,:)    ! v*q  [m/s^2]
+real(8), allocatable :: fuq    (:,:) ! u*q  [m/s^2]
+real(8), allocatable :: fvq    (:,:) ! v*q  [m/s^2]
 
 !--- case 2 (!! variables contain different fields depending on context)
-real(8), allocatable :: fuqxoqx(:,:) ! u*dq/dx [s^-2] or dq/dx [1/ms]
-real(8), allocatable :: fvqyoqy(:,:) ! v*dq/dy [s^-2] or dq/dy [1/ms]
+real(8), allocatable :: fqx(:,:) ! u*dq/dx [s^-2] or dq/dx [1/ms]
+real(8), allocatable :: fqy(:,:) ! v*dq/dy [s^-2] or dq/dy [1/ms]
 
 !--- case 3
-real(8), allocatable :: fv2mu2(:,:) ! v^2-u^2 [m^2/s^2]
-real(8), allocatable :: fuv(:,:)    ! u*v     [m^2/s^2]
+real(8), allocatable :: fv2mu2 (:,:) ! v^2-u^2 [m^2/s^2]
+real(8), allocatable :: fuv    (:,:) ! u*v     [m^2/s^2]
 
 
 !--- basic model variables (format used for time propagation)
@@ -408,6 +411,7 @@ integer   , allocatable :: kx(:),ky(:)
 real(8)   , allocatable :: kx2(:), ky2(:)
 real(8)   , allocatable :: k2(:,:), k2pa(:,:), rk2pa(:,:)
 real(8)   , allocatable :: kxrk2pa(:,:),kyrk2pa(:,:)
+real(8)   , allocatable :: kx2mky2(:,:), kxky(:,:)
 
 
 !--- linear time propagation (dissipation and beta-term)
@@ -517,7 +521,6 @@ call init_diag
 call read_resol
 call init_pars
 call cat_alloc
-call init_jacobian
 call init_ops
 if (lrst) then
    call check_rst
@@ -528,6 +531,7 @@ call cat_open
 if (nsim > 0) call simstart
 if (nuser > 0) call userstart
 call cat_input
+call init_jacobian
 call init_lintstep
 call init_rand
 call init_forc
@@ -770,7 +774,6 @@ allocate(kx2(0:nkx))  ; kx2(:)  = 0.0
 allocate(ky2(0:nfy))  ; ky2(:)  = 0.0
 
 
-
 !----------------------------
 ! 2D real and complex arrays
 !----------------------------
@@ -788,11 +791,15 @@ allocate(ggui(1:ngx,1:ngy)) ; ggui(:,:)  = 0.0  ! GUI transfer
 allocate(fu(0:nfx,0:nfy))   ; fu(:,:)   = 0.0 ! u 
 allocate(fv(0:nfx,0:nfy))   ; fv(:,:)   = 0.0 ! v 
 
-allocate(k2(0:nkx,0:nfy))     ; k2(:,:)     = 0.0 ! Laplacian
+allocate(k2(0:nkx,0:nfy))      ; k2(:,:)      = 0.0 ! Laplacian
 allocate(k2pa(0:nkx,0:nfy))    ; k2pa(:,:)    = 0.0 ! modified Laplacian
 allocate(rk2pa(0:nkx,0:nfy))   ; rk2pa(:,:)   = 0.0 ! modified Laplacian^-1
 allocate(kxrk2pa(0:nkx,0:nfy)) ; kxrk2pa(:,:) = 0.0 ! q --> v
 allocate(kyrk2pa(0:nkx,0:nfy)) ; kyrk2pa(:,:) = 0.0 ! q --> u
+allocate(kx2mky2(0:nkx,0:nfy)) ; kx2mky2(:,:)  = 0.0 ! utility for Jacobian 3 
+allocate(kxky  (0:nkx,0:nfy))  ; kxky  (:,:)  = 0.0 ! utility for Jacobian 3 
+
+
 
 allocate(cli(0:nkx,0:nfy))  ; cli(:,:)   = (0.0,0.0) ! linear time propagator 
 
@@ -816,44 +823,40 @@ end subroutine cat_alloc
 subroutine init_jacobian
 use catmod
 implicit none
+select case(jacmthd)
+case(0)
+   print *, "init_jacobian case 0"
+case(1)
+   !--- allocate fields used by jacobian
 
-select case (jacmthd)
+   !--- grid point fields
+   allocate(guq(1:ngx,1:ngy)) ; guq(:,:) = 0.0  ! u*q
+   allocate(gvq(1:ngx,1:ngy)) ; gvq(:,:) = 0.0  ! v*q
 
-   case (1)
-      !--- allocate fields used by jacobian
- 
-      !--- grid point fields 
-      allocate(guq(1:ngx,1:ngy)) ; guq(:,:) = 0.0  ! u*q
-      allocate(gvq(1:ngx,1:ngy)) ; gvq(:,:) = 0.0  ! v*q
+   !--- spectral fields  
+   allocate(fuq(0:nfx,0:nfy)) ; fuq(:,:) = 0.0  ! u*q
+   allocate(fvq(0:nfx,0:nfy)) ; fvq(:,:) = 0.0  ! v*q
+case(2)
+   !--- allocate fields used by jacobian
 
-      !--- spetral fields  
-      allocate(fuq(0:nfx,0:nfy)) ; fuq(:,:) = 0.0  ! u*q
-      allocate(fvq(0:nfx,0:nfy)) ; fvq(:,:) = 0.0  ! v*q
+   !--- grid point fields
+   allocate(gqx(1:ngx,1:ngy))  ; gqx(:,:)  = 0.0  ! qx
+   allocate(gqy(1:ngx,1:ngy))  ; gqy(:,:)  = 0.0  ! qy
+   allocate(gjac(1:ngx,1:ngy)) ; gjac(:,:) = 0.0  ! jacobian in grid-space
 
-   case (2)
-      !--- allocate fields used by jacobian
-      
-      !--- grid point fields 
-      allocate(guqxoqx(1:ngx,1:ngy)) ; guqxoqx(:,:) = 0.0  ! u*qx or qx
-      allocate(gvqyoqy(1:ngx,1:ngy)) ; gvqyoqy(:,:) = 0.0  ! v*qy or qy
-   
-      !--- spetral fields  
-      allocate(fuqxoqx(0:nfx,0:nfy)) ; fuqxoqx(:,:) = 0.0  ! u*qx or qx
-      allocate(fvqyoqy(0:nfx,0:nfy)) ; fvqyoqy(:,:) = 0.0  ! v*qy or qy
-
-   case (3)
-      !--- allocate fields used by jacobian
-
-      !--- grid point fields 
-      allocate(gv2mu2(1:ngx,1:ngy)) ; gv2mu2(:,:) = 0.0  ! v^2-u^2 
-      allocate(guv   (1:ngx,1:ngy)) ; guv   (:,:) = 0.0  ! u*v 
-
-      !--- spetral fields  
-      allocate(fv2mu2(0:nfx,0:nfy)) ; fv2mu2(:,:) = 0.0  ! v^2-u^2
-      allocate(fuv   (0:nfx,0:nfy)) ; fuv   (:,:) = 0.0  ! u*v
-
+   !--- spectral fields  
+   allocate(fqx(0:nfx,0:nfy)) ; fqx(:,:) = 0.0  ! u*qx or qx
+   allocate(fqy(0:nfx,0:nfy)) ; fqy(:,:) = 0.0  ! v*qy or qy
+case(3)
+   !--- allocate fields used by jacobian
+   !--- grid point fields 
+   allocate(gv2mu2(1:ngx,1:ngy)) ; gv2mu2(:,:) = 0.0  ! v^2-u^2 
+   allocate(guv   (1:ngx,1:ngy)) ; guv   (:,:) = 0.0  ! u*v 
+   !--- spetral fields  
+   allocate(fv2mu2(0:nfx,0:nfy)) ; fv2mu2(:,:) = 0.0  ! v^2-u^2
+   allocate(fuv   (0:nfx,0:nfy)) ; fuv   (:,:) = 0.0  ! u*v
+   print *, "init_jacobian case 3"
 end select
-
 
 return
 end subroutine init_jacobian
@@ -883,12 +886,13 @@ case (2)
    !--- deallocate fields used by jacobian
 
    !--- grid point fields 
-   deallocate(guqxoqx)
-   deallocate(gvqyoqy)
+   deallocate(gqx)
+   deallocate(gqy)
+   deallocate(gjac)
 
    !--- spetral fields 
-   deallocate(fuqxoqx)
-   deallocate(fvqyoqy)
+   deallocate(fqx)
+   deallocate(fqy)
 
 case (3)
    !--- deallocate fields used by jacobian
@@ -1348,13 +1352,20 @@ select case(npert)
       cqpert(0,0) = (0.0,0.0)
       cq = cq + cqpert
    case(5)
-      !--- symmetric about x = pi 
-      do jx = 1,ngx/2
-         call random_number(ytmp)
-         ytmp = 2.0*apert*(ytmp - sum(ytmp)*rny)
-         gqpert(jx,:)       =  ytmp(:)   
-         gqpert(ngx+1-jx,:) = -ytmp(:)
+      !--- anti-symmetric about x = pi 
+!     do jx = 1,ngx/2
+!        call random_number(ytmp)
+!        ytmp = 2.0*apert*(ytmp - sum(ytmp)*rny)
+!        gqpert(jx,:)       =  ytmp(:)   
+!        gqpert(ngx+1-jx,:) = -ytmp(:)
+!     enddo
+      do jy = 1,ngy/2
+         call random_number(xtmp)
+         xtmp = 2.0*apert*(xtmp - sum(xtmp)*rnx)
+         gqpert(:,jy)       =  xtmp(:)   
+         gqpert(:,ngy+1-jy) = -xtmp(:)
       enddo
+      gqpert = transpose(gqpert)
       call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
       cqpert(0,0) = (0.0,0.0)
       cq = cq + cqpert
@@ -1399,6 +1410,19 @@ call fourier_to_grid(fv,gv,nfx,nfy,ngx,ngy)
 return
 end subroutine cq2gquv
 
+! **********************
+! * SUBROUTINE CQ2GQUV *
+! **********************
+subroutine cq2gqxqy
+use catmod
+implicit none
+
+call cq2fqxqy
+call fourier_to_grid(fqx,gqx,nfx,nfy,ngx,ngy)
+call fourier_to_grid(fqy,gqy,nfx,nfy,ngx,ngy)
+
+return
+end subroutine cq2gqxqy
 
 ! *************************
 ! * SUBROUTINE CAT_WRTOUT *
@@ -1874,7 +1898,7 @@ subroutine jacobian
 use catmod
 implicit none
 
-integer    :: jx,jy
+integer    :: jx
 
 select case (jacmthd)
 case (0)
@@ -1890,17 +1914,31 @@ case (1)
    call grid_to_fourier(gvq,fvq,nfx,nfy,ngx,ngy)
 
    !--- (!!! Jacobian has different sign than in CAT-UG !!!)
-    do jx = 0, nkx
-       cjac0(jx,:) = & 
-        cmplx( kx(jx)*fuq(jx+jx+1,:)+ky(:)*fvq(jx+jx+1,:), &
-              -kx(jx)*fuq(jx+jx  ,:)-ky(:)*fvq(jx+jx  ,:))
-    enddo
+   do jx = 0, nkx
+      cjac0(jx,:) = & 
+       cmplx( kx(jx)*fuq(jx+jx+1,:)+ky(:)*fvq(jx+jx+1,:), &
+             -kx(jx)*fuq(jx+jx  ,:)-ky(:)*fvq(jx+jx  ,:))
+   enddo
 
 case (2)
-   !--- Jacobian in standard form (first representation in CAT-UG)
-    
+   !--- Jacobian in advection form (first representation in CAT-UG)
+   call cq2gqxqy
+   gjac = gu*gqx + gv*gqy
+   call grid_to_fourier(gjac,cjac0,nfx,nfy,ngx,ngy)
 
 case (3)
+   !--- Jacobian in invariant form (third representation in CAT-UG)
+   gv2mu2 = gv**2 - gu**2 
+   guv    = gu*gv
+
+   call grid_to_fourier(gv2mu2,fv2mu2,nfx,nfy,ngx,ngy)
+   call grid_to_fourier(guv,fuv,nfx,nfy,ngx,ngy)
+
+   do jx = 0, nkx
+      cjac0(jx,:) = & 
+       cmplx(kxky(jx,:)*fv2mu2(2*jx  ,:) + kx2mky2(jx,:)*fuv(2*jx  ,:), &
+             kxky(jx,:)*fv2mu2(2*jx+1,:) + kx2mky2(jx,:)*fuv(2*jx+1,:))
+   enddo
       
 end select
 
@@ -1930,25 +1968,27 @@ return
 end subroutine cq2fuv
 
 
-! *********************
-! * SUBROUTINE CQ2FQX *
-! *********************
-subroutine cq2fqx
+! ***********************
+! * SUBROUTINE CQ2FQXQZ *
+! ***********************
+subroutine cq2fqxqy
 use catmod
 implicit none
 
-integer :: jx
+integer :: jx, jy
 
 do jx = 0, nkx
-    fuqxoqx(2*jx  ,:) =  aimag(cq(jx,:) * kx(:))
-    fuqxoqx(2*jx+1,:) = -real (cq(jx,:) * kx(:))
+   do jy = 0, nfy
+      fqx(2*jx  ,jy) =  aimag(cq(jx,jy)) * kx(jx)
+      fqx(2*jx+1,jy) = -real (cq(jx,jy)) * kx(jx)
 
-    fvqyoqy(2*jx  ,:) =  aimag(cq(jx,:) * ky(:))
-    fvqyoqy(2*jx+1,:) = -real (cq(jx,:) * ky(:))
+      fqy(2*jx  ,jy) =  aimag(cq(jx,jy)) * ky(jy)
+      fqy(2*jx+1,jy) = -real (cq(jx,jy)) * ky(jy)
+   enddo
 enddo
 
 return
-end subroutine cq2fqx
+end subroutine cq2fqxqy
 
 
 ! ***********************
@@ -2104,6 +2144,8 @@ do jy = 0, nfy
       rk2pa  (jx,jy) = 1.0d0/(k2(jx,jy)+alpha)  ! 1/mod Laplacian    q --> -psi
       kxrk2pa(jx,jy) = kx(jx)*rk2pa(jx,jy)      ! q ---> v/i  
       kyrk2pa(jx,jy) = ky(jy)*rk2pa(jx,jy)      ! q ---> u/i
+      kx2mky2(jx,jy) = kx2(jx)-ky2(jy)          ! utility Jacobian 3
+      kxky   (jx,jy) = kx(jx)*ky(jy)            ! utility Jacobian 3
    enddo
 enddo
 

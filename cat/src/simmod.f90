@@ -163,16 +163,27 @@ select case(ysim)
 
   case("fjet02")
      gpvar(:,:) = 0.0
-     do jx = 1, ngx
-        if ( jx .ge. ngx/2+1-hscl*(w1+w2) .and. & 
-           jx .le. ngx/2-hscl*w1 ) then
-           gpvar(jx,:) = -qmax
+!    do jx = 1, ngx
+!       if ( jx .ge. ngx/2+1-hscl*(w1+w2) .and. & 
+!          jx .le. ngx/2-hscl*w1 ) then
+!          gpvar(jx,:) = -qmax
+!       endif
+!       if ( jx .ge. ngx/2+1+hscl*w1 .and. & 
+!          jx .le. ngx/2+hscl*(w1+w2) ) then
+!          gpvar(jx,:) =  qmax
+!       endif
+!    enddo
+     do jy = 1, ngy
+        if ( jy .ge. ngy/2+1-hscl*(w1+w2) .and. & 
+           jy .le. ngy/2-hscl*w1 ) then
+           gpvar(:,jy) = -qmax
         endif
-        if ( jx .ge. ngx/2+1+hscl*w1 .and. & 
-           jx .le. ngx/2+hscl*(w1+w2) ) then
-           gpvar(jx,:) =  qmax
+        if ( jy .ge. ngy/2+1+hscl*w1 .and. & 
+           jy .le. ngy/2+hscl*(w1+w2) ) then
+           gpvar(:,jy) =  qmax
         endif
      enddo
+     gpvar = transpose(gpvar)
      call sim_wrtgp(gpvar,qfrccde,1)
 
   case("fjet03")

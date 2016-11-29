@@ -399,6 +399,7 @@ real(8), allocatable :: fuv    (:,:) ! u*v     [m^2/s^2]
 
 !--- basic model variables (format used for time propagation)
 complex(8), allocatable :: cq(:,:)     ! vorticity
+complex(4), allocatable :: c4(:,:)     ! vorticity
 
 complex(8), allocatable :: cjac0(:,:)  ! Jacobian at time  0
 complex(8), allocatable :: cjac1(:,:)  ! Jacobian at time -1
@@ -481,6 +482,8 @@ real(8), allocatable :: gvym(:)   ! mean y-velocity allong y-dir [m/s]
 
 real(4), allocatable :: gguixm(:) ! single precision mean in x-dir for gui 
 real(4), allocatable :: gguiym(:) ! single precision mean in y-dir for gui 
+
+real(4), allocatable :: ggxm(:,:) ! single precision mean in y-dir for gui 
 
 end module catmod
 
@@ -804,6 +807,8 @@ allocate(kxky  (0:nkx,0:nfy))  ; kxky  (:,:)  = 0.0 ! utility for Jacobian 3
 allocate(cli(0:nkx,0:nfy))  ; cli(:,:)   = (0.0,0.0) ! linear time propagator 
 
 allocate(cq(0:nkx,0:nfy))   ; cq(:,:)    = (0.0,0.0) ! vorticity
+allocate(c4(0:nkx,0:nfy))   ; c4(:,:)    = (0.0,0.0) ! vorticity
+
 allocate(cqfrc(0:nkx,0:nfy)); cqfrc(:,:) = (0.0,0.0) ! ext. vorticity force
 allocate(cjac0(0:nkx,0:nfy)); cjac0(:,:) = (0.0,0.0) ! Jacobian at time level  0
 allocate(cjac1(0:nkx,0:nfy)); cjac1(:,:) = (0.0,0.0) ! Jacobian at time level -1
@@ -1483,11 +1488,15 @@ if (npost > 0) then
    gguixm(:) = gpsixm(:) ! double -> single
    call guiput("GPSIXM" // char(0), gguixm, ngy, 1, 1) ! psi 
 
-   gguixm(:) = guxm(:) ! double -> single
-   call guiput("GUXM" // char(0), gguixm, ngy, 1, 1)   ! u
+!  gguixm(:) = guxm(:) ! double -> single
+!  call guiput("GUXM" // char(0), gguixm, ngy, 1, 1)   ! u
 
-   gguixm(:) = gvxm(:) ! double -> single
-   call guiput("GVXM" // char(0), gguixm, ngy, 1, 1)   ! v
+!  gguixm(:) = gvxm(:) ! double -> single
+!  call guiput("GVXM" // char(0), gguixm, ngy, 1, 1)   ! v
+
+   ggxm(:,1) = guxm(:)
+   ggxm(:,2) = gvxm(:)
+   call guiput("GXM" // char(0), ggxm, ngy, 2, 1)   ! u & v
 
 
    !--- meridional means
@@ -1502,6 +1511,9 @@ if (npost > 0) then
 
    gguiym(:) = gvym(:) ! double -> single
    call guiput("GVYM" // char(0), gguiym, 1, ngx, 1)   ! v
+
+   c4(:,:) = cq(:,:)
+   call guiput("CQ" // char(0), c4, nkx+1, nfy+1, 2)   ! v
 
 endif
 
@@ -1660,6 +1672,8 @@ allocate(gvym(1:ngx))   ; gvym(:)   = 0.0 ! v-mean in y-dir [m/s]
 
 allocate(gguixm(1:ngy)) ; gguixm(:) = 0.0 ! single precision mean in x-dir  
 allocate(gguiym(1:ngx)) ; gguiym(:) = 0.0 ! single precision mean in y-dir  
+
+allocate(ggxm(1:ngx,4)) ; ggxm(:,:) = 0.0 ! single precision mean in x-dir  
 
 return
 end subroutine init_post

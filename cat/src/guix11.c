@@ -83,6 +83,7 @@ int Debug = 0; // set in initgui
 #define MAPHOR 11
 #define MAPTRA 12
 #define LINE   13
+#define ISOAMP 14
 
 /* Models */
 
@@ -104,7 +105,8 @@ char *IsoNames[] =
    "ISOROT",
    "MAPHOR",
    "MAPTRA",
-   "LINE"
+   "LINE",
+   "ISOAMP"
 };
 
 int IsoTypes = sizeof(IsoNames) / sizeof(char *);
@@ -302,12 +304,14 @@ double AutoXdelt[NUMWIN];
 double AutoLo[NUMWIN];
 double LineScale[NUMWIN];   // last used scale  for LINE plots
 double LineMin[NUMWIN];     // last used offset for LINE plots
+REAL *Amp[NUMWIN];          // amplitudes of an array
 REAL *TSdata[NUMWIN];
 REAL *Dmin[NUMWIN];
 REAL *Dmax[NUMWIN];
 REAL *SpeedScale;
 XPoint *TSxp[NUMWIN];       // data for timeseries
 XPoint *LIxp[NUMWIN];       // data for line plots
+XColor *Aco[NUMWIN];        // colors for amplitude plots
 
 #define MAXPAR 16384
 float pax[MAXPAR];
@@ -631,8 +635,6 @@ REAL VGAY;
 REAL CurVal;
 
 REAL *Field;  // Pointer for ISO data
-REAL *Ampli;  // Amplitudes of spherical harmonics
-XColor *Acol; // Amplitude colors
 
 Colormap colormap;
 
@@ -3042,10 +3044,10 @@ void TracerPlot(int w)
 
 
 /* ============= */
-/* AmplitudePlot */
+/* SH_Amplitudes */
 /* ============= */
 
-void AmplitudePlot(void)
+void SH_Amplitudes(int w)
 {
    int i,j,m,n;
    int x,y;
@@ -3054,18 +3056,18 @@ void AmplitudePlot(void)
    int imax;
    REAL Amax,Fac;
 
-   if (!Ampli) Ampli = FloatAlloc(DimX,"Ampli");
-   if (!Acol ) Acol  = SizeAlloc(DimX,sizeof(XColor),"Acol");
+   if (!Amp[w]) Amp[w] = FloatAlloc(DimX,"Amp[w]");
+   if (!Aco[w]) Aco[w]  = SizeAlloc(DimX,sizeof(XColor),"Aco[w]");
 
    Amax = 0.0;
    imax = 0;
    for (i=0 ; i < DimX ; ++i)
    {
-      Ampli[i] = log (1.0 + sqrt(Field[2*i]*Field[2*i]+Field[2*i+1]*Field[2*i+1]));
-      Acol[i].pixel = WhitePix;
-      if (Ampli[i] > Amax && i > DimY)
+      Amp[w][i] = log (1.0 + sqrt(Field[2*i]*Field[2*i]+Field[2*i+1]*Field[2*i+1]));
+      Aco[w][i].pixel = WhitePix;
+      if (Amp[w][i] > Amax && i > DimY)
       {
-         Amax = Ampli[i];
+         Amax = Amp[w][i];
          imax = i;
       }
    }
@@ -3074,9 +3076,9 @@ void AmplitudePlot(void)
    if (Amax > 1.e-20) Fac = 1.0 / Amax;
    for (i=0 ; i < DimX ; ++i)
    {
-      j = AMPLI_COLS * Ampli[i] * Fac;
+      j = AMPLI_COLS * Amp[w][i] * Fac;
       if (j >= AMPLI_COLS) j = AMPLI_COLS-1;
-      Acol[i].pixel = AmpliStrip[j].pixel;
+      Aco[w][i].pixel = AmpliStrip[j].pixel;
    }
 
    dx = WinXSize / 23;
@@ -3090,7 +3092,61 @@ void AmplitudePlot(void)
       if (n < 22)
       {
          x = dx/2 + n * dx;
-         XSetForeground(display,gc,Acol[i].pixel);
+         XSetForeground(display,gc,Aco[w][i].pixel);
+         XFillArc(display,pix,gc,x,y,r,r,0,360*64);
+      }
+   }
+}
+
+
+/* ========== */
+/* Amplitudes */
+/* ========== */
+
+void Amplitudes(int w)
+{
+   int i,j,m,n;
+   int x,y;
+   int r,dx,dy;
+   int imax;
+   REAL Amax,Fac;
+
+   if (!Amp[w]) Amp[w] = FloatAlloc(DimXY,"Amp[w]");
+   if (!Aco[w]) Aco[w] = SizeAlloc(DimXY,sizeof(XColor),"Aco[w]");
+
+   Amax = 0.0;
+   imax = 0;
+   for (i=0 ; i < DimXY ; ++i)
+   {
+      Amp[w][i] = log (1.0 + sqrt(Field[2*i]*Field[2*i]+Field[2*i+1]*Field[2*i+1]));
+      Aco[w][i].pixel = WhitePix;
+      if (Amp[w][i] > Amax)
+      {
+         Amax = Amp[w][i];
+         imax = i;
+      }
+   }
+
+   Fac = 0.0;
+   if (Amax > 1.e-20) Fac = 1.0 / Amax;
+   for (i=0 ; i < DimXY ; ++i)
+   {
+      j = AMPLI_COLS * Amp[w][i] * Fac;
+      if (j >= AMPLI_COLS) j = AMPLI_COLS-1;
+      Aco[w][i].pixel = AmpliStrip[j].pixel;
+   }
+
+   dx = WinXSize / (DimX+1);
+   dy = WinYSize / (DimY+1);
+   r  = (dx+dx+dy+dy) / 6;
+   XSetForeground(display,gc,BlackPix);
+   for (m=0,i=0 ; m < DimX ; ++m)
+   {
+      y = FixFontHeight + 4 + m * dx;
+      for (n=0 ; n < DimY ; ++n)
+      {
+         x = dx/2 + n * dx;
+         XSetForeground(display,gc,Aco[w][i++].pixel);
          XFillArc(display,pix,gc,x,y,r,r,0,360*64);
       }
    }
@@ -4334,7 +4390,8 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
       FlagSize = DimX;
    }
 
-   if (PicType == ISOSH) pal = 1; // ISOSH has its own palette
+   if (PicType == ISOSH || PicType == ISOAMP) pal = 1; // special palette
+
    if (pal < 1 || pal >= NUMPAL)
    {
       Cstrip = Autostrip;
@@ -4714,7 +4771,14 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
 
    if (PicType == ISOSH)
    {
-      AmplitudePlot();     
+      SH_Amplitudes(w);     
+   }
+
+   // amplitudes of rectangular array
+
+   if (PicType == ISOAMP)
+   {
+      Amplitudes(w);     
    }
 
    // line plot

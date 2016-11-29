@@ -65,7 +65,7 @@ int Debug = 0; // set in initgui
 #define IPY(l,m,h) (VGAY * (y + (l-m) / (l-h)))
 
 #define NUMWIN 9
-#define NUMPAL 13
+#define NUMPAL 14
 
 /* Picture types */
 
@@ -123,7 +123,8 @@ char *PalNames[] =
    "OCET",
    "OCES",
    "DCC",
-   "DTDT"
+   "DTDT",
+   "SIMPLE"
 };
 
 int PalTypes = sizeof(PalNames) / sizeof(char *);
@@ -299,6 +300,8 @@ int RotLon[NUMWIN];
 double AutoDelta[NUMWIN];
 double AutoXdelt[NUMWIN];
 double AutoLo[NUMWIN];
+double LineScale[NUMWIN];   // last used scale  for LINE plots
+double LineMin[NUMWIN];     // last used offset for LINE plots
 REAL *TSdata[NUMWIN];
 REAL *Dmin[NUMWIN];
 REAL *Dmax[NUMWIN];
@@ -603,12 +606,25 @@ struct ColorStrip DTDTstrip[] =
    {  0.0,  0.0,NULL}
 };
 
+struct ColorStrip Simplestrip[] =
+{
+   {  0.0,   0.0,"white"},
+   {  0.0,   0.0,"red"},
+   {  0.0,   0.0,"green"},
+   {  0.0,   0.0,"blue"},
+   {  0.0,   0.0,"yellow"},
+   {  0.0,   0.0,"magenta"},
+   {  0.0,   0.0,"cyan"},
+   {  0.0,   0.0,"orange"},
+   {  0.0,   0.0, NULL}
+};
+
 #define AMPLI_COLS 8
 
 struct ColorStrip *Cstrip;
 struct ColorStrip *Pallet[NUMPAL] =
 { Autostrip, Ustrip, Vstrip, Tstrip, Pstrip, Qstrip,MarsTStrip,AmpliStrip,
-  Vegstrip, Tstripoce, Sstripoce, DCCstrip, DTDTstrip};
+  Vegstrip, Tstripoce, Sstripoce, DCCstrip, DTDTstrip,Simplestrip};
 
 REAL VGAX;
 REAL VGAY;
@@ -2575,8 +2591,9 @@ void IsoLines(struct ColorStrip Strip[],int Colored)
 
 void LinePlot(int w)
 {
-   int i;
-   REAL zmin,zmax,zrange,zdelta,f;
+   int i,j,xp,yp;
+   double zmin,zmax,zrange,rrange,zdelta,f;
+   char Text[128];
 
    // allocate space for plot data
 
@@ -2585,38 +2602,81 @@ void LinePlot(int w)
    // compute minimum & maximum for auto scaling
 
    zmin = zmax = Field[0];
-   for (i=1 ; i < DimX ; ++i)
+   for (i=1 ; i < DimXY ; ++i)
    {
       zmin = MIN(zmin,Field[i]);
       zmax = MAX(zmax,Field[i]);
    }
-   zrange = zmax - zmin;
-   if (zrange < 1e-10) f = 1.0;
-   else                f = (InYSize-2) / zrange;
 
-   if (Debug)
+   zrange = zmax - zmin;
+
+   // compute scaling parameter
+
+   if (zrange < 1e-10) f = 0.0;
+   else
    {
-      printf("LinePlot: %6d %10.4e %10.4e %10.4e %10.4e \n",
-             DimX, zmin,zmax,zrange,f);
+      rrange = pow(10.0,rint(log10(zrange)) + 1.0);
+      if (rrange > 5.0 * zrange) rrange *= 0.2;
+      if (rrange > 2.0 * zrange) rrange *= 0.5;
+      f = (InYSize-2-2*FixFontHeight) / rrange;
+      zmin = 0.1 * (rint(10.0 * zmin / rrange) * rrange);
+   }
+   if (LineScale[w] < f || fabs(LineMin[w]-zmin) > 0.2 * fabs(zmin))
+   {
+      LineScale[w] = f;
+      LineMin[w]   = zmin;
+   }
+   else
+   {
+      f = LineScale[w];
+      zmin = LineMin[w];
    }
 
-   // scale plot data
+   // compute x values for line plot
 
    for (i=0 ; i < DimX ; ++i)
    {
       LIxp[w][i].x = VGAX * i;
-      LIxp[w][i].y = InYSize - 1 - f * (Field[i] - zmin);
    }
 
    // fill plot area with black
-
+   
+   XSetBackground(display,gc,BlackPix);
    XSetForeground(display,gc,BlackPix);
-   XFillRectangle(display,pix,gc,0,0,WinXSize,InYSize);
-
-   // draw data
-
+   XFillRectangle(display,pix,gc,0,0,WinXSize,WinYSize);
    XSetForeground(display,gc,WhitePix);
-   XDrawLines(display,pix,gc,LIxp[w],DimX,CoordModeOrigin);
+
+   // print range
+
+   if (f > 0.0)
+   {
+      if (fabs(zmin) > 0.009 && fabs(zmin+rrange) < 9999.0)
+         sprintf(Text,"Range: %10.4f   %10.4f",zmin,zmin+rrange);
+      else
+         sprintf(Text,"Range: %10.2e   %10.2e",zmin,zmin+rrange);
+      xp = FixFontWidth;
+      yp = WinYSize - FixFontHeight/2;
+      XDrawImageString(display,pix,gc,xp,yp,Text,strlen(Text));
+   }
+
+   // loop over parameters
+
+   for (j=0 ; j < DimY ; ++j)
+   {
+      // scale plot data
+   
+      for (i=0 ; i < DimX ; ++i)
+      {
+         LIxp[w][i].y = InYSize - 2 - 2 * FixFontHeight - f * (Field[i+j*DimX] - zmin);
+         // if (Debug) printf(" %3d",LIxp[w][i].y);
+      }
+      // if (Debug) printf("\n");
+      // draw data
+   
+      XSetForeground(display,gc,Simplestrip[j].pixel);
+      XDrawLines(display,pix,gc,LIxp[w],DimX,CoordModeOrigin);
+
+   }
 }
 
 

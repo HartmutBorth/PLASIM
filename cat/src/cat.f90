@@ -1494,8 +1494,9 @@ if (npost > 0) then
 !  gguixm(:) = gvxm(:) ! double -> single
 !  call guiput("GVXM" // char(0), gguixm, ngy, 1, 1)   ! v
 
-   ggxm(:,1) = guxm(:)
-   ggxm(:,2) = gvxm(:)
+   ggxm(:,1) = gvym(:)
+!  ggxm(:,2) = gvxm(:)
+   ggxm(:,2) = gqym(:)
    call guiput("GXM" // char(0), ggxm, ngy, 2, 1)   ! u & v
 
 
@@ -1748,14 +1749,14 @@ implicit none
 !--- calculate zonal means
 gqxm   = sum(gq  ,1)*rnx
 gpsixm = sum(gpsi,1)*rnx
-guxm   = sum(gq  ,1)*rnx
-gvxm   = sum(gq  ,1)*rnx
+guxm   = sum(gu  ,1)*rnx
+gvxm   = sum(gv  ,1)*rnx
 
 !--- calculate meridional means
 gqym   = sum(gq  ,2)*rny
 gpsiym = sum(gpsi,2)*rny
-guym   = sum(gq  ,2)*rny
-gvym   = sum(gq  ,2)*rny
+guym   = sum(gu  ,2)*rny
+gvym   = sum(gv  ,2)*rny
 
 return
 end subroutine post

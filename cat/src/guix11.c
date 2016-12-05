@@ -2593,8 +2593,8 @@ void IsoLines(struct ColorStrip Strip[],int Colored)
 
 void LinePlot(int w)
 {
-   int i,j,xp,yp;
-   double zmin,zmax,zrange,rrange,zdelta,f;
+   int i,j,k,xp,yp;
+   double zmin,zmax,zrange,zdelta,f;
    char Text[128];
 
    // allocate space for plot data
@@ -2614,16 +2614,20 @@ void LinePlot(int w)
 
    // compute scaling parameter
 
-   if (zrange < 1e-10) f = 0.0;
+   if (zrange < 1e-20) zdelta = 0.1;
    else
    {
-      rrange = pow(10.0,rint(log10(zrange)) + 1.0);
-      if (rrange > 5.0 * zrange) rrange *= 0.2;
-      if (rrange > 2.0 * zrange) rrange *= 0.5;
-      f = (InYSize-2-2*FixFontHeight) / rrange;
-      zmin = 0.1 * (rint(10.0 * zmin / rrange) * rrange);
+      zdelta = pow(10.0,rint(log10(zrange)));
+      if (zdelta * 0.2 > 0.1 * zrange) zdelta *= 0.2;
+      if (zdelta * 0.5 > 0.1 * zrange) zdelta *= 0.5;
    }
-   if (LineScale[w] < f || fabs(LineMin[w]-zmin) > 0.2 * fabs(zmin))
+
+   zmin = (floor(zmin / zdelta) - 1.0) * zdelta;
+   zmax = ( ceil(zmax / zdelta) + 1.0) * zdelta;
+   if (zmax > zmin) f = InYSize / (zmax - zmin);
+   else             f = 1.0;
+
+   if (LineScale[w] < f || fabs(LineMin[w]-zmin) > 0.9 * fabs(zdelta))
    {
       LineScale[w] = f;
       LineMin[w]   = zmin;
@@ -2652,10 +2656,10 @@ void LinePlot(int w)
 
    if (f > 0.0)
    {
-      if (fabs(zmin) > 0.009 && fabs(zmin+rrange) < 9999.0)
-         sprintf(Text,"Range: %10.4f   %10.4f",zmin,zmin+rrange);
+      if (fabs(zmin) > 0.009 && fabs(zmax) < 9999.0)
+         sprintf(Text,"Range: %10.4f   %10.4f",zmin,zmax);
       else
-         sprintf(Text,"Range: %10.2e   %10.2e",zmin,zmin+rrange);
+         sprintf(Text,"Range: %10.2e   %10.2e",zmin,zmax);
       xp = FixFontWidth;
       yp = WinYSize - FixFontHeight/2;
       XDrawImageString(display,pix,gc,xp,yp,Text,strlen(Text));
@@ -2669,16 +2673,24 @@ void LinePlot(int w)
    
       for (i=0 ; i < DimX ; ++i)
       {
-         LIxp[w][i].y = InYSize - 2 - 2 * FixFontHeight - f * (Field[i+j*DimX] - zmin);
-         // if (Debug) printf(" %3d",LIxp[w][i].y);
+         LIxp[w][i].y = InYSize - f * (Field[i+j*DimX] - zmin);
       }
-      // if (Debug) printf("\n");
-      // draw data
    
       XSetForeground(display,gc,Simplestrip[j].pixel);
       XDrawLines(display,pix,gc,LIxp[w],DimX,CoordModeOrigin);
-
    }
+
+   // Check scaling
+
+/*
+   xp = 0;
+   yp = 0;
+   i  = VGAX * (DimX-1);
+   j  = VGAY * (DimY-1);
+
+   XSetForeground(display,gc,Yellow.pixel);
+   XDrawRectangle(display,pix,gc,xp,yp,i,j);
+*/
 }
 
 

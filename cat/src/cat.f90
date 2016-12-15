@@ -1514,7 +1514,7 @@ if (npost > 0) then
    call guiput("GVYM" // char(0), gguiym, 1, ngx, 1)   ! v
 
    c4(:,:) = cq(:,:)
-   call guiput("CQ" // char(0), c4, nkx+1, nfy+1, 2)   ! v
+   call guiput("C4" // char(0), c4, nkx+1, nfy+1, 2)   ! v
 
 endif
 

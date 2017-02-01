@@ -3139,6 +3139,11 @@ void Amplitudes(int w)
       }
    }
 
+   if (Debug)
+   {
+      printf("Max Amplitude = %10.2e at %d\n",Amax,imax);
+   }
+
    Fac = 0.0;
    if (Amax > 1.e-20) Fac = 1.0 / Amax;
    for (i=0 ; i < DimXY ; ++i)

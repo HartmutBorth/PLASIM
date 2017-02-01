@@ -1036,7 +1036,6 @@ void InitNamelist(void)
    NL_i(PUMA,"puma","NDIAG"  ,  0);
    NL_i(PUMA,"puma","NEWSR"  ,  0);
    NL_i(PUMA,"puma","NGUIDBG",  0);
-   NL_i(PUMA,"puma","NHELSUA",  0);
    NL_i(PUMA,"puma","NSYNC"  ,  0);
    NL_i(PUMA,"puma","NWPD"   ,  1);
    NL_r(PUMA,"puma","DTEP"   , 60);

@@ -1,11 +1,10 @@
 /*  c++ -O2 -o burn7.x burn7.cpp -lm -lnetcdf_c++ -lnetcdf */
 
 #define NETCDF_OUTPUT
-// #define OPEN_MP
 
-#define V0 "burn 7.6 (15-Dec-2015)"
-#define V1 "Edilbert Kirk - University of Hamburg"
-#define V2 "Usage: burn7 [-help|-c|-d|-m|-n|-s] <modelfile> <resultfile>"
+#define V0 "burn 7.7 (02-Feb-2017)"
+#define V1 "KlimaCampus"
+#define V2 "Usage: burn7 [-help|-c|-d|-m|-n|-r|-s] <modelfile> <resultfile>"
 #define V3 "New: option <-g> writes Grads ctl for service plotting"
 #define V4 "New: comments (#) are allowed in namelist file"
 
@@ -130,13 +129,13 @@ NcDim *TimDim;
 
 #endif
 
-int     SaveMemory = 0; /* Switch on for dynamic memory usage */
-int     PolyCreate = 0; /* Create polynomials files for hires T1365 and more */
-int     PolyDisk   = 0; /* Read polynomials from disk */
-int     GaussGrid  = 0; /* Output Guassian Grid */
-int     DPM        = 0; /* Days Per Month */
-int     DPY        = 0; /* Days Per Year */
-int     DayDivisor = 0; /* Use for day adjustment if more than 99 days per month */
+int     SaveMemory =  0; /* Switch on for dynamic memory usage */
+int     PolyCreate =  0; /* Create polynomials files for hires T1365 and more */
+int     PolyDisk   =  0; /* Read polynomials from disk */
+int     GaussGrid  = -1; /* 1: use Gaussian grid, 0: use regular grid */
+int     DPM        =  0; /* Days Per Month */
+int     DPY        =  0; /* Days Per Year */
+int     DayDivisor =  0; /* Use for day adjustment if more than 99 days per month */
 
 char    VerType; /* s=Sigma   p=Pressure */
 char    HorType; /* s=Spherical   f=Fourier   z=Zonal Mean   g=Gauss Grid */
@@ -3452,22 +3451,22 @@ void legini(void)
    ZTEMP1 = new double[Fouriers];
    ZTEMP2 = new double[Fouriers];
 
-   for (int i=0 ; i<hdim ; ++i) pnm[i]=hnm[i]=777.0;
-   Gaulat = new GauLat(Gats,"Gaulat");
-   Outlon = new RegLon(Lons,"Outlon");
+   // if gridtype for output is not selected, choose Gauss grid
+   // for matching resolution and regular grid else
+
+   if (GaussGrid < 0) GaussGrid = (Lats == Gats && Lons == Gons);
+
+   Gaulat = new GauLat(Gats,"Gaulat"); // Gaussian latitudes of input grid
+   Outlon = new RegLon(Lons,"Outlon"); // Regular longitudes of output grid
    if (GaussGrid) Outlat = new GauLat(Lats,"Outlat");
    else           Outlat = new RegLat(Lats,"Outlat");
-   if (Debug) Outlat->PrintArray();
-   if (Debug) Outlon->PrintArray();
 
-   if (Lats == Gats && Lons == Gons)
-   for (jlat = 0 ; jlat < Gats ; ++jlat)
+   if (Debug)
    {
-      Outlat->Phi[jlat] = Gaulat->Phi[jlat];
-      Outlat->gmu[jlat] = Gaulat->gmu[jlat];
-      Outlat->gwt[jlat] = Gaulat->gwt[jlat];
+      Gaulat->PrintArray();
+      if (Lats != Gats || !GaussGrid) Outlat->PrintArray();
+      Outlon->PrintArray();
    }
-   else if (Debug) Outlat->PrintArray();
 
    if (PolyCreate)
    {
@@ -6128,14 +6127,15 @@ int main(int argc, char *argv[])
    for (i = 1 ; i < argc ; ++i) {
       if (argv[i][0] == '-') {
          if      (argv[i][1] == 'c') {PrintCodes(); exit(1);}
-         else if (argv[i][1] == 'd') Debug      = 1;
-         else if (argv[i][1] == 'v') Debug      = 1;
-         else if (argv[i][1] == 'n') NetCDF     = 1;
-         else if (argv[i][1] == 'g') Grads      = 1;
-         else if (argv[i][1] == 'm') Mean       = 1;
-         else if (argv[i][1] == 'p') PolyCreate = 1;
-         else if (argv[i][1] == 'i') GaussGrid  = 1;
-         else if (argv[i][1] == 's') SaveMemory = 1;
+         else if (argv[i][1] == 'd') Debug      =  1;
+         else if (argv[i][1] == 'v') Debug      =  1;
+         else if (argv[i][1] == 'n') NetCDF     =  1;
+         else if (argv[i][1] == 'g') Grads      =  1;
+         else if (argv[i][1] == 'm') Mean       =  1;
+         else if (argv[i][1] == 'p') PolyCreate =  1;
+         else if (argv[i][1] == 'i') GaussGrid  =  1;
+         else if (argv[i][1] == 'r') GaussGrid  =  0;
+         else if (argv[i][1] == 's') SaveMemory =  1;
          else Usage();
       }
       else if (ifile[0] == '\0') strcpy(ifile,argv[i]);

@@ -3111,11 +3111,11 @@ void SH_Amplitudes(int w)
 }
 
 
-/* ========== */
-/* Amplitudes */
-/* ========== */
+/* ============= */
+/* FC_Amplitudes */
+/* ============= */
 
-void Amplitudes(int w)
+void FC_Amplitudes(int w)
 {
    int i,j,m,n;
    int x,y;
@@ -3155,14 +3155,17 @@ void Amplitudes(int w)
 
    dx = WinXSize / (DimX+1);
    dy = WinYSize / (DimY+1);
+   if (dx < dy) dy = dx;
+   else         dx = dy;
    r  = (dx+dx+dy+dy) / 6;
    XSetForeground(display,gc,BlackPix);
-   for (m=0,i=0 ; m < DimX ; ++m)
+   i = 0;
+   for (n=0 ; n < DimY ; ++n)
    {
-      y = FixFontHeight + 4 + m * dx;
-      for (n=0 ; n < DimY ; ++n)
+      y = FixFontHeight + 4 + n * dy;
+      for (m=0 ; m < DimX ; ++m)
       {
-         x = dx/2 + n * dx;
+         x = dx/2 + m * dx;
          XSetForeground(display,gc,Aco[w][i++].pixel);
          XFillArc(display,pix,gc,x,y,r,r,0,360*64);
       }
@@ -4206,7 +4209,7 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
    char Text[128];
 
    int i,j,k,len,lens,xp,yp,status,x;
-   int y,dx,r,width,height;
+   int y,dx,dy,r,width,height;
    INTXU border,depth;
    REAL f,o,ra,rb;
    int CapLines;
@@ -4556,7 +4559,10 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
 
    if (SizeChanged && PicType == ISOAMP)
    {
-      dx = WinXSize / DimX;
+      dx = WinXSize / (DimX+1);
+      dy = WinYSize / (DimY+1);
+      if (dx < dy) dy = dx;
+      else         dx = dy;
       XSetForeground(display,gc,BlackPix);
       XFillRectangle(display,pix,gc,0,0,WinXSize,WinYSize);
 
@@ -4580,7 +4586,7 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
          width  = XTextWidth(FixFont,Text,len);
          height = FixFont->ascent + FixFont->descent;
          xp     = WinXSize - width - 2;
-         yp     = 2 * FixFontHeight + i * dx;
+         yp     = 2 * FixFontHeight + i * dy;
          if (yp+FixFont->descent > InYSize) break;
          XDrawImageString(display,pix,gc,xp,yp,Text,len);
       }
@@ -4859,7 +4865,7 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
 
    if (PicType == ISOAMP)
    {
-      Amplitudes(w);
+      FC_Amplitudes(w);
    }
 
    // line plot

@@ -5,14 +5,14 @@ module catmod
 
 ! *********************************************
 ! *                                           *
-! *                 CAT                       * 
+! *                 CAT                       *
 ! *                                           *
 ! *        Computer Aided Turbulence          *
 ! *                                           *
 ! *        Version  1.1    July 2016          *
 ! *                                           *
 ! *********************************************
-! *  Theoretical Meteorology - KlimaCampus    * 
+! *  Theoretical Meteorology - KlimaCampus    *
 ! *         University of Hamburg             *
 ! *********************************************
 ! *     Hartmut Borth - Edilbert Kirk         *
@@ -42,13 +42,13 @@ module catmod
 character (256) :: catversion = "July 2016, Version 0.1"
 
 integer :: nshutdown = 0       ! Flag to stop program
-logical :: lrsttest  = .false. ! flag set to .true. for restart test, 
-                               ! parameter nsteps is not written 
+logical :: lrsttest  = .false. ! flag set to .true. for restart test,
+                               ! parameter nsteps is not written
                                ! to restart file. lrsttest is set to
                                ! true if a file RSTTEST is found in the
                                ! run directory. Call <make rsttest> to
                                ! do the restart test. To clean the run after
-                               ! a restart test call <make cleanresttest> 
+                               ! a restart test call <make cleanresttest>
 
 
 ! ***************************
@@ -109,20 +109,20 @@ integer, parameter :: ningp  = 5
 integer, parameter :: ninsp  = 5
 integer :: ingp(ningp) = &
    (/ qcde       , &
-      qfrccde    , &     
-       0         , &     
-       0         , &     
-       0           &    
-   /) 
+      qfrccde    , &
+       0         , &
+       0         , &
+       0           &
+   /)
 integer :: insp(ninsp) = &
    (/  qcde      , &
        qfrccde   , &
-       0         , &     
-       0         , &     
+       0         , &
+       0         , &
        0           &
-   /) 
+   /)
 
-!--- codes of variables to be written to cat_gp or cat_sp 
+!--- codes of variables to be written to cat_gp or cat_sp
 integer, parameter :: noutgp = 5
 integer, parameter :: noutsp = 5
 integer :: outgp(noutgp) = &
@@ -142,7 +142,7 @@ integer :: outsp(noutsp) = &
 
 
 ! *******************************
-! * Basic diagnostic parameters * 
+! * Basic diagnostic parameters *
 ! *******************************
 
 integer :: tsps          ! time steps per second (cpu-time)
@@ -164,7 +164,7 @@ real(8) :: ly = twopi   ! in y-direction (scale L_x = X/2pi)
 real(8) :: alpha = 0.0  ! alpha = 1/R_hat**2 [1/m**2]
                         ! with the non-dimensional Rossby
                         ! radius Ro_hat = Ro/L_x
-                            
+
 real(8) :: beta  = 0.0  ! ambient vorticity gradient [1/m*s]
 
 !---------------------!
@@ -176,20 +176,20 @@ integer :: diss_mthd  = 1  ! dissipation method
                            !    sig and lam and the powers psig and
                            !    plam
                            ! 2: Laplacian viscosity and friction
-                           !    characterized by the reciprocal 
+                           !    characterized by the reciprocal
                            !    damping time-scales rtsig and rtlam,
                            !    the cut-off wave-numbers ksig and klam
-                           !    and the powers psig and plam 
- 
+                           !    and the powers psig and plam
+
 
 !----------------------------------!
 ! Laplacian viscosity and friction !
 !----------------------------------!
 
-integer, parameter :: nsig = 2 ! maximum number of terms of Laplacian 
+integer, parameter :: nsig = 2 ! maximum number of terms of Laplacian
                                    ! dissipation on small scales
- 
-integer, parameter :: nlam = 2 ! maximum number of terms of Laplacian 
+
+integer, parameter :: nlam = 2 ! maximum number of terms of Laplacian
                                    ! dissipation on large scales
 
 !--- definition of dissipation on small scales
@@ -199,11 +199,11 @@ real(8) :: psig (nsig) =      & ! powers of Laplacian parameterizing
        /)
 real(8) :: sig(nsig)   =      & ! coefficients of different powers
        (/ 9.765625d-05,       & ! of the Laplacian [m^2*psig/s]
-          9.094947d-11        & 
+          9.094947d-11        &
        /)
 real(8) :: rtsig(nsig) =      & ! 1/time-scale of different powers
        (/ 1.d-1,              & ! of the Laplacian [1/s]
-          1.d+2               & 
+          1.d+2               &
        /)
 integer :: ksig (nsig) =      & ! lower "cut-off" wave number of different
        (/ 320,                & ! powers of Laplacian
@@ -214,14 +214,14 @@ integer :: ksig (nsig) =      & ! lower "cut-off" wave number of different
 real(8) :: plam (nlam) =      & ! powers of Laplacian modelling viscosity
        (/ -1.d0,              & ! on large scales plam <= 0
           -4.d0               &
-       /)      
+       /)
 real(8) :: lam(nlam)   =      & ! coefficients of different powers
        (/ 0.d0,               & ! of the Laplacian [m^(-2*psig)/s]
-          0.d0                & 
+          0.d0                &
        /)
 real(8) :: rtlam(nlam) =      & ! 1/time-scale of different powers
        (/ 0.d0,               & ! of the Laplacian [1/s]
-          0.d0                & 
+          0.d0                &
        /)
 integer :: klam (nlam) =      & ! lower "cut-off" wave number of different
        (/ 1,                  & ! powers of Laplacian
@@ -243,16 +243,16 @@ integer :: npert = 0 ! initial perturbation switch
                      ! 2 = white noise symmetric perturbation about the axis
                      !     y = pi (zero mean vorticity in the upper and
                      !     lower part of the fluid domain separately)
-                     ! 3 = white noise anti-symmetricy perturbation about 
-                     !     the axis y = pi (zero mean vorticity in the upper 
+                     ! 3 = white noise anti-symmetricy perturbation about
+                     !     the axis y = pi (zero mean vorticity in the upper
                      !     and lower power separately)
                      ! 4 = white noise symmetric perturbation about the axis
                      !     x = pi (zero mean vorticity in the upper and
                      !     lower part of the fluid domain separately)
-                     ! 5 = white noise anti-symmetricy perturbation about 
-                     !     the axis x = pi (zero mean vorticity in the upper 
+                     ! 5 = white noise anti-symmetricy perturbation about
+                     !     the axis x = pi (zero mean vorticity in the upper
                      !     and lower power separately)
- 
+
 real(8) :: apert = 1.0d-5 ! amplitude of perturbation
 
 
@@ -311,11 +311,11 @@ integer :: jacmthd  = 1       ! approximation method of Jacobian
                               ! 0 : no Jacobian
                               ! 1 : divergence form (uq)_x + (vq)_y
                               ! 2 : advection form   uq_x  + vq_y
-                              ! 3 : invariant form   
+                              ! 3 : invariant form
 
 !--- time integration
 integer :: nsteps    = 10000  ! number of time steps to be integrated
-integer :: tstep     = 0      ! current time step (since start of runs) 
+integer :: tstep     = 0      ! current time step (since start of runs)
 integer :: tstop     = 0      ! last time step of run
 
 integer :: tstp_mthd = 1      ! time stepping method
@@ -326,18 +326,18 @@ integer :: nstdout   = 2500   ! time steps between messages to
 
 
 integer :: ndiag     = 500    ! time steps between test outputs into
-                              ! out_diag (-1 no test outputs) 
+                              ! out_diag (-1 no test outputs)
 
 integer :: ngp       = 100     ! time steps between output of grid point
                                ! fields (-1 = no output)
 integer :: nsp       = 100     ! time steps between output of spectral
                                ! fields (-1 = no output)
-integer :: ncfl      = 100     ! time steps between cfl-check 
+integer :: ncfl      = 100     ! time steps between cfl-check
                                ! (-1 no cfl check)
 
 integer :: ntseri    = 100     ! time steps between time-series output
                                ! (-1 no time-series)
- 
+
 real(8) :: dt        = 1.d-3   ! length of time step [s]
 
 !--------------------------------------------!
@@ -358,7 +358,7 @@ real(8), allocatable :: guq(:,:)    ! u*q  [m/s^2]
 real(8), allocatable :: gvq(:,:)    ! v*q  [m/s^2]
 
 !--- case 2 (!! variables contain different fields depending on context)
-real(8), allocatable :: gqx (:,:) ! dq/dx [1/ms] 
+real(8), allocatable :: gqx (:,:) ! dq/dx [1/ms]
 real(8), allocatable :: gqy (:,:) ! dq/dy [1/ms]
 real(8), allocatable :: gjac(:,:) ! jacobian [s^-2]
 
@@ -372,7 +372,7 @@ real(4), allocatable :: ggui(:,:) ! single precision transfer
 
 !----------------------------------------------------------!
 ! variables in spectral space, representation as imaginary !
-! and real part (prefix f) used for fourier transformation ! 
+! and real part (prefix f) used for fourier transformation !
 ! and complex representation (prefix c) used for time      !
 ! evolution                                                !
 !----------------------------------------------------------!
@@ -424,10 +424,10 @@ complex(8), allocatable :: cli(:,:)    ! linear time propagation
 ! *******************
 
 !--- gui communication (guimod)
-integer :: ngui    = 1   ! global switch and parameter 
-                         ! ngui > 0 GUI = on  
-                         ! ngui specifies moreover the number of 
-                         ! time-steps between two calls of gui_transfer 
+integer :: ngui    = 1   ! global switch and parameter
+                         ! ngui > 0 GUI = on
+                         ! ngui specifies moreover the number of
+                         ! time-steps between two calls of gui_transfer
                          ! which exchanges data between GUI and CAT
 
 integer :: nguidbg = 0   ! GUI debug mode
@@ -437,9 +437,9 @@ real(4) :: parc(5) = 0.0 ! timeseries display
 
 
 !--- code of predefined simulations (simmod)
-integer :: nsim  = 0 ! 0 no predefined simulation is specified 
+integer :: nsim  = 0 ! 0 no predefined simulation is specified
                      ! nsim > 0 predefined simulation is run
-                     ! 
+                     !
                      ! available predefined simulations (experiments):
                      ! -----------------------------------------------
                      !    code       name
@@ -447,19 +447,19 @@ integer :: nsim  = 0 ! 0 no predefined simulation is specified
                      !     1    decaying_jet01
                      !    51    top-hat wind-forcing
                      !    52    top-hat wind-forcing
-                     ! ----------------------------------------------- 
-                     ! 
+                     ! -----------------------------------------------
+                     !
                      ! Predefined simulations are given in the dat
-                     ! directory as sim_XXXX.nl with XXXX the code  
+                     ! directory as sim_XXXX.nl with XXXX the code
                      ! To activate a given simulation one has to copy
-                     ! a given sim_XXXX.nl to sim_namelist in the run 
+                     ! a given sim_XXXX.nl to sim_namelist in the run
                      ! directory.
-                     ! ----------------------------------------------- 
+                     ! -----------------------------------------------
 
 !--- usermod (usermod)
 integer :: nuser = 0 ! 1/0 user mode is switched on/off.
-                     ! In user mode it is possible to introduce 
-                     ! new code into CAT (see chapter <Modifying 
+                     ! In user mode it is possible to introduce
+                     ! new code into CAT (see chapter <Modifying
                      ! CAT> in the User's Guide).
 
 
@@ -480,10 +480,10 @@ real(8), allocatable :: guym(:)   ! mean x-velocity allong y-dir [m/s]
 real(8), allocatable :: gvxm(:)   ! mean y-velocity allong x-dir [m/s]
 real(8), allocatable :: gvym(:)   ! mean y-velocity allong y-dir [m/s]
 
-real(4), allocatable :: gguixm(:) ! single precision mean in x-dir for gui 
-real(4), allocatable :: gguiym(:) ! single precision mean in y-dir for gui 
+real(4), allocatable :: gguixm(:) ! single precision mean in x-dir for gui
+real(4), allocatable :: gguiym(:) ! single precision mean in y-dir for gui
 
-real(4), allocatable :: ggxm(:,:) ! single precision mean in y-dir for gui 
+real(4), allocatable :: ggxm(:,:) ! single precision mean in y-dir for gui
 
 end module catmod
 
@@ -684,7 +684,7 @@ if (lcatnl) then
   read(nucatnl,cat_nl)
 endif
 
-!--- check consistency of namelist parameters   
+!--- check consistency of namelist parameters
 if (jacmthd .lt. 0 .or. jacmthd .gt. 3) then
    write(nudiag, &
    '(/," ************************************************")')
@@ -790,21 +790,21 @@ allocate(gpsi(1:ngx,1:ngy)) ; gpsi(:,:) = 0.0  ! stream function
 
 allocate(ggui(1:ngx,1:ngy)) ; ggui(:,:)  = 0.0  ! GUI transfer
 
-!--- spetral space 
-allocate(fu(0:nfx,0:nfy))   ; fu(:,:)   = 0.0 ! u 
-allocate(fv(0:nfx,0:nfy))   ; fv(:,:)   = 0.0 ! v 
+!--- spetral space
+allocate(fu(0:nfx,0:nfy))   ; fu(:,:)   = 0.0 ! u
+allocate(fv(0:nfx,0:nfy))   ; fv(:,:)   = 0.0 ! v
 
 allocate(k2(0:nkx,0:nfy))      ; k2(:,:)      = 0.0 ! Laplacian
 allocate(k2pa(0:nkx,0:nfy))    ; k2pa(:,:)    = 0.0 ! modified Laplacian
 allocate(rk2pa(0:nkx,0:nfy))   ; rk2pa(:,:)   = 0.0 ! modified Laplacian^-1
 allocate(kxrk2pa(0:nkx,0:nfy)) ; kxrk2pa(:,:) = 0.0 ! q --> v
 allocate(kyrk2pa(0:nkx,0:nfy)) ; kyrk2pa(:,:) = 0.0 ! q --> u
-allocate(kx2mky2(0:nkx,0:nfy)) ; kx2mky2(:,:)  = 0.0 ! utility for Jacobian 3 
-allocate(kxky  (0:nkx,0:nfy))  ; kxky  (:,:)  = 0.0 ! utility for Jacobian 3 
+allocate(kx2mky2(0:nkx,0:nfy)) ; kx2mky2(:,:)  = 0.0 ! utility for Jacobian 3
+allocate(kxky  (0:nkx,0:nfy))  ; kxky  (:,:)  = 0.0 ! utility for Jacobian 3
 
 
 
-allocate(cli(0:nkx,0:nfy))  ; cli(:,:)   = (0.0,0.0) ! linear time propagator 
+allocate(cli(0:nkx,0:nfy))  ; cli(:,:)   = (0.0,0.0) ! linear time propagator
 
 allocate(cq(0:nkx,0:nfy))   ; cq(:,:)    = (0.0,0.0) ! vorticity
 allocate(c4(0:nkx,0:nfy))   ; c4(:,:)    = (0.0,0.0) ! vorticity
@@ -838,7 +838,7 @@ case(1)
    allocate(guq(1:ngx,1:ngy)) ; guq(:,:) = 0.0  ! u*q
    allocate(gvq(1:ngx,1:ngy)) ; gvq(:,:) = 0.0  ! v*q
 
-   !--- spectral fields  
+   !--- spectral fields
    allocate(fuq(0:nfx,0:nfy)) ; fuq(:,:) = 0.0  ! u*q
    allocate(fvq(0:nfx,0:nfy)) ; fvq(:,:) = 0.0  ! v*q
 case(2)
@@ -849,15 +849,15 @@ case(2)
    allocate(gqy(1:ngx,1:ngy))  ; gqy(:,:)  = 0.0  ! qy
    allocate(gjac(1:ngx,1:ngy)) ; gjac(:,:) = 0.0  ! jacobian in grid-space
 
-   !--- spectral fields  
+   !--- spectral fields
    allocate(fqx(0:nfx,0:nfy)) ; fqx(:,:) = 0.0  ! u*qx or qx
    allocate(fqy(0:nfx,0:nfy)) ; fqy(:,:) = 0.0  ! v*qy or qy
 case(3)
    !--- allocate fields used by jacobian
-   !--- grid point fields 
-   allocate(gv2mu2(1:ngx,1:ngy)) ; gv2mu2(:,:) = 0.0  ! v^2-u^2 
-   allocate(guv   (1:ngx,1:ngy)) ; guv   (:,:) = 0.0  ! u*v 
-   !--- spetral fields  
+   !--- grid point fields
+   allocate(gv2mu2(1:ngx,1:ngy)) ; gv2mu2(:,:) = 0.0  ! v^2-u^2
+   allocate(guv   (1:ngx,1:ngy)) ; guv   (:,:) = 0.0  ! u*v
+   !--- spetral fields
    allocate(fv2mu2(0:nfx,0:nfy)) ; fv2mu2(:,:) = 0.0  ! v^2-u^2
    allocate(fuv   (0:nfx,0:nfy)) ; fuv   (:,:) = 0.0  ! u*v
    print *, "init_jacobian case 3"
@@ -879,34 +879,34 @@ select case (jacmthd)
 case (1)
    !--- deallocate fields used by jacobian
 
-   !--- grid point fields 
+   !--- grid point fields
    deallocate(guq)
    deallocate(gvq)
 
-   !--- spetral fields 
+   !--- spetral fields
    deallocate(fuq)
    deallocate(fvq)
 
 case (2)
    !--- deallocate fields used by jacobian
 
-   !--- grid point fields 
+   !--- grid point fields
    deallocate(gqx)
    deallocate(gqy)
    deallocate(gjac)
 
-   !--- spetral fields 
+   !--- spetral fields
    deallocate(fqx)
    deallocate(fqy)
 
 case (3)
    !--- deallocate fields used by jacobian
 
-   !--- grid point fields 
+   !--- grid point fields
    deallocate(gv2mu2)
    deallocate(guv)
 
-   !--- spetral fields 
+   !--- spetral fields
    deallocate(fv2mu2)
    deallocate(fuv)
 
@@ -1162,7 +1162,7 @@ integer    :: jx,jy,n
 !
 ! arg = -dt*[diss_sig + diss_lam + beta_term]
 !
-!  with 
+!  with
 !     diss_sig  = -sum_j=1,nsig sig(j)*k^(2*psig(j))
 !     diss_lam  = -sum_j=1,nlam lam(j)*k^(2*plam(j))
 !     b_term    = i*beta*kx/(k^2 + alpha)
@@ -1230,7 +1230,7 @@ integer :: jx,jy
 
 if (nforc .eq. 0) return
 
-!---     
+!---
 ent=0.d0
 do jy = 0, nfy
   do jx = 0, nkx
@@ -1239,10 +1239,10 @@ do jy = 0, nfy
     if (jy.ne.0.or.jx.ne.0) then
       if (sqrt(k2tmp).ge.kfmin.and.sqrt(k2tmp).le.kfmax) then
         nk = nk + 1
-        in(nk,1) = jx 
+        in(nk,1) = jx
         in(nk,2) = jy
 !       ent=ent+k2+alpha
-        ent=ent+k2pa(jy,jx)
+        ent=ent+k2pa(jx,jy)
       endif
     endif
   enddo
@@ -1281,7 +1281,7 @@ if (nforc .eq. 0) return
 
 !--- forcing is specified by input files
 
-!--- examples are produced in simmod.f90 
+!--- examples are produced in simmod.f90
 
 !--- produce masks
 
@@ -1328,7 +1328,7 @@ select case(npert)
       do jy = 1,ngy/2
          call random_number(xtmp)
          xtmp = 2.0*apert*(xtmp - sum(xtmp)*rnx)
-         gqpert(:,jy)       = xtmp(:)   
+         gqpert(:,jy)       = xtmp(:)
          gqpert(:,ngy+1-jy) = xtmp(:)
       enddo
       call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
@@ -1339,35 +1339,35 @@ select case(npert)
       do jy = 1,ngy/2
          call random_number(xtmp)
          xtmp = 2.0*apert*(xtmp - sum(xtmp)*rnx)
-         gqpert(:,jy)       =  xtmp(:)   
+         gqpert(:,jy)       =  xtmp(:)
          gqpert(:,ngy+1-jy) = -xtmp(:)
       enddo
       call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
       cqpert(0,0) = (0.0,0.0)
       cq = cq + cqpert
    case(4)
-      !--- symmetric about x = pi 
+      !--- symmetric about x = pi
       do jx = 1,ngx/2
          call random_number(ytmp)
          ytmp = 2.0*apert*(ytmp - sum(ytmp)*rny)
-         gqpert(jx,:)       = ytmp(:)   
+         gqpert(jx,:)       = ytmp(:)
          gqpert(ngx+1-jx,:) = ytmp(:)
       enddo
       call grid_to_fourier(gqpert,cqpert,nfx,nfy,ngx,ngy)
       cqpert(0,0) = (0.0,0.0)
       cq = cq + cqpert
    case(5)
-      !--- anti-symmetric about x = pi 
+      !--- anti-symmetric about x = pi
 !     do jx = 1,ngx/2
 !        call random_number(ytmp)
 !        ytmp = 2.0*apert*(ytmp - sum(ytmp)*rny)
-!        gqpert(jx,:)       =  ytmp(:)   
+!        gqpert(jx,:)       =  ytmp(:)
 !        gqpert(ngx+1-jx,:) = -ytmp(:)
 !     enddo
       do jy = 1,ngy/2
          call random_number(xtmp)
          xtmp = 2.0*apert*(xtmp - sum(xtmp)*rnx)
-         gqpert(:,jy)       =  xtmp(:)   
+         gqpert(:,jy)       =  xtmp(:)
          gqpert(:,ngy+1-jy) = -xtmp(:)
       enddo
       gqpert = transpose(gqpert)
@@ -1448,7 +1448,7 @@ if((ngp .gt. 0) .and. mod(tstep,ngp).eq.0)  then
       case (qcde)
          call cat_wrtgp(nugp,gq,qcde,0)
       end select
-   enddo 
+   enddo
 endif
 
 if((nsp .gt. 0) .and. mod(tstep,nsp).eq.0)  then
@@ -1480,13 +1480,16 @@ implicit none
 ggui(:,:) = gq(:,:) ! double precision -> single
 call guiput("GQ" // char(0), ggui, ngx, ngy, 1)
 
+c4(:,:) = cq(:,:)
+call guiput("C4" // char(0), c4, nkx+1, nfy+1, 2)   ! fc
+
 if (npost > 0) then
    !--- zonal means
    gguixm(:) = gqxm(:)   ! double -> single
-   call guiput("GQXM" // char(0), gguixm, ngy, 1, 1)   ! q 
+   call guiput("GQXM" // char(0), gguixm, ngy, 1, 1)   ! q
 
    gguixm(:) = gpsixm(:) ! double -> single
-   call guiput("GPSIXM" // char(0), gguixm, ngy, 1, 1) ! psi 
+   call guiput("GPSIXM" // char(0), gguixm, ngy, 1, 1) ! psi
 
 !  gguixm(:) = guxm(:) ! double -> single
 !  call guiput("GUXM" // char(0), gguixm, ngy, 1, 1)   ! u
@@ -1502,19 +1505,16 @@ if (npost > 0) then
 
    !--- meridional means
    gguiym(:) = gqym(:)   ! double -> single
-   call guiput("GQYM" // char(0), gguiym, ngx, 1, 1) ! q 
+   call guiput("GQYM" // char(0), gguiym, ngx, 1, 1) ! q
 
    gguiym(:) = gpsiym(:) ! double -> single
-   call guiput("GPSIYM" // char(0), gguiym, ngx, 1, 1) ! psi 
+   call guiput("GPSIYM" // char(0), gguiym, ngx, 1, 1) ! psi
 
    gguiym(:) = guym(:) ! double -> single
    call guiput("GUYM" // char(0), gguiym, ngx, 1, 1)   ! u
 
    gguiym(:) = gvym(:) ! double -> single
    call guiput("GVYM" // char(0), gguiym, 1, ngx, 1)   ! v
-
-   c4(:,:) = cq(:,:)
-   call guiput("C4" // char(0), c4, nkx+1, nfy+1, 2)   ! v
 
 endif
 
@@ -1603,16 +1603,16 @@ subroutine init_tstep
 use catmod
 implicit none
 
-real(8) :: dt2 
+real(8) :: dt2
 
 
 dt2 = dt/2
 
 !--- determine tstop and return if tstep > 0
 if (tstep .eq. 0) then
-   tstop = tstep + nsteps      
+   tstop = tstep + nsteps
 else
-   tstop = tstep - 1 + nsteps   
+   tstop = tstep - 1 + nsteps
    return
 endif
 
@@ -1671,10 +1671,10 @@ allocate(guym(1:ngx))   ; guym(:)   = 0.0 ! u-mean in y-dir [m/s]
 allocate(gvxm(1:ngy))   ; gvxm(:)   = 0.0 ! v-mean in x-dir [m/s]
 allocate(gvym(1:ngx))   ; gvym(:)   = 0.0 ! v-mean in y-dir [m/s]
 
-allocate(gguixm(1:ngy)) ; gguixm(:) = 0.0 ! single precision mean in x-dir  
-allocate(gguiym(1:ngx)) ; gguiym(:) = 0.0 ! single precision mean in y-dir  
+allocate(gguixm(1:ngy)) ; gguixm(:) = 0.0 ! single precision mean in x-dir
+allocate(gguiym(1:ngx)) ; gguiym(:) = 0.0 ! single precision mean in y-dir
 
-allocate(ggxm(1:ngx,4)) ; ggxm(:,:) = 0.0 ! single precision mean in x-dir  
+allocate(ggxm(1:ngx,4)) ; ggxm(:,:) = 0.0 ! single precision mean in x-dir
 
 return
 end subroutine init_post
@@ -1688,11 +1688,11 @@ use catmod
 implicit none
 
 if (npost > 0) then
-   deallocate(gqxm) 
-   deallocate(gqym) 
+   deallocate(gqxm)
+   deallocate(gqym)
 
    deallocate(gpsixm)
-   deallocate(gpsiym) 
+   deallocate(gpsiym)
 
    deallocate(guxm)
    deallocate(guym)
@@ -1860,7 +1860,7 @@ call put_restart_iarray('npert',npert,1,1)
 call put_restart_array ('apert',apert,1,1)
 call put_restart_iarray('nforc',nforc,1,1)
 call put_restart_iarray('kfmin',kfmin,1,1)
-call put_restart_iarray('kfmax',kfmax,1,1) 
+call put_restart_iarray('kfmax',kfmax,1,1)
 call put_restart_array ('aforc',aforc,1,1)
 call put_restart_array ('tforc',tforc,1,1)
 call put_restart_iarray('myseed',myseed,mxseedlen,1)
@@ -1894,7 +1894,7 @@ subroutine close_files
 use catmod
 
 if (lrst)            close(nurstini)
-if (lcatnl)          close(nucatnl) 
+if (lcatnl)          close(nucatnl)
 close(nurstfin)
 close(nudiag)
 if (ntseri .gt. 0)   close(nutseri)
@@ -1930,7 +1930,7 @@ case (1)
 
    !--- (!!! Jacobian has different sign than in CAT-UG !!!)
    do jx = 0, nkx
-      cjac0(jx,:) = & 
+      cjac0(jx,:) = &
        cmplx( kx(jx)*fuq(jx+jx+1,:)+ky(:)*fvq(jx+jx+1,:), &
              -kx(jx)*fuq(jx+jx  ,:)-ky(:)*fvq(jx+jx  ,:))
    enddo
@@ -1943,18 +1943,18 @@ case (2)
 
 case (3)
    !--- Jacobian in invariant form (third representation in CAT-UG)
-   gv2mu2 = gv**2 - gu**2 
+   gv2mu2 = gv**2 - gu**2
    guv    = gu*gv
 
    call grid_to_fourier(gv2mu2,fv2mu2,nfx,nfy,ngx,ngy)
    call grid_to_fourier(guv,fuv,nfx,nfy,ngx,ngy)
 
    do jx = 0, nkx
-      cjac0(jx,:) = & 
+      cjac0(jx,:) = &
        cmplx(kxky(jx,:)*fv2mu2(2*jx  ,:) + kx2mky2(jx,:)*fuv(2*jx  ,:), &
              kxky(jx,:)*fv2mu2(2*jx+1,:) + kx2mky2(jx,:)*fuv(2*jx+1,:))
    enddo
-      
+
 end select
 
 if (jac_scale .ne. 1.0 .or. jac_scale .ne. 0.0)  &
@@ -2021,9 +2021,9 @@ eni=0.d0
 enf=0.d0
 
 select case (nforc)
-   case (1) 
+   case (1)
       cq = cq + cqfrc
- 
+
    case (2)
       do ifk = 1,nk
          i = in(ifk,1)
@@ -2126,7 +2126,7 @@ real(8) :: cfl
 real(8) :: maxu,maxv
 
 
-!--- check courant number 
+!--- check courant number
 maxu = maxval(abs(gu(:,:))) * dt * ngx / lx
 maxv = maxval(abs(gv(:,:))) * dt * ngy / ly
 
@@ -2145,10 +2145,10 @@ subroutine init_ops
 use catmod
 implicit none
 
-integer :: jx,jy    
- 
+integer :: jx,jy
+
 kx2    = kx*kx
-kx2(0) = 1.0    
+kx2(0) = 1.0
 
 ky2    = ky*ky
 
@@ -2157,7 +2157,7 @@ do jy = 0, nfy
       k2     (jx,jy) = (kx2(jx)+ky2(jy))        ! - Laplacian      psi --> -q
       k2pa   (jx,jy) = (kx2(jx)+ky2(jy))+alpha  ! - mod Laplacian  psi --> -q
       rk2pa  (jx,jy) = 1.0d0/(k2(jx,jy)+alpha)  ! 1/mod Laplacian    q --> -psi
-      kxrk2pa(jx,jy) = kx(jx)*rk2pa(jx,jy)      ! q ---> v/i  
+      kxrk2pa(jx,jy) = kx(jx)*rk2pa(jx,jy)      ! q ---> v/i
       kyrk2pa(jx,jy) = ky(jy)*rk2pa(jx,jy)      ! q ---> u/i
       kx2mky2(jx,jy) = kx2(jx)-ky2(jy)          ! utility Jacobian 3
       kxky   (jx,jy) = kx(jx)*ky(jy)            ! utility Jacobian 3

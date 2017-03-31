@@ -1,4 +1,4 @@
-%
+
 \chapter{Evolution equations of incompressible 2D fluids} 
 %
 %
@@ -20,7 +20,7 @@ From homogeneity and incompressibility of the fluid we get
   \rho \mathbf{\nabla \cdot u} = 0,
 \end{equation} 
 with $\rho$ the fluid density. Using this property we can introduce 
-a volume (mass) stream function measuring the volume (mass) flux  
+a volume (mass) streamfunction measuring the volume (mass) flux  
 across an arbitrary line from the point $(x_{0},y_{0})$ to a point $(x,y)$ 
 via the path integral
 \begin{equation} \label{eq_psizetadef}
@@ -45,10 +45,10 @@ via the path integral
 \end{equation}
 The minus sign in front of the integral just changes the direction
 of positive massflux across the line and is chosen to make 
-the classical stream function of 2D fluids compatible to 
-the stream function (see e.g.\ \cite{danilovandgurarie2000}) 
+the classical streamfunction of 2D fluids compatible to 
+the streamfunction (see e.g.\ \cite{danilovandgurarie2000}) 
 typically used for 2D rotating fluids in geosciences. 
-In terms of the stream function $\psi$ the integrated mass flux 
+In terms of the streamfunction $\psi$ the integrated mass flux 
 $\mathcal{M}$ across a line joining the points $(x_{0},y_{0})$ and 
 $(x,y)$ is given by
 \begin{equation} \label{eq_calM}
@@ -57,109 +57,235 @@ $(x,y)$ is given by
        \left[\psi(x,y) -  \psi(x_{0},y_{0}) \right],
 \end{equation}
 with $H_{0}$ the depth of the fluid. At the same time
-the stream function $\psi$ is connected to the velocity 
+the streamfunction $\psi$ is connected to the velocity 
 field $(u,v)$ and the (relative) 
 vorticity $\zeta = v_{x} - u_{y}$ via
 \begin{equation} \label{eq_psiuv}
   (u,v) = (- \psi_{y},\psi_{x}) \ \mbox{and} \ \ \zeta = \Delta \psi.
 \end{equation}
-Using the stream function $\psi$, the evolution equation (\ref{eq_2Dvortvel}
-can be also written in the form
+Using the streamfunction $\psi$, the evolution equation (\ref{eq_2Dvortvel})
+can be written in the form
 \begin{equation} \label{eq_2Dvortstream}
-  \zeta_{t} + J(\psi,\zeta) = F + D.
+  \zeta_{t} + J(\psi,\zeta) = F + D,
 \end{equation}
+with $J(\psi,\zeta) = \psi_{x} \zeta_{y} - \psi_{y} \zeta_{x}$ the Jacobian.
 Since the velocity field is divergence free (equation \ref{eq_conti})
-we can further derive the equivalent equation in flux form
-\begin{equation} \label{eq_2Dflux}
-  \zeta_{t} + \nabla \cdot \left(\mathbf{u} \zeta \right) = F + D.
+different representations of the Jacobian $J$ can be found. Using 
+appropriate superpositions of different representations one can derive 
+discrete analogs of the Jacobian $J$ which keep the symmetry 
+property $J(\psi,\zeta) = -J(\zeta,\psi)$ and conserve the integrated 
+vorticity $\zeta$, kinetic energy $\nabla \psi \cdot \nabla \psi $  and
+enstrophy $\zeta^{2}$. In \cite{arakawa1966} such a discrete analog is 
+derived for a finite difference numerical model. Keeping the notation of 
+\cite{arakawa1966} the Jacobian $J$ of equation (\ref{eq_2Dvortstream}) 
+is denoted by $J_{1}$. Starting from $J_{1}$ we can derive a second form 
+of the Jacobian 
+\begin{equation} \label{eq_Jacobi2} 
+  J_{2}(\psi,\zeta) 
+   = 
+  J_{1}(\psi,\zeta) + \psi \left( \zeta_{xy} - \zeta_{yx} \right)
+   = 
+  \left(\psi  \zeta_{y} \right)_{x}
+   - 
+  \left(\psi  \zeta_{x} \right)_{y},
 \end{equation}
-Starting from the flux form one can after repeated application of the
-continuity equation (\ref{eq_conti}) finally derive an equation where
-the Jacobian only depends on the two velocity fields $(u,v)$
-\begin{equation} \label{eq_2Duv}
-  \zeta_{t} 
-   + \partial_{x} \partial_{y} \left( v^{2} - u^{2} \right) 
-   + \left(\partial^{2}_{x} - \partial^{2}_{y} \right) uv
+which gives the evolution equation
+\begin{equation} \label{eq_2DJacobi2} 
+  \zeta_{t} + \left(\psi  \zeta_{y} \right)_{x}  
+            - \left(\psi  \zeta_{x} \right)_{y} = F + D.
+\end{equation}
+Further we can derive a third form of Jacobian $J_{3}$ as follows 
+\begin{equation} \label{eq_Jacobi3}
+  J_{3}(\psi,\zeta) 
+   = 
+  J_{1}(\psi,\zeta) + \zeta \left( \psi_{xy} - \psi_{yx} \right)
+   = 
+  \left(\zeta  \psi_{x} \right)_{y}
+   - 
+  \left(\zeta  \psi_{y} \right)_{x},
+\end{equation}
+which inserted in the evolution equation yields the 2D fluid equations
+in flux form
+\begin{equation} \label{eq_2Dflux}
+  \zeta_{t} + 
+  \left(\zeta  \psi_{x} \right)_{y}
+   - 
+  \left(\zeta  \psi_{y} \right)_{x},
+   = 
+  \zeta_{t} + \nabla \cdot \left(\mathbf{u} \zeta \right) 
+   = F + D.
+\end{equation}
+It is possible to derive a fourth form of the Jacobian $J_{4}$
+which is a funciton of the field $v^{2} - u^{2})$ and 
+$uv$. We start again from the first Jacobian $J_{1}$
+\begin{equation} \label{eq_Jacobi4}
+  J_{4}(\psi,\zeta) 
+   = 
+  J_{1}(\psi,\zeta) + 
+   \left(2 \zeta - \psi_{x} \right) \ \left( \psi_{xy} - \psi_{yx} \right)
+   = 
+  \left(v^{2} - u^{2} \right)_{xy}  
+   + 
+  \left(uv \right)_{xx-yy},
+\end{equation}
+which leads to the evolution equation
+\begin{equation} \label{eq_2DJacobi4}
+  \zeta_{t}+ \left( v^{2} - u^{2} \right)_{xy} + \left( uv \right)_{xx - yy} 
    = 
   F + D.
 \end{equation}
-This form allows in the pseudo-spectral method (see \ref{sec_evolfourier}) 
-to reduce the number of Fourier transforms per time-step from 
-$3$, i.e.\ ($u,v,\zeta$) to $2$, i.e.\ ($u,v$).  
-
+All four forms given above are equivalent so that mathemtically one form is
+sufficient to catch all properties of the equations. Of course also other
+forms can be derived and it is also possible to superpose serveral forms.   
+The different forms get important if one tries to find discrete 
+representations of the Jacobian in the numerical scheme. Each form leads 
+to a discrete representation with different conservation and symmetry 
+properties. For more details see the chapters on the conservation 
+properties (\ref{sec_conprops}) and on the pseudo-spectral method 
+(\ref{sec_evolfourier}). 
 %
 \section{Quasi-two-dimensional rotating case} \label{sec_quasi2Dcase}
 %
 Starting from the shallow water equation on the $\beta$-plane one can
 derive (see e.g. \cite{danilovandgurarie2000}) an equation
 describing a rotating barotropic quasi-two-dimensional fluid which is a
-generalization of the 2D-equation (\ref{eq_2Dvortvel}). For small Rossby 
-numbers $\mathrm{Ro} = U/Lf$, with $U$ a typical horizontal fluid velocity
-at the length scale $L$ considered and $f$ the local coriolis paramter 
-we get the potential vorticity (PV) $q$ in quasi-geostrophic (QG) approximation 
-\begin{equation} \label{eq_qdef}
-  q = \left( \nabla^{2}- \alpha^{2} \right) \psi + f,
+generalization of the 2D-equation (\ref{eq_2Dvortvel}). The shallow
+water potential vorticity is defined by 
+\begin{equation} \label{eq_qshallow}
+  q_{s} = \frac{\zeta + f}{H},
 \end{equation}
-where we have the modification parameter $\alpha = 1/L^{2}_{\mathrm{R}}$ 
-with the Rossby-Obukhov radius of deformation 
-$L_{\mathrm{R}} = \sqrt{g H_{0}}/f$ and the stream function 
-$\psi = gh/f$. Here $g$ is the gravitational acceleration and $h(x,y)$ 
-the deviation of the mean fluid depth $H_{0}$ of the original 
-shallow water layer. As in the $2$-dimensional case the stream function $\psi$ 
-(remind the different definition) is related to the velocity fields $(u,v)$ 
-as defined in equation (\ref{eq_psiuv}). In an unforced non-dissipative fluid
-the QG PV is materially conserved
+where $H(x,y,t)$ is the fluid depth and $f$ the planetary vorticity. 
+Decomposing the fluid depth into a mean depth $H_{0}$, a constant 
+bottom topography B(x,y) and a time-dependent
+depth deviation $h(x,y,t)$ we can write $H(x,y,t) = H_{0} + h(x,y,t) - B(x,y)$. 
+Inserting the decomposition of the fluid depth into the equation 
+(\ref{eq_qshallow}) we can expand the potential vorticity
+\begin{equation} \label{eq_qshallowdecomp}
+  q_{s} 
+   =
+  \frac{\zeta + f}{H_{0} + h - B}
+   =
+  \frac{1}{H_{0}} \ \frac{\zeta + f}{1 + \Delta H / H_{0}}
+   =
+  \frac{1}{H_{0}} \ 
+  \left( \zeta + f \right) \left(1 - \frac{\Delta H}{H_{0}} + \dots \right),
+\end{equation}
+with $\Delta H = h - B$. Keeping only linear terms we finally get the barotopic
+vorticity
+\begin{equation} \label{eq_qbaro}
+  q = H_{0} q_{s} = \zeta - \frac{f}{H_{0}} \left(h - B\right) + f.
+\end{equation}
+Here we assume that the depth deviations $\Delta H = h - B$ are much smaller
+than the mean depth $H_{0}$. For small Rossby numbers $\mathrm{Ro} = U/Lf$, 
+with $U$ a typical horizontal velocity scale, $L$ a typical horizontal 
+length scale of the fluid motion and $f$ the local coriolis parameter 
+we can (see again e.g.\ \cite{danilovandgurarie2000}) introduce 
+the streamfunction 
+\begin{equation} \label{eq_psibaro}
+  \psi(x,y,t) = \frac{g}{f} \ h(x,y,t),    
+\end{equation}
+with $g$ the gravity. Using this streamfunction and expanding the 
+coriolis parameter linarly we can write the barotropic 
+quasi-geostrophic (QG) potential vorticity (PV) 
+on the $\beta$-plane (\ref{eq_qbaro}) as 
+\begin{equation} \label{eq_qdef}
+  q = \left( \nabla^{2}- \alpha^{2} \right) \psi 
+   + f_{0} + \beta y + \frac{f_{0}}{H_{0}} \ B.
+\end{equation}
+The linear expansion of the Coriolis parameter 
+$f(\varphi) = 2 \Omega \sin \varphi$ which is defined on a sphere 
+with radius $a$ and rotation rate $\Omega$ leads to
+\begin{equation} \label{eq_fbeta}
+  f(\varphi_{0} +  \Delta \varphi)
+   =
+  f(\varphi_{0}) + f^{\prime}(\varphi_{0}) \Delta \ \varphi   
+   = 
+  f_{0} + \beta  y,  
+\end{equation}
+with $\varphi_{0}$ the central latitude and the meridional 
+coordinate $y = a \Delta \varphi$ which is the linearization of 
+the projection $y = a \sin(\Delta \varphi)$. The $\beta$-parameter 
+is defined by $\beta = 2 \Omega \cos(\varphi_{0})/a$. The modification 
+parameter $\alpha = 1/L_{\mathrm{R}}$ is connected to the Rossby-Obukhov 
+radius of deformation $L_{\mathrm{R}} = \sqrt{g H_{0}}/f$. 
+As in the $2$-dimensional case the streamfunction $\psi$ 
+(remind the different definition) is related to the velocity field 
+$(u,v)$ again (see also equation \ref{eq_psiuv})  via
+\begin{equation} \label{eq_upsibaro}
+  u = -\psi_{y} \ \ \ \mbox{and} \ \ \ v = \psi_{x}.
+\end{equation}
+In an unforced and non-dissipative fluid the QG PV is materially conserved
 \begin{equation} 
   q_{t} + J(\psi,q) = 0. 
 \end{equation}  
-Using the linear approximation of the coriolis parameter $f = f_{0} + \beta y$
+Using the linear approximation of the coriolis parameter (\ref{eq_fbeta})
 and introducing again forcing and dissipation we can write the evolution
-equation in the form
+equation for a barotropic fluid on the $\beta$-plane in the form
 \begin{equation} \label{eq_quasi2Dbaro}
-  q_{t} + J(\psi,q) + \beta \psi_{x} = F + D,
+  q_{t} + J(\psi,q + \frac{f_{0}}{H_{0}} \ B) + \beta \psi_{x} = F + D,
 \end{equation}
-with the vorticity $q$ given by
+with the vorticity $q$ again given by
 \begin{equation} \label{eq_vortquasi2Dbaro}
   q = \left(\nabla^2 -\alpha^{2} \right) \psi 
     = \zeta - \alpha^{2} \psi.
 \end{equation}
-Further one can introduce a variable mean fluid depth $H(x,y)$, 
-which in the simple case of a linear slope in $y$-direction leads 
-to a topographic $\beta$-effect (see e.g.\ \cite{vanheist1994}). 
+Here we used the property of the Jacobian $J(f,f) = 0$ for all fields
+$f(x,y)$ on the fluid domain.
 
+Idealizing the bottom topography to a linear slope in y-direction 
+$B(x,y) = B_{y} y$ the fluid experiences in addition to the ambient
+planetary $\beta$-effect a so called topographic $\beta$-effect 
+(see e.g.\ \cite{vanheist1994}) and the evolution equation simplifies to
+\begin{equation} \label{eq_qbarotopobeta} 
+  q_{t} + J(\psi,q) + \left(\beta + \frac{f_{0}}{H_{0}} B_{y} \right) \psi_{x} 
+   = F + D.
+\end{equation}
 In the form (\ref{eq_quasi2Dbaro}) and (\ref{eq_vortquasi2Dbaro}) 
-one can simulate incompressible 2D fluids and rotating quasi-2D fluids 
-with the same set of equations using different parameters. 
+one can simulate incompressible 2D fluids and rotating barotropic 
+quasi-2D fluids with the same set of equations using different parameters. 
 In this more general frame the simplest case of a non-rotating
 2D incompressible fluid is characterized by a vanishing 
 ambient vorticity gradient, i.e.\ $\beta = 0$, and the limit of
 an infinite Rossby radius $L_{\mathrm{R}} \longrightarrow \infty$
 or a vanishing modification parameter $\alpha \longrightarrow 0$.
-
-One has to keep in mind that the stream functions are different in 
-the two cases. In the non-rotating case $\psi$ is defined by 
-equation (\ref{eq_calM}). In the rotating case we get 
-\begin{equation} \label{eq_hquasi2Dbaropsi}
-  h(x,y) = \frac{f}{g} \ \psi(x,y),    
-\end{equation} 
-so that $\psi$ is proportional to pressure deviations, which is not 
-the case in the non-rotating 2D case where the relation is more
-complex, see e.g.\ \cite{johnstonandliu2004}.
-
-Using the property of the Jacobian $J(f,f) = 0$ for all fields
-$f(x,y)$ on the fluid domain, equation (\ref{eq_quasi2Dbaro})
-is equivalent to
-\begin{equation} \label{eq_quasi2Dbarozeta}
-  q_{t} + J(\psi,\zeta) + \beta \psi_{x} = F + D,
+One has to keep in mind that the streamfunctions are different in 
+the two cases (see e.g.\ \cite{johnstonandliu2004}) and that there 
+are more subtle differences between 2D and QG Turbulence 
+(see e.g.\ \cite{tungandorlando2003}). 
+%
+\section{Multi-layer quasi-geostrophic case} \label{sec_multilayerqg}
+%
+%
+\section{The surface geostrophic case} \label{sec_sqg}
+%
+%
+\section{Conservation properties} \label{sec_conprops}
+%
+The properties of the Jacobian and the conditions at the fluid boundaries
+are at the base of the conservation properties of the fluid motions.
+Given two functions $g(x,y)$ and $h(x,y)$ defined on the fluid domains
+then the following integrals
+\begin{equation} \label{eq_intjacobian01}
+  \int_{x=0}^{X} \int_{x=0}^{Y} J(A,B) \ dxdy 
+  , \
+  \int_{x=0}^{X} \int_{x=0}^{Y} A J(A,B) \ dxdy 
+   \ \ \mbox{and} \ \    
+  \int_{x=0}^{X} \int_{x=0}^{Y} B J(A,B) \ dxdy 
 \end{equation}
-where the vorticity $q$ is still defined by equation 
-(\ref{eq_vortquasi2Dbaro}). From this from it directly follows that
-that the form of the 2D Jacobian in equations 
-(\ref{eq_2Dflux}) and (\ref{eq_2Duv}) can be also applied in the 
-quasi-two-dimensional rotating case.
+can be transformed through partial integration.
 
+
+
+Above results can be generalized to more general fluid domains 
+(see e.g.\ \cite{salmonandtalley1989}).
+
+
+     
+
+
+%
 \section{Non-adiabatic terms}
-
+%
 \subsection{Laplacian based Viscosity and friction}
 
 Internal viscosity and external friction of the fluid are described by 

@@ -1480,7 +1480,9 @@ implicit none
 ggui(:,:) = gq(:,:) ! double precision -> single
 call guiput("GQ" // char(0), ggui, ngx, ngy, 1)
 
-c4(:,:) = cq(:,:)
+! double -> single and center about ky = 0
+c4(:,0:nky-1)     = cq(:,nky+1:nfy)  
+c4(:,nky:nfy) = cq(:,0:nky)
 call guiput("C4" // char(0), c4, nkx+1, nfy+1, 2)   ! fc
 
 if (npost > 0) then

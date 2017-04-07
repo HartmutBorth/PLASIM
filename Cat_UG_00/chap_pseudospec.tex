@@ -1079,11 +1079,11 @@ purely spectral and is called pseudo-spectral method, see e.g.\
 the higher wave numbers have to be filtered out. In CAT trunction is 
 used, see above. 
 
-We present three different forms of the Jacobian $J$ in physical space, 
-see equations (\ref{eq_2Dvortstream}), (\ref{eq_2Dflux}) 
-and (\ref{eq_2Duv}). Using the pseudo-spectral method for each
-form we get a different representation of the Jacobian $\hat{J}$ 
-in spectral space.   
+We present four different forms of the Jacobian $J$ in physical space, 
+see equations (\ref{eq_2Dvortstream}), (\ref{eq_2Dflux}), 
+(\ref{eq_2DJacobi2}) and (\ref{eq_2DJacobi4}). Using the pseudo-spectral 
+method for each form we get a different representation of the 
+Jacobian $\hat{J}$ in spectral space.   
 
 For the Jacobian (\ref{eq_2Dvortstream}) of the first form
 \begin{equation} \label{eq_jacobian01}
@@ -1091,18 +1091,18 @@ For the Jacobian (\ref{eq_2Dvortstream}) of the first form
    = 
   J(\psi,q) 
    = 
-  \partial_{x} \psi \ \partial_{y} q 
+  \psi_{x} \ q_{y} 
    -   
-  \partial_{x} q \ \partial_{y} \psi
+  q_{x} \  \psi_{y}
    =
-  \left[ v \ \partial_{y} q  + u \ \partial_{x} q \right],
+   v \ q_{y}  + u \  q_{x},
 \end{equation}
 one proceeds as follows. First the individual differential terms 
 are determined in spectral space using the fourier transform of 
 vorticity, and the spectral representation of the differential 
-operators. We get
+operators. The basic operators are given by 
 \begin{eqnarray} \label{eq_jacobian01_termsa}
-  \mathcal{F}(\partial_{x} \psi)
+  \mathcal{F}(\psi_{x})
   &=& 
   i  k_{x} \ \mathcal{F}(\psi)
    =
@@ -1111,11 +1111,11 @@ operators. We get
   - \ i \ \frac{k_{x}}{k^{2}_{x} + k^{2}_{y} + \alpha} \ 
   \mathcal{F}(q),
   \ \ 
-  \mathcal{F}(\partial_{y} q)
+  \mathcal{F}(q_{y})
    = 
   i k_{y} \ \mathcal{F}(q) \ \ \
   \\ \label{eq_jacobian01_termsb}
-  \mathcal{F}(\partial_{y} \psi)
+  \mathcal{F}(\psi_{y})
   &=&
   i  k_{y} \ \mathcal{F}(\psi)
    =
@@ -1124,7 +1124,7 @@ operators. We get
   - \ i \ \frac{k_{y}}{k^{2}_{x} + k^{2}_{y} + \alpha} \ 
   \mathcal{F}(q),
   \ \
-  \mathcal{F}(\partial_{x} q)
+  \mathcal{F}(q_{x})
    = 
   i k_{x} \ \mathcal{F}(q). \ \ \ 
 \end{eqnarray}
@@ -1137,43 +1137,41 @@ $\hat{J}$ is given by
 \begin{equation} \label{eq_jacobian01_J}
   \hat{J} 
    = 
-  \mathcal{F}(v \partial_{y} q)
-   -
-  \mathcal{F}(u \partial_{x} q).
+  \mathcal{F}(v q_{y})
+   +
+  \mathcal{F}(u q_{x})
+   = 
+  \mathcal{F}(v q_{y} + u q_{x}).
 \end{equation}
 Combining all necessary steps we can write
-\begin{eqnarray} \nonumber
+\begin{equation} \label{eq_jacobian01_Jall}
   \hat{J} 
-   &=&
+   =
   \mathcal{F}
-   \left(
+   \left[
     \mathcal{F}^{-1} 
      \left(
-      \ - \ i \frac{k_{x}}{k^{2}_{x}+k^{2}_{y}+\alpha} \ 
+       - i \frac{k_{x}}{k^{2}_{x}+k^{2}_{y}+\alpha} \ 
       \hat{q}
      \right) 
     \mathcal{F}^{-1} 
      \left(
       ik_{y} \ \hat{q}
      \right)
-   \right)
-    \\ \label{eq_jacobian01_Jall}
-   &-&
-  \mathcal{F}
-   \left(
+       +
     \mathcal{F}^{-1} 
      \left(
-     \ i \frac{k_{y}}{k^{2}_{x}+k^{2}_{y}+\alpha} \ 
+      i \frac{k_{y}}{k^{2}_{x}+k^{2}_{y}+\alpha} \ 
       \hat{q}
      \right) 
     \mathcal{F}^{-1}
      \left(
       ik_{x} \ \hat{q}
      \right)
-   \right),
-\end{eqnarray}
+   \right],
+\end{equation}
 where $\hat{q}$ is the vorticity in spectral space, the starting point
-for a new time step. As can be seen one needs $6$ $2$-FFT operations
+for a new time step. As can be seen one needs $5$ $2D$-FFT operations
 to determine the Jacobian. The components of the Jacobian 
 $\hat{J}_{k}$ are then used to determine the time 
 evolution of the different wave number components of the vorticity 
@@ -1182,11 +1180,7 @@ $\hat{q}_{\mathbf{k}}$, see equation (\ref{eq_evolqhat}).
 In the flux form of the evolution equation ({\ref{eq_2Dflux}})
 the second form of the Jacobian arises
 \begin{equation} \label{eq_jacobian02}
-  J(\psi,q)
-   = 
-  \partial_{x} (u \ q) 
-   +
-  \partial_{x} (v \ q).
+  J(\psi,q) = (u \ q)_{x} + (v \ q)_{y}.
 \end{equation}
 Following again equations (\ref{eq_jacobian01_termsa}) and 
 (\ref{eq_jacobian01_termsb}) we determine $\mathcal{F}(u)$ and
@@ -1235,14 +1229,47 @@ Combining again all necessary steps we can write
 As we can see the Jacobian in spectral space $\hat{J}$ can now be 
 determined by $5$ FFT operations.
 
-The third form of the Jacobian used in equation (\ref{eq_2Duv}) is
-given by
+The third form of the Jacobian in equation (\ref{eq_2DJacobi2})
+is given by
 \begin{equation} \label{eq_jacobian03}
+  J(\psi,q) = (\psi \ q_{y})_{x} - (\psi \ q_{x})_{y}.
+\end{equation}
+In spectral space we get 
+\begin{equation} \label{eq_jacobian03_J}
+  \hat{J} = -ik_{x} \ \mathcal{F}(\psi \ q_{y}) 
+            +ik_{y} \ \mathcal{F}(\psi \ q_{x}).
+\end{equation}
+Combining all necessary steps the Jacobian is determined by
+\begin{eqnarray} 
+  \hat{J} 
+   &=& 
+ -ik_{x} \ 
+  \mathcal{F}\left(
+     \mathcal{F}^{-1} 
+       \left(-\frac{1}{k_{x}^{2} + k_{y}^{2} + \alpha} \ \hat{q} \right) \
+     \mathcal{F}^{-1}
+       \left(
+         -ik_{y} \ \hat{q}
+       \right)
+             \right) 
+    \\ \label{eq_jacobian03_Jall}
+   &+&
+  ik_{y} \ 
+  \mathcal{F}\left(
+     \mathcal{F}^{-1} 
+       \left(-\frac{1}{k_{x}^{2} + k_{y}^{2} + \alpha} \ \hat{q} \right) \
+     \mathcal{F}^{-1}
+       \left(
+         -ik_{x} \ \hat{q}
+       \right)
+             \right).
+\end{eqnarray}
+The fourth form of the Jacobian used in equation (\ref{eq_2DJacobi4}) is \begin{equation} \label{eq_jacobian04}
   J(\psi,q)
    = 
   \partial_{x}\partial_{y} \left(v^{2} - u^{2} \right)
    +
-  \partial^{2}_{x} \partial^{2}_{y} uv.
+  \left( \partial^{2}_{x} - \partial^{2}_{y} \right)  uv.
 \end{equation}
 In this representation it is possible to reduce the number of FFT
 operations from $5$ to $4$. We first have to determine $\hat{u}$ 
@@ -1252,12 +1279,12 @@ space where the products $v^{2} - u^{2}$ and $uv$ are formed.
 Finally we have to transform them back to spectral space where they
 are differentiated. The Jacobian in spectral space $\hat{J}$ is 
 given by   
-\begin{equation} \label{eq_jacobian03_J}
+\begin{equation} \label{eq_jacobian04_J}
   \hat{J}
    = 
   -k_{x}k_{y} \ \mathcal{F}(v^{2} - u^{2})
    +
-   k^{2}_{x}k^{2}_{y} \mathcal{F}(uv)
+   \left( k^{2}_{x} - k^{2}_{y} \right) \mathcal{F}(uv)
 \end{equation} 
 or by combining all necessary steps
 \begin{eqnarray} \nonumber
@@ -1284,7 +1311,7 @@ or by combining all necessary steps
    \right)
     \\ \label{eq_jacobian02_Jall}
    &+&
-  k^{2}_{x} k^{2}_{y} \ 
+  \left( k^{2}_{x} - k^{2}_{y} \right) \ 
   \mathcal{F}
    \left(
     \mathcal{F}^{-1} 

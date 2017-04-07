@@ -1,5 +1,5 @@
 /*
-    guix11 - a GUI for PUMA, PLASIM & CAT 
+    guix11 - a GUI for PUMA, PLASIM & CAT
     2016 Edilbert Kirk & Hartmut Borth
 
     This program is free software; you can redistribute it and/or modify
@@ -925,7 +925,7 @@ void AzimuthalImage(struct MapImageStruct *s, struct MapImageStruct *d)
    int dy ;           // centre relative y position
    int p00;           // euqator
    int l00;           // reference longitude
-   
+
    unsigned int dih;  // destination image height
    unsigned int diw;  // destination image width
    unsigned int dpw;  // destination image padded width
@@ -1008,15 +1008,15 @@ void SwapIEEE16(char W[2])
 {
    char B;
 
-   B = W[0]; W[0] = W[1]; W[1] = B; 
+   B = W[0]; W[0] = W[1]; W[1] = B;
 }
 
 void SwapIEEE32(char W[4])
 {
    char B;
 
-   B = W[0]; W[0] = W[3]; W[3] = B; 
-   B = W[1]; W[1] = W[2]; W[2] = B; 
+   B = W[0]; W[0] = W[3]; W[3] = B;
+   B = W[1]; W[1] = W[2]; W[2] = B;
 }
 
 int ReadINT(FILE *fpi)
@@ -1102,8 +1102,8 @@ void ReadImage(struct MapImageStruct *ei, char *filename)
    BuffImageData = malloc(PicBytes);
    fseek(fp,OffBits,SEEK_SET);
    n = fread(BuffImageData,PicBytes,1,fp);
-   fclose(fp);  
-   
+   fclose(fp);
+
    ei->X = XCreateImage(display,CopyFromParent,ScreenD,ZPixmap,0,
                   ei->d,PadWidth,ImageBMI.Height,8,0);
 
@@ -1252,7 +1252,7 @@ int AllocateColorCells(struct ColorStrip cs[])
       XAllocNamedColor(display,colormap,cs[i].Name,&xcolor1,&xcolor2);
       cs[i].pixel = xcolor1.pixel;
       ++i;
-   }   
+   }
    return i;
 }
 
@@ -1373,13 +1373,13 @@ void TestWindow(int xx, int yy, int wi, int he, int *x, int *y,
    unsigned int DepthReturn  = 0;
    unsigned int BorderReturn = 0;
    Window TW,Parent,Child;
-   
+
    TW = XCreateWindow(display,RootWindow(display,screen_num),
         xx,yy,wi,he,                   // x,y,w,h
         0,CopyFromParent,InputOutput,  // border, depth, class
           CopyFromParent,0,NULL);      // visual, valuemask, attributes
    XSelectInput(display,TW,ExposureMask);
-   XMapWindow(display,TW);           
+   XMapWindow(display,TW);
    XMoveWindow(display,TW,xx,yy);
    XNextEvent(display,&CowEvent);            // Wait until WM mapped it
    XGetGeometry(display,TW,&Parent,x,y,W,H,&BorderReturn,&DepthReturn);
@@ -1398,7 +1398,7 @@ void CreateTestWindow(void)
 {
    int X,Y,xp,yp;
    unsigned int W,H;
-   
+
    // Open a test window with displacement x = 100 and y = 100
    // Test the returned coordinates for upper left corner
    // and compute left margin (border) and top margin (title bar)
@@ -1606,7 +1606,7 @@ void CreateControlWindow(void)
    strcpy(Title1,"Unknown model");
    if (Model == 0) // PUMA
    {
-      if (MRpid < 0) 
+      if (MRpid < 0)
          strcpy(Title1,"PUMA - KlimaCampus Hamburg");
       else
          sprintf(Title1,"Run %d: PUMA - KlimaCampus Hamburg",MRpid);
@@ -1836,7 +1836,7 @@ void ShowGridStatus(void)
    if (Grid) CheckMark(x,y,d);
 }
 
-      
+
 int RedrawControlWindow(void)
 {
    char Text[80];
@@ -1847,7 +1847,7 @@ int RedrawControlWindow(void)
    status = XGetWindowAttributes(display,Cow,&CurAtt);
    WinXSize = CurAtt.width;
    WinYSize = CurAtt.height;
-   
+
    XSetForeground(display,gc,BlackPix);
    XSetBackground(display,gc,WhitePix);
 
@@ -1865,7 +1865,7 @@ int RedrawControlWindow(void)
    for (i=0 ; i < PSDIM ; ++i)
    if (pixelstar[j][i] == '*')
       XDrawPoint(display,Cow,gc,i+x1,j+y1);
-  
+
    XSetForeground(display,gc,LightRed.pixel);
    x1 = 10; x2 = 40 ; y1 = OffsetY + 10 ; y2 = OffsetY + 40;
    XDrawLine(display,Cow,gc,x2  ,y1-1,x2  ,y2  );
@@ -1895,7 +1895,7 @@ int RedrawControlWindow(void)
    XSetForeground(display,gc,Blue.pixel);
    XFillPolygon(display,Cow,gc,PauseButton1,4,Convex,CoordModeOrigin);
    XFillPolygon(display,Cow,gc,PauseButton2,4,Convex,CoordModeOrigin);
-   
+
    x1 = 95; x2 = 102; y1 = OffsetY + 10; y2 = OffsetY + 40;
    XSetForeground(display,gc,DarkBlue.pixel);
    XDrawLine(display,Cow,gc,x1-1,y1-1,x1-1,y2  );
@@ -1959,7 +1959,7 @@ int CheckEndianess(void)
       int  i;
    } ec;
 
-   ec.i = 8; 
+   ec.i = 8;
    return (ec.b[0] == 0);
 }
 
@@ -1983,7 +1983,7 @@ void initgui_(int *model, int *debug, int *lats, int *mrpid, int *mrnum, char *p
 
    gettimeofday(&TimeVal,NULL);
    Seed = TimeVal.tv_sec;
-   
+
    Model = *model;
    Debug = *debug;
    Latitudes = *lats;
@@ -2000,7 +2000,7 @@ void initgui_(int *model, int *debug, int *lats, int *mrpid, int *mrnum, char *p
    if (Debug) printf("initgui(%d,%d)\n",Model,Debug);
    if ((display=XOpenDisplay(display_name)) == NULL)
    {
-      fprintf(stderr,"%s: cannot connect to X server %s\n", 
+      fprintf(stderr,"%s: cannot connect to X server %s\n",
               progname, XDisplayName(display_name));
       exit(1);
    }
@@ -2063,7 +2063,7 @@ void initgui_(int *model, int *debug, int *lats, int *mrpid, int *mrnum, char *p
    wm_hints.initial_state = NormalState;
    wm_hints.input = True;
    wm_hints.flags = StateHint | InputHint;
-   
+
    class_hints.res_name = progname;
    class_hints.res_class = "PUMA";
 
@@ -2115,7 +2115,7 @@ void initgui_(int *model, int *debug, int *lats, int *mrpid, int *mrnum, char *p
 
    for (i=0 ; i < NUMPAL ; ++i)
       LineCo[i] = AllocateColorCells(Pallet[i]);
-  
+
    /* Color cells for control window */
 
    XAllocNamedColor(display,colormap,"red"        ,&Red       ,&Dummy);
@@ -2646,7 +2646,7 @@ void LinePlot(int w)
    }
 
    // fill plot area with black
-   
+
    XSetBackground(display,gc,BlackPix);
    XSetForeground(display,gc,BlackPix);
    XFillRectangle(display,pix,gc,0,0,WinXSize,WinYSize);
@@ -2670,12 +2670,12 @@ void LinePlot(int w)
    for (j=0 ; j < DimY ; ++j)
    {
       // scale plot data
-   
+
       for (i=0 ; i < DimX ; ++i)
       {
          LIxp[w][i].y = InYSize - f * (Field[i+j*DimX] - zmin);
       }
-   
+
       XSetForeground(display,gc,Simplestrip[j].pixel);
       XDrawLines(display,pix,gc,LIxp[w],DimX,CoordModeOrigin);
    }
@@ -2952,7 +2952,7 @@ void TracerPlot(int w)
    {
       for (j=0 ; j < DimY; ++j)
       {
-         SpeedScale[j] = InXSize * DeltaTime * 60.0 / 40000000.0 
+         SpeedScale[j] = InXSize * DeltaTime * 60.0 / 40000000.0
                        / cos((j-0.5*(DimY-1)) * (M_PI/DimY));
       }
       SpeedScale[DimY-1] = SpeedScale[0] = SpeedScale[1];
@@ -3111,11 +3111,11 @@ void SH_Amplitudes(int w)
 }
 
 
-/* ========== */
-/* Amplitudes */
-/* ========== */
+/* ============= */
+/* FC_Amplitudes */
+/* ============= */
 
-void Amplitudes(int w)
+void FC_Amplitudes(int w)
 {
    int i,j,m,n;
    int x,y;
@@ -3155,14 +3155,17 @@ void Amplitudes(int w)
 
    dx = WinXSize / (DimX+1);
    dy = WinYSize / (DimY+1);
+   if (dx < dy) dy = dx;
+   else         dx = dy;
    r  = (dx+dx+dy+dy) / 6;
    XSetForeground(display,gc,BlackPix);
-   for (m=0,i=0 ; m < DimX ; ++m)
+   i = 0;
+   for (n=0 ; n < DimY ; ++n)
    {
-      y = FixFontHeight + 4 + m * dx;
-      for (n=0 ; n < DimY ; ++n)
+      y = FixFontHeight + 4 + n * dy;
+      for (m=0 ; m < DimX ; ++m)
       {
-         x = dx/2 + n * dx;
+         x = dx/2 + m * dx;
          XSetForeground(display,gc,Aco[w][i++].pixel);
          XFillArc(display,pix,gc,x,y,r,r,0,360*64);
       }
@@ -3201,7 +3204,7 @@ void ReopenWindow(int i)
    {
       if (WinAtt[i].x < ScreenOffset) WinAtt[i].x = ScreenOffset + OutXSize * (i % WinCols);
       if (WinAtt[i].y < ScreenOffset) WinAtt[i].y = ScreenOffset + OutYSize * (i / WinCols);
-      Win[i] = XCreateSimpleWindow(display,RootWindow(display,screen_num), 
+      Win[i] = XCreateSimpleWindow(display,RootWindow(display,screen_num),
                WinAtt[i].x,WinAtt[i].y,WinAtt[i].w,WinAtt[i].h,
                BorderWidth,BlackPix,WhitePix);
       XSetWMProtocols(display,Win[i],&Delwin,1);
@@ -3265,7 +3268,7 @@ void DisplayHelpWindow(void)
    h = BigFontHeight * (HelpLines + 1);
    x = (ScreenW - w) / 2;
    y = (ScreenH - h) / 2;
-   HelpWindow = XCreateSimpleWindow(display,RootWindow(display,screen_num), 
+   HelpWindow = XCreateSimpleWindow(display,RootWindow(display,screen_num),
                 x,y,w,h,BorderWidth,Yellow.pixel,DarkBlue.pixel);
    XStringListToTextProperty(&HelpTitle,1,&HelpName);
    XSetWMProtocols(display,HelpWindow,&Delwin,1);
@@ -3619,7 +3622,7 @@ void guiclose_(void)
    }
    while (!(XCheckTypedWindowEvent(display,Cow,ButtonPress,&CowEvent) &&
             HitStopButton(&CowEvent)));
-     
+
 // XCloseDisplay(display); // segmentation fault on sun compiler!
 }
 
@@ -3728,7 +3731,7 @@ void lp2ps(REAL *a, REAL *b)
    {
       dx = arx * (xnp - i);
       dy = ary * (ynp - j);
-      x = atan2(dx,dy) * lfa;      // angle 
+      x = atan2(dx,dy) * lfa;      // angle
       y = sqrt(dx * dx + dy * dy); // distance from NP
       if (x < 0.0) x += (DimX-1);
       k = x;                       // integer part
@@ -4028,23 +4031,23 @@ void ShowGridPolar(void)
       XSetForeground(display,gc,WhitePix);
       XSetBackground(display,gc,BlackPix);
       XSetLineAttributes(display,gc,1,LineOnOffDash,CapButt,JoinRound);
-   
+
       /* Northern Hemisphere */
-   
+
       XDrawArc(display,pix,gc,OffX+dx/6,OffY+dy/6,2*dx/3,2*dy/3,0,360*64);
       XDrawArc(display,pix,gc,OffX+dx/3,OffY+dy/3,dx/3,dy/3,0,360*64);
-   
+
       XDrawLine(display,pix,gc,OffX,yh,InXSize,yh);
       XDrawLine(display,pix,gc,OffX+xh,OffY,OffX+xh,InYSize);
-   
+
       /* Southern Hemisphere */
-   
+
       XDrawArc(display,pix,gc,OffX+7*dx/6,OffY+dy/6,2*dx/3,2*dy/3,0,360*64);
       XDrawArc(display,pix,gc,OffX+4*dx/3,OffY+dy/3,dx/3,dy/3,0,360*64);
-   
+
       x = OffX + dx + xh;
       XDrawLine(display,pix,gc,x,OffY,x,InYSize);
-   
+
       if (GridLabel)
       {
          x  = OffX + xh - FixFontWidth/2;
@@ -4206,7 +4209,7 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
    char Text[128];
 
    int i,j,k,len,lens,xp,yp,status,x;
-   int y,dx,r,width,height;
+   int y,dx,dy,r,width,height;
    INTXU border,depth;
    REAL f,o,ra,rb;
    int CapLines;
@@ -4221,7 +4224,7 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
    // At high frame rates (SkipFreq > 1) some types are redrawn
    // at "SkipFreq" intervals
 
-   if (SkipFreq > 1 && (nstep % SkipFreq) != 0 && 
+   if (SkipFreq > 1 && (nstep % SkipFreq) != 0 &&
       (PicType == ISOCS  || PicType == ISOHOR ||
        PicType == MAPHOR || PicType == ISOCOL ||
        PicType == ISOREC )) return;
@@ -4436,12 +4439,12 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
    pix = WinPixMap[w].Pix; /* Set current pixmap */
 
    /* Draw colour bar */
-   
+
    if ((SizeChanged || Cstrip == Autostrip) &&
        (PicType == ISOCS  || PicType == ISOHOR ||
-       	PicType == ISOHOV || PicType == ISOLON ||
+        PicType == ISOHOV || PicType == ISOLON ||
         PicType == ISOCOL || PicType == MAPHOR ||
-        PicType == ISOREC ))
+        PicType == ISOREC || PicType == ISOAMP))
    {
       XSetForeground(display,gc,BlackPix);
       XFillRectangle(display,pix,gc,0,InYSize,WinXSize,WinYSize);
@@ -4489,7 +4492,7 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
    }
 
    /* Draw mode legend */
-   
+
    if (SizeChanged && PicType == ISOSH)
    {
       dx = WinXSize / 23;
@@ -4517,6 +4520,73 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
          height = FixFont->ascent + FixFont->descent;
          xp     = WinXSize - width - 2;
          yp     = 2 * FixFontHeight + i * dx;
+         if (yp+FixFont->descent > InYSize) break;
+         XDrawImageString(display,pix,gc,xp,yp,Text,len);
+      }
+      strcpy(Text,"n/m");
+      len    = strlen(Text);
+      width  = XTextWidth(FixFont,Text,len);
+      xp     = WinXSize - width - 2;
+      yp     = FixFontHeight;
+      XSetForeground(display,gc,WhitePix);
+      XDrawImageString(display,pix,gc,xp,yp,Text,len);
+      strcpy(Text,"High ");
+      len    = strlen(Text);
+      width  = XTextWidth(FixFont,Text,len);
+      xp     = WinXSize/2 - AMPLI_COLS * 10 - width;
+      yp     = WinYSize - FixFontHeight + 10;
+      r      = FixFontHeight-2;
+      XSetForeground(display,gc,WhitePix);
+      if (xp > 0) XDrawImageString(display,pix,gc,xp,yp,Text,len);
+      strcpy(Text," Low");
+      len    = strlen(Text);
+      width  = XTextWidth(FixFont,Text,len);
+      xp     = WinXSize/2 + AMPLI_COLS * 10;
+      if (xp + width < WinXSize) XDrawImageString(display,pix,gc,xp,yp,Text,len);
+      yp     = InYSize;
+      XDrawLine(display,pix,gc,OffX,yp,WinXSize,yp);
+      yp     = WinYSize - r -  FixFont->descent;
+
+      for (i=0 ; i < AMPLI_COLS ; ++i)
+      {
+         xp = WinXSize/2 - AMPLI_COLS * 10 + i * 20;
+         XSetForeground(display,gc,AmpliStrip[AMPLI_COLS-i-1].pixel);
+         XFillArc(display,pix,gc,xp,yp,r,r,0,360*64);
+      }
+   }
+
+   /* Double Fourier Coefficients */
+
+   if (SizeChanged && PicType == ISOAMP)
+   {
+      dx = WinXSize / (DimX+1);
+      dy = WinYSize / (DimY+1);
+      if (dx < dy) dy = dx;
+      else         dx = dy;
+      XSetForeground(display,gc,BlackPix);
+      XFillRectangle(display,pix,gc,0,0,WinXSize,WinYSize);
+
+      XSetForeground(display,gc,LightGreen.pixel);
+      XSetBackground(display,gc,BlackPix);
+      for (i=0 ; i < DimX ; i+=2)
+      {
+         sprintf(Text,"%d",i);
+         len    = strlen(Text);
+         width  = XTextWidth(FixFont,Text,len);
+         height = FixFont->ascent + FixFont->descent;
+         xp     = dx + i * dx - width/2 - FixFontWidth/2 + 1;
+         yp     = FixFontHeight;
+         XDrawImageString(display,pix,gc,xp,yp,Text,len);
+      }
+      XSetForeground(display,gc,LightBlue.pixel);
+      for (i=0 ; i < DimY ; i+=2)
+      {
+         sprintf(Text,"%d",i);
+         len    = strlen(Text);
+         width  = XTextWidth(FixFont,Text,len);
+         height = FixFont->ascent + FixFont->descent;
+         xp     = WinXSize - width - 2;
+         yp     = 2 * FixFontHeight + i * dy;
          if (yp+FixFont->descent > InYSize) break;
          XDrawImageString(display,pix,gc,xp,yp,Text,len);
       }
@@ -4593,7 +4663,7 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
       XSetBackground(display,gc,BlackPix);
    }
 
-   if (PicType == ISOTS) 
+   if (PicType == ISOTS)
    {
       if (TSxp[w] == NULL) TSxp[w] = SizeAlloc(DimX * DimY , sizeof(XPoint),"TSxp");
       if (Dmin[w] == NULL) Dmin[w] = FloatAlloc(DimY ,"Dmin");
@@ -4621,7 +4691,7 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
          o = Dmin[w][j];
          if ((Dmax[w][j] - Dmin[w][j]) > 1.0e-20) f = (InYSize-2) / (Dmax[w][j] - Dmin[w][j]);
          else f = 1.0;
-   
+
          for (i=1 ; i < DimX ; ++i)
          {
             TSxp[w][i].x = VGAX * i;
@@ -4631,7 +4701,7 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
       }
    }
 
-   if (PicType == ISOTAB) 
+   if (PicType == ISOTAB)
    {
       XSetForeground(display,gc,BlackPix);
       XSetBackground(display,gc,BlackPix);
@@ -4783,26 +4853,26 @@ void iso(int w,int PicType,REAL *field,int dimx,int dimy,int dimz,int pal)
    {
       IsoAreas(Cstrip);
    }
-   
+
    // amplitudes of coeeficients of spherical harmonics
 
    if (PicType == ISOSH)
    {
-      SH_Amplitudes(w);     
+      SH_Amplitudes(w);
    }
 
    // amplitudes of rectangular array
 
    if (PicType == ISOAMP)
    {
-      Amplitudes(w);     
+      FC_Amplitudes(w);
    }
 
    // line plot
 
    if (PicType == LINE)
    {
-      LinePlot(w);     
+      LinePlot(w);
    }
 
    if (Grid && PicType == ISOCS) ShowGridCS();

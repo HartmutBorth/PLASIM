@@ -277,17 +277,20 @@
 !     entropy/energy diagnostics
 !
       if(nentropy > 0) then
-       if(nentropy > 2) then
-        dentropy(:,6)=zdtdt(:)/dt(:,1)                                  &
-     &               *acpd*(1.+adv*dq(:,1))*dp(:)/ga*dsigma(1)
-       else
-        dentropy(:,6)=zdtdt(:)/dentrot(:,1)                             &
+       dentropy(:,6)=zdtdt(:)/dentrot(:,1)                              &
      &              *acpd*(1.+adv*dentroq(:,1))*dentrop(:)/ga*dsigma(1)
+       if(nentro3d > 0) then
+        dentro3d(:,2:NLEV,6)=0.
+        dentro3d(:,1,6)=dentropy(:,6) 
        endif
       endif
       if(nenergy > 0) then
        denergy(:,6)=zdtdt(:)                                            &
      &              *acpd*(1.+adv*dq(:,1))*dp(:)/ga*dsigma(1)
+       if(nener3d > 0) then
+        dener3d(:,2:NLEV,6)=0.
+        dener3d(:,1,6)=denergy(:,6)
+       endif
       endif
 !
       return

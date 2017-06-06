@@ -343,7 +343,8 @@ int Preprocessed;
 int SAMindex;
 int ScreenHeight;
 int Expert = 1;
-int Cats = 0;
+int CatEnabled;
+int SamEnabled;
 int LsgEnabled;
 int ModeRadiusSq;
 int ForceRebuild;
@@ -1036,6 +1037,7 @@ void InitNamelist(void)
    NL_i(PUMA,"puma","NDIAG"  ,  0);
    NL_i(PUMA,"puma","NEWSR"  ,  0);
    NL_i(PUMA,"puma","NGUIDBG",  0);
+   NL_i(PUMA,"puma","NHELSUA",  0);
    NL_i(PUMA,"puma","NSYNC"  ,  0);
    NL_i(PUMA,"puma","NWPD"   ,  1);
    NL_r(PUMA,"puma","DTEP"   , 60);
@@ -1237,6 +1239,14 @@ void InitSelections(void)
    Sel = NewSel(Sel);
    InitNextSelection(Sel,dyn,"SAM");
 
+   // Hide SAM ?
+
+   if (!SamEnabled)
+   {
+      Sel->no = 1;
+      Sel->lt = 0;
+   }
+
    // CAT
 
    Sel = NewSel(Sel);
@@ -1244,7 +1254,7 @@ void InitSelections(void)
 
    // Hide CAT until released
 
-   if (!Cats)
+   if (!CatEnabled)
    {
       Sel->no = 1;
       Sel->lt = 0;
@@ -4480,10 +4490,17 @@ void InitGUI(void)
       fclose(xpp);
    }
 
-   xpp = fopen("Cats","r"); // Cat enabled
+   xpp = fopen("cat","r"); // Cat enabled
    if (xpp)
    {
-      Cats = 1;
+      CatEnabled = 1;
+      fclose(xpp);
+   }
+
+   xpp = fopen("sam","r"); // Sam enabled
+   if (xpp)
+   {
+      SamEnabled = 1;
       fclose(xpp);
    }
 
@@ -4626,7 +4643,7 @@ void OnMouseClick(void)
    {
       if (HitBox(Sel) && Model != i)
       {
-         if (i == CAT && Cats == 0) return; // Hide CAT
+         if (i == CAT && !CatEnabled) return; // Hide CAT
          if (Debug) printf("Change model from %d to %d\n",Model,i);
          ChangeModel(i);
          CalcFrame(Latitudes);

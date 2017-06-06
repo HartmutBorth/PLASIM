@@ -182,7 +182,9 @@
       integer :: nperpetual = 0 ! radiation day for perpetual integration
       integer :: n_sea_points=0 ! number of sea points on grid
       integer :: nentropy = 0   ! switch for entropy diagnostics
+      integer :: nentro3d = 0   ! switch for 3d entropy diagnostics
       integer :: nenergy  = 0   ! switch for energy diagnostics
+      integer :: nener3d  = 0   ! switch for 3d energy diagnostics
       integer :: ndheat   = 1   ! switch for heating due to momentum dissipation
       integer :: nseedlen = 0   ! length of random seed (set by lib call)
       integer :: nsela    = 0   ! enable (1) or disable (0) Semi Lagrangian Advection
@@ -383,12 +385,15 @@
 
       real, allocatable :: dgp2d(:,:),dsp2d(:,:)     ! 2-d diagnostics
       real, allocatable :: dgp3d(:,:,:),dsp3d(:,:,:) ! 3-d diagnostics
-      real, allocatable :: dclforc(:,:)  ! cloud forcing diagnostics
-      real, allocatable :: dentropy(:,:) ! entropy diagnostics
-      real, allocatable :: denergy(:,:)  ! energy diagnostics
-      real, allocatable :: dentrop(:)    ! ps for entropy diagnostics
-      real, allocatable :: dentrot(:,:)  ! t for entropy diagnostics
-      real, allocatable :: dentroq(:,:)  ! q for entropy diagnostics
+      real, allocatable :: dclforc(:,:)   ! cloud forcing diagnostics
+      real, allocatable :: dentropy(:,:)  ! entropy diagnostics
+      real, allocatable :: dentro3d(:,:,:)! entropy diagnostics 3d
+      real, allocatable :: denergy(:,:)   ! energy diagnostics
+      real, allocatable :: dener3d(:,:,:) ! energy diagnostics 3d
+      real, allocatable :: dentrop(:)     ! ps for entropy diagnostics
+      real, allocatable :: dentrot(:,:)   ! t for entropy diagnostics
+      real, allocatable :: dentroq(:,:)   ! q for entropy diagnostics
+      real, allocatable :: dentro(:)      ! 2d entropy for diagnostics
 
 !
 !     accumulated output

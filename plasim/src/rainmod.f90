@@ -312,11 +312,17 @@
       if(nentropy > 0) then
        dentropy(:,11)=0.
       endif
+      if(nentro3d > 0) then
+       dentro3d(:,:,11)=0.
+      endif
       if(nenergy > 0) then
        denergy(:,11)=0.
        denergy(:,15)=0.
       endif
-
+      if(nener3d > 0) then
+       dener3d(:,:,11)=0.
+       dener3d(:,:,15)=0.
+      endif
 !
 !*    initialize
 !
@@ -495,20 +501,19 @@
 !     entropy/energy diagnostics
 !
        if(nentropy > 0) then
-        if(nentropy > 2) then
-         dentropy(:,11)=dentropy(:,11)                                  &
-     &                 +zdtdt(:)/dt(:,jlev)                             &
-     &                 *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
-        else
-         dentropy(:,11)=dentropy(:,11)                                  &
-     &                 +zdtdt(:)/dentrot(:,jlev)                        &
-     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)
-        endif
+        dentro(:)=zdtdt(:)/dentrot(:,jlev)                              &
+     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev) 
+        dentropy(:,11)=dentropy(:,11)+dentro(:)
+        if(nentro3d > 0) dentro3d(:,jlev,11)=dentro(:)
        endif
        if(nenergy > 0) then
         denergy(:,11)=denergy(:,11)                                     &
      &               +zdtdt(:)                                          &
      &               *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
+        if(nener3d > 0) then 
+         dener3d(:,jlev,11)=zdtdt(:)                                    &
+     &                   *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
+        endif
         do jhor=1,NHOR
          if(zt(jhor) > TMELT) then
           zzal=als
@@ -517,9 +522,12 @@
          endif
          denergy(jhor,15)=denergy(jhor,15)+zzal*zdqdt(jhor)             &
      &                                    *dsigma(jlev)*dp(jhor)/ga
+         if(nener3d > 0) then
+          dener3d(jhor,jlev,15)=zzal*zdqdt(jhor)                        &
+     &                         *dsigma(jlev)*dp(jhor)/ga
+         endif
         enddo
        endif
-
       enddo
 
       return
@@ -1371,32 +1379,26 @@
 !
       if(nentropy > 0) then
        dentropy(:,12)=0.
+       if(nentro3d > 0) dentro3d(:,:,12)=0.
        do jlev=1,NLEV
-        if(nentropy > 2) then
-        where(ilift(:) >= jlev .and. itop(:) <= jlev .and. zi(:) > 0.   &
-     &       .and. ishallow(:) == 0)
-         dentropy(:,12)=dentropy(:,12)                                  &
-     &         +zat(:)*zdtdt(:,jlev)/deltsec2/dt(:,jlev)                &
-     &         *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
-        endwhere
-        else 
         where(ilift(:) >= jlev .and. itop(:) <= jlev .and. zi(:) > 0.   &
      &       .and.ishallow(:) == 0)
-         dentropy(:,12)=dentropy(:,12)                                  &
-     &         +zat(:)*zdtdt(:,jlev)/deltsec2/dentrot(:,jlev)           &
+         dentro(:)=+zat(:)*zdtdt(:,jlev)/deltsec2/dentrot(:,jlev)       &
      &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)
+         dentropy(:,12)=dentropy(:,12)+dentro(:)
         endwhere
+        if(nentro3d > 0) then
+         where(ilift(:) >= jlev .and. itop(:) <= jlev .and. zi(:) > 0.  &
+     &        .and.ishallow(:) == 0)
+          dentro3d(:,jlev,12)=dentro(:)
+         endwhere
         endif
         if(nshallow == 1) then
-         if(nentropy > 2) then
-          dentropy(:,12)=dentropy(:,12)                                 &
-     &                  +zdtdts(:,jlev)/dt(:,jlev)                      &
-     &                  *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
-         else
-          dentropy(:,12)=dentropy(:,12)                                 &
-     &                  +zdtdts(:,jlev)/dentrot(:,jlev)                 &
+         dentro(:)=zdtdts(:,jlev)/dentrot(:,jlev)                       &
      &        *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)
-         endif
+         dentropy(:,12)=dentropy(:,12)+dentro(:)
+         if(nentro3d > 0) dentro3d(:,jlev,12)=dentro3d(:,jlev,12)       &
+     &                                       +dentro(:)
         endif
        enddo
       endif
@@ -1422,6 +1424,27 @@
      &                *dsigma(jlev)*dp(:)/ga
         endif
        enddo
+       if(nener3d > 0) then
+        dener3d(:,:,12)=0.
+        dener3d(:,:,16)=0.
+        do jlev=1,NLEV
+         where(ilift(:) >= jlev .and. itop(:) <= jlev .and. zi(:) > 0.  &
+     &        .and.ishallow(:) == 0)
+          dener3d(:,jlev,12)=zat(:)*zdtdt(:,jlev)/deltsec2              &
+     &                   *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
+         endwhere
+         dener3d(:,jlev,16)=alv*(dqdt(:,jlev)-zdqdtold(:,jlev))         &
+     &                     *dsigma(jlev)*dp(:)/ga
+         if(nshallow == 1) then
+          dener3d(:,jlev,12)=dener3d(:,jlev,12)                         &
+     &                      +zdtdts(:,jlev)/deltsec2                    &
+     &                   *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
+          dener3d(:,jlev,16)=dener3d(:,jlev,16)                         &
+     &                      +alv*zdqdts(:,jlev)                         &
+     &                      *dsigma(jlev)*dp(:)/ga
+         endif
+        enddo
+       endif
       endif
 !
       return
@@ -2046,15 +2069,10 @@
       if(nentropy > 0) then
        dentropy(:,13)=0.
        do jlev=1,NLEV
-        if(nentropy > 2) then
-         dentropy(:,13)=dentropy(:,13)                                  &
-     &                 +zdtdt(:,jlev)/dt(:,jlev)                        &
-     &                 *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
-        else
-         dentropy(:,13)=dentropy(:,13)                                  &
-     &                 +zdtdt(:,jlev)/dentrot(:,jlev)                   &
-     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)
-        endif
+        dentro(:)=zdtdt(:,jlev)/dentrot(:,jlev)                         &
+     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev) 
+        dentropy(:,13)=dentropy(:,13)+dentro(:)
+        if(nentro3d > 0) dentro3d(:,jlev,13)=dentro(:)
        enddo
       endif
       if(nenergy > 0) then
@@ -2063,6 +2081,10 @@
         denergy(:,13)=denergy(:,13)                                     &
      &               +zdtdt(:,jlev)                                     &
      &               *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
+        if(nener3d > 0) then
+         dener3d(:,jlev,13)=zdtdt(:,jlev)                               &
+     &                   *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
+        endif
        enddo
       endif
 !
@@ -2240,15 +2262,10 @@
       if(nentropy > 0) then
        dentropy(:,20)=0.
        do jlev=1,NLEV
-        if(nentropy > 2) then
-         dentropy(:,20)=dentropy(:,20)                                  &
-     &                 +zdtdt(:,jlev)/dt(:,jlev)                        &
-     &                 *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
-        else
-         dentropy(:,20)=dentropy(:,20)                                  &
-     &                 +zdtdt(:,jlev)/dentrot(:,jlev)                   &
+        dentro(:)=zdtdt(:,jlev)/dentrot(:,jlev)                         &
      &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)
-        endif
+        dentropy(:,20)=dentropy(:,20)+dentro(:)
+        if(nentro3d > 0) dentro3d(:,jlev,14)=dentro(:)
        enddo
       endif
       if(nenergy > 0) then
@@ -2257,6 +2274,10 @@
          denergy(:,14)=denergy(:,14)                                    &
      &                +zdtdt(:,jlev)                                    &
      &                *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
+         if(nener3d > 0) then
+          dener3d(:,jlev,14)=zdtdt(:,jlev)                              &
+     &                   *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
+         endif 
        enddo
       endif
 

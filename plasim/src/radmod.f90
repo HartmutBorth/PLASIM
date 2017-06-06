@@ -574,152 +574,91 @@
        dentropy(:,17)=dswfl(:,NLEP)/dt(:,NLEP)
        dentropy(:,27)=dftd(:,NLEP)/dt(:,NLEP)
        dentropy(:,28)=dftu(:,NLEP)/dt(:,NLEP)
+       dentropy(:,9)=0.
+       dentropy(:,10)=0.
+       dentropy(:,21)=0.
+       dentropy(:,22)=0.
+       dentropy(:,23)=0.
+       dentropy(:,24)=0.
+       dentropy(:,26)=0.
        dentropy(:,29)=0.
        dentropy(:,30)=0.
        do jlev=1,NLEV
-        dentropy(:,29)=dentropy(:,29)+dftu0(:,jlev)/dentrot(:,jlev)
-        dentropy(:,30)=dentropy(:,30)+dftd0(:,jlev)/dentrot(:,jlev)
-       enddo
-       allocate(zdtdte(NHOR,NLEV))
-       dentropy(:,9)=0.
-       do jlev=1,NLEV
-        jlep=jlev+1
-        zdtdte(:,jlev)=-ga*(dlwfl(:,jlep)-dlwfl(:,jlev))                &
-     &                /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))
-        if(nentropy > 2) then
-        dentropy(:,9)=dentropy(:,9)                                     &
-     &         +zdtdte(:,jlev)/dt(:,jlev)                               &
-     &         *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
-        else
-        dentropy(:,9)=dentropy(:,9)                                     &
-     &         +zdtdte(:,jlev)/dentrot(:,jlev)                          &
-     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)
-        endif
-       enddo
-       dentropy(:,21)=0.
-       do jlev=1,NLEV
-        jlep=jlev+1
-        zdtdte(:,jlev)=-ga*(dftd(:,jlep)-dftd(:,jlev))                  &
-     &                /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))
-        if(nentropy > 2) then
-        dentropy(:,21)=dentropy(:,21)                                   &
-     &         +zdtdte(:,jlev)/dt(:,jlev)                               &
-     &         *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
-        else
-        dentropy(:,21)=dentropy(:,21)                                   &
-     &         +zdtdte(:,jlev)/dentrot(:,jlev)                          &
-     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)
-        endif
-       enddo
-       dentropy(:,22)=0.
-       do jlev=1,NLEV
-        jlep=jlev+1
-        zdtdte(:,jlev)=-ga*(dftu(:,jlep)-dftu(:,jlev))                  &
-     &                /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))
-        if(nentropy > 2) then
-        dentropy(:,22)=dentropy(:,22)                                   &
-     &         +zdtdte(:,jlev)/dt(:,jlev)                               &
-     &         *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
-        else
-        dentropy(:,22)=dentropy(:,22)                                   &
-     &         +zdtdte(:,jlev)/dentrot(:,jlev)                          &
-     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)
-        endif
-       enddo
-       dentropy(:,23)=0.
-       do jlev=1,NLEV
-        jlep=jlev+1
-        zdtdte(:,jlev)=-ga*(dftue1(:,jlep)-dftue1(:,jlev))              &
-     &                /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))
-        if(nentropy > 2) then
-        dentropy(:,23)=dentropy(:,23)                                   &
-     &         +zdtdte(:,jlev)/dt(:,jlev)                               &
-     &         *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
-        else
-        dentropy(:,23)=dentropy(:,23)                                   &
-     &         +zdtdte(:,jlev)/dentrot(:,jlev)                          &
-     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)
-        endif
-       enddo
-       dentropy(:,24)=0.
-       do jlev=1,NLEV
-        jlep=jlev+1
-        zdtdte(:,jlev)=-ga*(dftue2(:,jlep)-dftue2(:,jlev))              &
-     &                /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))
-        if(nentropy > 2) then
-        dentropy(:,24)=dentropy(:,24)                                   &
-     &         +zdtdte(:,jlev)/dt(:,jlev)                               &
-     &         *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
-        else
-        dentropy(:,24)=dentropy(:,24)                                   &
-     &         +zdtdte(:,jlev)/dentrot(:,jlev)                          &
-     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)
-        endif
-       enddo
-       dentropy(:,26)=0.
-       do jlev=1,NLEV
-        jlep=jlev+1
-        zdtdte(:,jlev)=-ga*(dftue2(:,jlep)-dftue2(:,jlev))              &
-     &                /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))
-        dentropy(:,26)=dentropy(:,26)                                   &
-     &              +zdtdte(:,jlev)                                     &
-     &              *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
+        jlep=jlev+1  
+        dentro(:)=dftu0(:,jlev)/dentrot(:,jlev)
+        dentropy(:,29)=dentropy(:,29)+dentro(:)
+        if(nentro3d > 0) dentro3d(:,jlev,19)=dentro(:)
+        dentro(:)=dftd0(:,jlev)/dentrot(:,jlev)
+        dentropy(:,30)=dentropy(:,30)+dentro(:)
+        if(nentro3d > 0) dentro3d(:,jlev,20)=dentro(:)
+        dentro(:)=-ga*(dlwfl(:,jlep)-dlwfl(:,jlev))                     &
+     &           /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))         &
+     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)&
+     &         /dentrot(:,jlev)
+        dentropy(:,9)=dentropy(:,9)+dentro(:)
+        if(nentro3d > 0) dentro3d(:,jlev,9)=dentro(:)
+        dentro(:)=-ga*(dswfl(:,jlep)-dswfl(:,jlev))                     &
+     &           /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))         &
+     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)&
+     &         /dentrot(:,jlev)
+        dentropy(:,10)=dentropy(:,10)+dentro(:)
+        if(nentro3d > 0) dentro3d(:,jlev,10)=dentro(:)
+        dentro(:)=-ga*(dftd(:,jlep)-dftd(:,jlev))                       &
+     &           /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))         &
+     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)&
+     &         /dentrot(:,jlev) 
+        dentropy(:,21)=dentropy(:,21)+dentro(:)
+        if(nentro3d > 0) dentro3d(:,jlev,15)=dentro(:)
+        dentro(:)=-ga*(dftu(:,jlep)-dftu(:,jlev))                       &
+     &           /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))         &
+     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)&
+     &         /dentrot(:,jlev)
+        dentropy(:,22)=dentropy(:,22)+dentro(:)
+        if(nentro3d > 0) dentro3d(:,jlev,16)=dentro(:)
+        dentro(:)=-ga*(dftue1(:,jlep)-dftue1(:,jlev))                   &
+     &           /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))         &
+     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)&
+     &         /dentrot(:,jlev)
+        dentropy(:,23)=dentropy(:,23)+dentro(:)
+        if(nentro3d > 0) dentro3d(:,jlev,17)=dentro(:) 
+        dentro(:)=-ga*(dftue2(:,jlep)-dftue2(:,jlev))                   &
+     &           /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))         &
+     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)&
+     &         /dentrot(:,jlev)
+        dentropy(:,24)=dentropy(:,24)+dentro(:)
+        if(nentro3d > 0) dentro3d(:,jlev,18)=dentro(:)
+        dentropy(:,26)=dentropy(:,26)+dentro(:)*dentrot(:,jlev)
        enddo
        dentropy(:,25)=(dftu(:,NLEP)+dentropy(:,26))/dt(:,NLEP)
        dentropy(:,26)=-dentropy(:,26)/dt(:,NLEP)
-!
-       dentropy(:,10)=0.
-       do jlev=1,NLEV
-        jlep=jlev+1
-        zdtdte(:,jlev)=-ga*(dswfl(:,jlep)-dswfl(:,jlev))                &
-     &                /(dsigma(jlev)*dp(:)*acpd*(1.+ADV*dq(:,jlev)))
-        if(nentropy > 2) then
-        dentropy(:,10)=dentropy(:,10)                                   &
-     &         +zdtdte(:,jlev)/dt(:,jlev)                               &
-     &         *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
-        else
-        dentropy(:,10)=dentropy(:,10)                                   &
-     &         +zdtdte(:,jlev)/dentrot(:,jlev)                          &
-     &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)
-        endif
-       enddo
-       deallocate(zdtdte)
       endif
       if(nenergy > 0) then
        allocate(zdtdte(NHOR,NLEV))
        denergy(:,9)=0.
+       denergy(:,10)=0.
+       denergy(:,17)=0.
+       denergy(:,18)=0.
+       denergy(:,19)=0.
+       denergy(:,20)=0.
+       denergy(:,28)=0.
        do jlev=1,NLEV
         jlep=jlev+1
         denergy(:,9)=denergy(:,9)-(dlwfl(:,jlep)-dlwfl(:,jlev))  
-       enddo
-       denergy(:,17)=0.
-       do jlev=1,NLEV
-        jlep=jlev+1
-        denergy(:,17)=denergy(:,17)-(dftd(:,jlep)-dftd(:,jlev)) 
-       enddo
-       denergy(:,18)=0.
-       do jlev=1,NLEV
-        jlep=jlev+1
-        denergy(:,18)=denergy(:,18)-(dftu(:,jlep)-dftu(:,jlev))
-       enddo
-       denergy(:,19)=0.
-       do jlev=1,NLEV
-        jlep=jlev+1
-        denergy(:,19)=denergy(:,19)-(dftue1(:,jlep)-dftue1(:,jlev))
-       enddo
-       denergy(:,20)=0.
-       do jlev=1,NLEV
-        jlep=jlev+1
-        denergy(:,20)=denergy(:,20)-(dftue2(:,jlep)-dftue2(:,jlev)) 
-       enddo
-       denergy(:,28)=0.
-       do jlev=1,NLEV
-        denergy(:,28)=denergy(:,28)+dt(:,jlev)*dsigma(jlev)
-       enddo
-       denergy(:,10)=0.
-       do jlev=1,NLEV
-        jlep=jlev+1
         denergy(:,10)=denergy(:,10)-(dswfl(:,jlep)-dswfl(:,jlev))
+        denergy(:,17)=denergy(:,17)-(dftd(:,jlep)-dftd(:,jlev)) 
+        denergy(:,18)=denergy(:,18)-(dftu(:,jlep)-dftu(:,jlev))
+        denergy(:,19)=denergy(:,19)-(dftue1(:,jlep)-dftue1(:,jlev))
+        denergy(:,20)=denergy(:,20)-(dftue2(:,jlep)-dftue2(:,jlev)) 
+        denergy(:,28)=denergy(:,28)+dt(:,jlev)*dsigma(jlev)
+        if(nener3d > 0) then
+         dener3d(:,jlev,9)=-(dlwfl(:,jlep)-dlwfl(:,jlev))
+         dener3d(:,jlev,10)=-(dswfl(:,jlep)-dswfl(:,jlev))
+         dener3d(:,jlev,17)=-(dftd(:,jlep)-dftd(:,jlev))
+         dener3d(:,jlev,18)=-(dftu(:,jlep)-dftu(:,jlev))
+         dener3d(:,jlev,19)=-(dftue1(:,jlep)-dftue1(:,jlev))
+         dener3d(:,jlev,20)=-(dftue2(:,jlep)-dftue2(:,jlev))
+         dener3d(:,jlev,28)=dt(:,jlev)*dsigma(jlev)
+        endif
        enddo
        deallocate(zdtdte)
       endif

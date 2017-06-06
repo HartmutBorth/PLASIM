@@ -541,9 +541,18 @@
 !     **************************************
 
       if(nentropy > 0) then
-       do jdiag=1,33
+       do jdiag=1,36
         jcode=319+jdiag
+        if(jcode == 333) cycle                      !333 is reserved
         call writegp(40,dentropy(1,jdiag),jcode,0)
+       enddo
+      end if
+      if(nentro3d > 0) then
+       do jdiag=1,23
+        jcode=419+jdiag
+        do jlev=1,NLEV
+         call writegp(40,dentro3d(1,jlev,jdiag),jcode,jlev)
+        enddo
        enddo
       end if
 
@@ -555,6 +564,14 @@
        do jdiag=1,28
         jcode=359+jdiag
         call writegp(40,denergy(1,jdiag),jcode,0)
+       enddo
+      end if
+      if(nener3d > 0) then
+       do jdiag=1,28
+        jcode=459+jdiag
+        do jlev=1,NLEV
+         call writegp(40,dener3d(1,jlev,jdiag),jcode,jlev)
+        enddo
        enddo
       end if
 !

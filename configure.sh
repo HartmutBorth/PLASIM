@@ -264,17 +264,17 @@ echo >> makefile "	rm -f *.o *.x F90* most_*"
 mkdir -p puma/bld
 mkdir -p puma/bin
 mkdir -p puma/run
-mkdir -p sam/bld
-mkdir -p sam/bin
-mkdir -p sam/run
 mkdir -p plasim/bld
 mkdir -p plasim/bin
 mkdir -p plasim/run
 mkdir -p plasim/dat/T21_exo
 mkdir -p plasim/dat/T42_exo
-mkdir -p cat/bld
-mkdir -p cat/bin
-mkdir -p cat/run
+#mkdir -p cat/bld
+#mkdir -p cat/bin
+#mkdir -p cat/run
+#mkdir -p sam/bld
+#mkdir -p sam/bin
+#mkdir -p sam/run
 
 #check FORTRAN I/O
 

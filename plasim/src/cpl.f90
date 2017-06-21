@@ -486,6 +486,11 @@
 !     run lsg if its time
 !
       if (mod(kstep,naomod) == naomod-1) then
+!
+       if(nprint > 0) then
+        write(nud,*) 'in cpl: make lsg step'
+       endif
+!
        if(ncoupling == 1) then
         call cputssta(psst)
        endif

@@ -2788,6 +2788,10 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
       if(nprint > 0) then
        if(mypid==NROOT) then
           write(nud,*)'------------ SUBROUTINE GRIDPOINTD -------------'
+          write(nud,*)'NSTEP= ',nstep
+          write(nud,*)'YY,MM,DD,HH,MIN= ',ndatim(1:5)
+          write(nud,*) 'gp= ',MAXVAL(gp(1:NHOR)),MINVAL(gp(1:NHOR))
+          write(nud,*) 'dp= ',MAXVAL(dp(1:NHOR)),MINVAL(dp(1:NHOR))
        endif
        call prdbug1
       endif
@@ -2902,7 +2906,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
      &         *acpd*(1.+adv*dentroq(:,jlev))*dentrop(:)/ga*dsigma(jlev)
         dentropy(:,4)=dentropy(:,4)+dentro(:)
         if(nentro3d > 0) dentro3d(:,jlev,4)=dentro(:)
-        zfac=-1.*ww*tfrc(jlev)/(1.+tfrc(jlev)*delt2)
+        zfac=ww*tfrc(jlev)/(1.+tfrc(jlev)*delt2)
         dentro(:)=((du(:,jlev)+dudt(:,jlev)*deltsec2)**2                &
      &             +(dv(:,jlev)+dvdt(:,jlev)*deltsec2)**2)              &
      &             *zfac*dentrop(:)/ga*dsigma(jlev)/dentrot(:,jlev)

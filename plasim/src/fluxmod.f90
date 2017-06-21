@@ -451,14 +451,15 @@
 !
       if(nentropy > 0) then
        dentropy(:,31)=zdtdt(:)/dentrot(:,NLEV)*dentrop(:)*dsigma(NLEV)  &
-     &               /ga
+     &               *acpd*(1.+adv*dentroq(:,NLEV))/ga
        if(nentro3d > 0) then
         dentro3d(:,1:NLEM,21)=0.
         dentro3d(:,NLEV,21)=dentropy(:,31)
        endif
       endif
       if(nenergy > 0) then
-       denergy(:,21)=zdtdt(:)*dp(:)/ga*dsigma(NLEV) 
+       denergy(:,21)=zdtdt(:)*acpd*(1.+adv*dq(:,NLEV))*dp(:)            &
+     &              /ga*dsigma(NLEV) 
        if(nener3d > 0) then
         dener3d(:,1:NLEM,21)=0.
         dener3d(:,NLEV,21)=denergy(:,21)

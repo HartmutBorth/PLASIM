@@ -62,6 +62,7 @@
       real :: gmu0(NHOR)                   ! cosine of solar zenit angle
       real :: gmu1(NHOR)                   ! cosine of solar zenit angle
       real :: dqo3(NHOR,NLEV)        = 0.0 ! ozon concentration (kg/kg)
+      real :: dqco2(NHOR,NLEV)       = 0.0 ! co2 concentration (ppmv)
       real :: dtdtlwr(NHOR,NLEV)           ! lwr temperature tendencies
       real :: dtdtswr(NHOR,NLEV)           ! swr temperature tendencies
 
@@ -316,6 +317,13 @@
          allocate(dqo3cl(NHOR,NLEV,0:13))
          dqo3cl(:,:,:) = 0.0
          call mpsurfgp('dqo3cl',dqo3cl,NHOR,NLEV*14)
+      endif
+!
+!     set co2 3d-field (enable external co2 by if statement)
+!
+!
+      if(co2 > 0.) then
+       dqco2(:,:)=co2
       endif
 !
       return
@@ -1376,6 +1384,7 @@
       real ztau(NHOR,NLEV)      ! total transmissivity
       real zq(NHOR,NLEV)        ! modified water vapour
       real zqo3(NHOR,NLEV)      ! modified ozon
+      real zqco2(NHOR,NLEV)     ! modified co2
       real ztausf(NHOR,NLEV)    ! total transmissivity to surface
       real ztaucs(NHOR,NLEV)    ! clear sky transmissivity
       real ztaucc0(NHOR,NLEV)   ! layer transmissivity cloud
@@ -1408,8 +1417,6 @@
       zco20=0.0676*(0.01022)**0.421  ! to get a(co2)=0 for co2=0
       zh2o0a=0.846*(3.59E-5)**0.243  ! to get a(h2o)=0 for h2o=0
       zh2o0=0.832*0.0286**0.26       ! to get t(h2o)=1 for h2o=0
-      zqco2=co2*zpv2pm*1.E-6         ! co2 pp mass needed for transmissivities
-                                     ! note: co2 in ppmv not ppv
 !
 !     to make a(o3) continues at 0.01cm: 
 !
@@ -1469,7 +1476,6 @@
       zbu(:,NLEP)=zeps(:)*zst4(:,NLEP)
       zbue1(:,NLEP)=0.
       zbue2(:,NLEP)=zbu(:,NLEP)
-
 !
 !**   3) vertical loops
 !
@@ -1479,12 +1485,12 @@
       do jlev=1,NLEV
        jlep=jlev+1
        zzf1=sigma(jlev)*dsigma(jlev)/ga/100000.
-       zzf2=zfco2*zqco2*(zsigh2(jlep)-zsigh2(jlev))*0.5/ga/100000.
+       zzf2=zpv2pm*1.E-6                        !get co2 in pp mass (kg/kg-stp)
        zzf3=-1.66*acllwr*1000.*dsigma(jlev)/ga
        zsfac(:)=zzf1*zps2(:)
        zq(:,jlev)=zfh2o*zsfac(:)*dq(:,jlev)
        zqo3(:,jlev)=zfo3*zsfac(:)*dqo3(:,jlev)
-       zsumco2(:)=zzf2*zps2(:)
+       zqco2(:,jlev)=zfco2*zzf2*zsfac(:)*dqco2(:,jlev) 
        if(clgray > 0) then
         ztaucc0(:,jlev)=1.-dcc(:,jlev)*clgray
        else
@@ -1499,15 +1505,15 @@
        ztaucc(:)=1.
        zsumwv(:)=0.
        zsumo3(:)=0.
+       zsumco2(:)=0.
 !
 !     transmissivities
 !
        do jlev2=jlev,NLEV
         jlep2=jlev2+1
-        zzf2=zfco2*zqco2*(zsigh2(jlep2)-zsigh2(jlev))*0.5/ga/100000.
         zsumwv(:)=zsumwv(:)+zq(:,jlev2)
         zsumo3(:)=zsumo3(:)+zqo3(:,jlev2)
-        zsumco2(:)=zzf2*zps2(:)
+        zsumco2(:)=zsumco2(:)+zqco2(:,jlev2)
 !
 !     clear sky transmisivity
 !

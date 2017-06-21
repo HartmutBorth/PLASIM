@@ -430,6 +430,11 @@
        call ntomin(nstep,ndatim(5),ndatim(4),ndatim(3),ndatim(2)        &
      &            ,ndatim(1))
        if(mypid == nroot) then
+!
+        if(nprint > 0) then
+         write(nud,*)'call for LSG coupling'
+        endif
+!         
         call clsgstep(ndatim,nstep,zsst,ztaux,ztauy,zpme,zroff,zice     &
      &               ,zheat,zfldo)
        endif

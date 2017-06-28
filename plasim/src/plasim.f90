@@ -3277,9 +3277,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
      &                   *acpd*(1.+adv*dq(:,jlev))*dp(:)/ga*dsigma(jlev)
         endif 
        enddo
-
        deallocate(zttgp)
-       allocate(zsttd(NSPP,NLEV))
       endif
 
 !     calculates spectral tendencies from restoration (if included)
@@ -3308,6 +3306,7 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
 !     energy/entropy diagnostics
 !
       if(nenergy > 0 .or. nentropy > 0) then
+       allocate(zsttd(NSPP,NLEV))
        do jlev=1,NLEV
         zsttd(:,jlev)=-tdisst(jlev)*sakpp(1:NSPP,jlev)*stp(:,jlev)      &
      &               /(1.+delt2*tdisst(jlev)*sakpp(1:NSPP,jlev))
@@ -3493,6 +3492,8 @@ plasimversion = "https://github.com/Edilbert/PLASIM/ : 15-Dec-2015"
        enddo
        deallocate(ztt)
        deallocate(zttgp)
+      endif
+      if(nenergy > 0 .or. nentropy > 0) then
        deallocate(zsttd)
       endif
 !

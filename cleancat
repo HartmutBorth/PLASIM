@@ -1,3 +1,0 @@
-rm -f -r cat/bld/*
-rm -f -r cat/bin/*
-rm -f -r cat/run/*

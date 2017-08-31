@@ -1,3 +1,0 @@
-rm -f sam/bld/*
-rm -f sam/bin/*
-rm -f sam/run/*

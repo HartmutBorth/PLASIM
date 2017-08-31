@@ -1,17 +1,17 @@
 PLASIM
 ======
 
-Gerneral Circulation Models Planet Simulator (PlaSim) and PUMA
+*General Circulation Models Planet Simulator (PlaSim)*
+(Streamlined fork of https://github.com/HartmutBorth/PLASIM)
 
-This repository has all necessary components to run the models.
+This repository has all necessary components to run the model.
 
-These models are research models used in Meteorology and Earth Sciences.
-You need knowledge in Meteorology and skills in Linux, C and FORTRAN
-for running the models and interpreting the results.
+This model is a research model used in Meteorology and Earth Sciences.
+You need knowledge in Meteorology, Climatology and skills in Linux, C and FORTRAN
+for running the model and interpreting the results.
 
-Please start reading the manuals located in:
+Please start reading the manual located in:
 
-puma/doc for the PUMA model
 plasim/doc for the Planet Simulator
 
 Then have a look at the README file for configuration and setup.

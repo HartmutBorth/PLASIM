@@ -343,6 +343,7 @@ int Preprocessed;
 int SAMindex;
 int ScreenHeight;
 int Expert = 1;
+int PumaEnabled;
 int CatEnabled;
 int SamEnabled;
 int LsgEnabled;
@@ -1233,6 +1234,13 @@ void InitSelections(void)
    Sel->yt   = Sel->y + FixFontAscent + 1;
    Sel->div  = Sel->iv   =  1;
    SelMod = Sel;
+
+   // Hide PUMA ?
+   if (!PumaEnabled)
+   {
+      Sel->no = 1;
+      Sel->lt = 0;
+   }
 
    // SAM
 
@@ -4494,6 +4502,13 @@ void InitGUI(void)
    if (xpp)
    {
       CatEnabled = 1;
+      fclose(xpp);
+   }
+
+   xpp = fopen("puma","r"); // Puma enabled
+   if (xpp)
+   {
+      PumaEnabled = 1;
       fclose(xpp);
    }
 

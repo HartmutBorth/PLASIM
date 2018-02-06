@@ -88,9 +88,10 @@
       subroutine mpscin(k,n) ! scatter n integer
       use mpimod
 
-      integer :: k(n)
+      integer :: k(n),l(n)
 
-      call mpi_scatter(k,n,mpi_itype,k,n,mpi_itype,NROOT,myworld,mpinfo)
+      call mpi_scatter(k,n,mpi_itype,l,n,mpi_itype,NROOT,myworld,mpinfo)
+      k(:)=l(:)
 
       return
       end subroutine mpscin
@@ -102,9 +103,10 @@
       subroutine mpscrn(p,n) ! scatter n real
       use mpimod
 
-      real :: p(*)
-
-      call mpi_scatter(p,n,mpi_rtype,p,n,mpi_rtype,NROOT,myworld,mpinfo)
+      real :: p(*),l(n)
+     
+      call mpi_scatter(p,n,mpi_rtype,l,n,mpi_rtype,NROOT,myworld,mpinfo)
+      p(1:n)=l(:)
 
       return
       end subroutine mpscrn
@@ -116,9 +118,10 @@
       subroutine mpscdn(p,n) ! scatter n double precision
       use mpimod
 
-      real (kind=8) :: p(*)
+      real (kind=8) :: p(*),l(n)
 
-      call mpi_scatter(p,n,MPI_REAL8,p,n,MPI_REAL8,NROOT,myworld,mpinfo)
+      call mpi_scatter(p,n,MPI_REAL8,l,n,MPI_REAL8,NROOT,myworld,mpinfo)
+      p(1:n)=l(:)
 
       return
       end subroutine mpscdn
@@ -225,13 +228,13 @@
       subroutine mpgacs(pcs) ! gather cross sections
       use mpimod
 
-      real :: pcs(NLAT,NLEV)
+      real :: pcs(NLAT,NLEV),l(NLPP)
 
       do jlev = 1 , NLEV
-         call mpi_gather(pcs(:,jlev),NLPP,mpi_rtype                      &
+         l(:)=pcs(1:NLPP,jlev)
+         call mpi_gather(l,NLPP,mpi_rtype                      &
      &                  ,pcs(:,jlev),NLPP,mpi_rtype                      &
      &                  ,NROOT,myworld,mpinfo)
-
       enddo
       return
       end subroutine mpgacs
@@ -398,6 +401,7 @@
       integer :: itest = 0
       real    :: rtest = 0.0
       logical :: ltest = .true.
+      character (80) :: myympname
 
       if (kind(itest) == 8) mpi_itype = MPI_INTEGER8
       if (kind(rtest) == 8) mpi_rtype = MPI_REAL8
@@ -419,12 +423,12 @@
       endif
 
       allocate(ympname(npro)) ; ympname(:) = ' '
-      call mpi_get_processor_name(ympname(1),ilen,mpinfo)
 
-      call mpi_gather(ympname,80,MPI_CHARACTER,   &   
+      call mpi_get_processor_name(myympname,ilen,mpinfo)
+
+      call mpi_gather(myympname,80,MPI_CHARACTER,   &   
                       ympname,80,MPI_CHARACTER,   &   
                       NROOT,myworld,mpinfo)
-
       return
       end subroutine mpstart
 
@@ -565,7 +569,7 @@
 !     SUBROUTINE MPI_INFO
 !     ===================
 
-      subroutine mpi_info(nprocess,npid)    ! get nproc and pid
+      subroutine get_mpi_info(nprocess,npid)    ! get nproc and pid
       use mpimod
 
       myworld=MPI_COMM_WORLD
@@ -574,7 +578,7 @@
       call mpi_comm_rank(myworld,npid,mpinfo)
 
       return
-      end subroutine mpi_info
+      end subroutine get_mpi_info
 
 
 !     ==================

@@ -566,7 +566,7 @@
 
 
 !     ===================
-!     SUBROUTINE MPI_INFO
+!     SUBROUTINE GET_MPI_INFO
 !     ===================
 
       subroutine get_mpi_info(nprocess,npid)    ! get nproc and pid

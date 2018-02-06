@@ -1807,11 +1807,11 @@ int WriteRunScript(int model)
       if (Multirun > 1) 
       {    
          fprintf(fp,"   %s",mpirun);
-         fprintf(fp," -np 1 %s : -np 1 %s\n",exec_name,exec_nam2);
+         fprintf(fp," -np 1 %s : -np 1 ./%s\n",exec_name,exec_nam2);
       }    
       else 
       {    
-         fprintf(fp,"   %s -np %d %s\n",mpirun,porm,exec_name);
+         fprintf(fp,"   %s -np %d ./%s\n",mpirun,porm,exec_name);
       }    
    }
    fputs("   [ -e Abort_Message ] && exit 1\n",fp);

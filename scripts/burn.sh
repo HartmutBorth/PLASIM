@@ -12,17 +12,20 @@ GACC=9.80665
 HUM_A=6.116441
 HUM_m=7.591386 
 HUM_Tn=240.7263
+GASRD=287.058
 
 function makevar {
 	outvar=$1
 	no3d=false;
 	case $outvar in
 		"ps")      invar="pl";   standard_name="surface_air_pressure" ;  long_name="Surface Air Pressure"; units="Pa";         expr="ps=exp(pl)";;
-		"psl")      invar="psl";   standard_name="air_pressure_at_sea_level" ;  long_name="Sea Level Pressure"; units="Pa";     expr="psl=psl*100";;
+		"psl")      invar="sg tas hus pl";   standard_name="air_pressure_at_sea_level" ;  long_name="Sea Level Pressure"; units="Pa";     expr="psl=psl"; no3d=true;; ## mslp is not saved by PlaSim - we are going to reconstruct it
 		"tas")     invar="tas";  standard_name="air_temperature" ;long_name="Near-Surface Air Temperature"; units="K"; expr="tas=tas";;
+		"tasmin")     invar="tasmin";  standard_name="air_temperature" ;long_name="Daily Minimum Near-Surface Air Temperature"; units="K"; expr="tasmin=tasmin";;
+		"tasmax")     invar="tasmax";  standard_name="air_temperature" ;long_name="Daily Maximum Near-Surface Air Temperature"; units="K"; expr="tasmax=tasmax";;
 		"ts")     invar="ts";    standard_name="surface_temperature" ;long_name="Surface Temperature"; units="K"; expr="ts=ts";;
-		"uas")     invar="uas";    standard_name="eastward_wind" ;long_name="Eastward Near-Surface Wind"; units="m s-1"; expr="uas=uas";;
-		"vas")     invar="vas";    standard_name="northward_wind" ;long_name="Northward Near-Surface Wind"; units="m s-1"; expr="vas=vas";;
+		"uas")     invar="ua";    standard_name="eastward_wind" ;long_name="Eastward Near-Surface Wind"; units="m s-1"; expr="uas=ua"; no3d=true;;
+		"vas")     invar="va";    standard_name="northward_wind" ;long_name="Northward Near-Surface Wind"; units="m s-1"; expr="vas=va"; no3d=true;;
 		"evspsbl") invar="evap"; standard_name="water_evaporation_flux" ;long_name="Evaporation";          units="kg m-2 s-1"; expr="evspsbl=-evap*1000";;
 		"pr")     invar="pr";    standard_name="precipitation_flux" ;long_name="Precipitation"; units="kg m-2 s-1"; expr="pr=pr*1000";;
 		"prc")     invar="prc";    standard_name="convective_precipitation_flux" ;long_name="Convective Precipitation"; units="kg m-2 s-1"; expr="prc=prc*1000";;
@@ -77,13 +80,14 @@ function makevar {
 }
 
 function help {
-HELPVARS2D="ps psl tas ts uas vas evspsbl pr prc prl prsn mrros mrso tsl rsdt rsut rlut rsds rsus rlds rlus hfls hfss clt prw huss hurs orog snd snm tauu tauv sit sic"
+HELPVARS2D="ps psl tas tasmin tasmax ts uas vas evspsbl pr prc prl prsn mrros mrso tsl rsdt rsut rlut rsds rsus rlds rlus hfls hfss clt prw huss hurs orog snd snm tauu tauv sit sic"
 HELPVARS3D="hus hur zg ta ua va wa wap cl clw"
 HELPEXTRA="td2m rst rls alb prl sndc stf lsm mld"
 
 echo "burn.sh $VERSION"
 echo "Afterburner cmorizer"
-echo "Extracts variables from PlaSim output using CMOR conventions"
+echo "Extracts variables from PlaSim output using CMOR conventions."
+echo "Adjusts variable names, signs, units and computes derived variables."
 echo
 echo Usage: burn.sh [options] infile outfile var 
 echo Options:
@@ -94,7 +98,7 @@ echo "        -p lev1,lev2,...  Specify pressure levels (in hPa)"
 echo
 echo "Default pressure levels are " $PLEVS "hPa"
 echo
-echo Variable which can be extracted:
+echo Variables which can be extracted:
 echo -------------------------------------------------------------------------------------
 echo "| 2D CMOR2 variables:                                                               |"
 echo -------------------------------------------------------------------------------------
@@ -126,14 +130,27 @@ echo ---------------------------------------------------------------------------
 
 echo Variables not in this list are extracted directly using afterburner with no change. 
 echo Examples: zeta,d,bld etc.
+echo Note: uas and vas are not available in PlaSim output, derived from ua and va at sigma=1
+echo "Note: psl (sea level pressure) is not avaiable in PlaSim output," 
+echo "      derived from huss (hus at sigma=1), tas and ps using the hypsometric formula"
 }
 
 function fixvar {
-        if [ "$expr" != "none" ] && [ $after != 1 ]; then 
-	  cdo setattribute,$outvar@standard_name="$standard_name" -setattribute,$outvar@long_name="$long_name" -setattribute,$outvar@units="$units" -expr,"$expr" $1 $2
-        else
-	  cp $1 $2
-	fi
+   local infile=$1
+
+   if [ "$expr" == "psl=psl" ] && [ $after != 1 ]; then
+	   # Reconstruct sea level pressure using the hypsometric formula
+	   cdo expr,"tv=tas*((1+hus/(1-hus)/0.622)/(1+hus/(1-hus)))" $infile tv$$.nc # virtual temperature
+	   cdo merge $infile tv$$.nc all$$.nc
+	   cdo expr,"psl=exp(pl)*exp(sg/($GASRD*tv))" all$$.nc $infile # hypsometric formula
+	   rm -f tv$$.nc all$$.nc 
+   fi
+
+   if [ "$expr" != "none" ] && [ $after != 1 ]; then 
+	  cdo setattribute,$outvar@standard_name="$standard_name" -setattribute,$outvar@long_name="$long_name" -setattribute,$outvar@units="$units" -expr,"$expr" $infile $2
+    else
+	  cp $infile $2
+   fi
 }
 
 function getvar {

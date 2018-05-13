@@ -6,20 +6,20 @@ VERSION=v1.0
 
 #set -ex
 BURNER=/work/users/jost/plasim/postprocessor/burn7.x
+BURNER=/Users/jost/plasim/plasimnew/postprocessor/burn7.x
 PLEVS="20,30,50,70,100,150,200,250,300,400,500,600,700,850,925,1000"
-VARS3D="wap wa zeta stf psi d zg hur ta ua va hus clw cl spd"
+VARS3D="wap wa zeta stf psi d zg hur ta ua va hus clw cl spd psl"
 GACC=9.80665
 HUM_A=6.116441
 HUM_m=7.591386 
 HUM_Tn=240.7263
-GASRD=287.058
 
 function makevar {
 	outvar=$1
 	no3d=false;
 	case $outvar in
-		"ps")      invar="pl";   standard_name="surface_air_pressure" ;  long_name="Surface Air Pressure"; units="Pa";         expr="ps=exp(pl)";;
-		"psl")      invar="sg tas hus pl";   standard_name="air_pressure_at_sea_level" ;  long_name="Sea Level Pressure"; units="Pa";     expr="psl=psl"; no3d=true;; ## mslp is not saved by PlaSim - we are going to reconstruct it
+		"ps")      invar="ps";   standard_name="surface_air_pressure" ;  long_name="Surface Air Pressure"; units="Pa";         expr="ps=ps*100";;
+		"psl")      invar="psl";   standard_name="air_pressure_at_sea_level" ;  long_name="Sea Level Pressure"; units="Pa";     expr="psl=psl*100";; 
 		"tas")     invar="tas";  standard_name="air_temperature" ;long_name="Near-Surface Air Temperature"; units="K"; expr="tas=tas";;
 		"tasmin")     invar="tasmin";  standard_name="air_temperature" ;long_name="Daily Minimum Near-Surface Air Temperature"; units="K"; expr="tasmin=tasmin";;
 		"tasmax")     invar="tasmax";  standard_name="air_temperature" ;long_name="Daily Maximum Near-Surface Air Temperature"; units="K"; expr="tasmax=tasmax";;
@@ -138,14 +138,6 @@ echo "      derived from huss (hus at sigma=1), tas and ps using the hypsometric
 function fixvar {
    local infile=$1
 
-   if [ "$expr" == "psl=psl" ] && [ $after != 1 ]; then
-	   # Reconstruct sea level pressure using the hypsometric formula
-	   cdo expr,"tv=tas*((1+hus/(1-hus)/0.622)/(1+hus/(1-hus)))" $infile tv$$.nc # virtual temperature
-	   cdo merge $infile tv$$.nc all$$.nc
-	   cdo expr,"psl=exp(pl)*exp(sg/($GASRD*tv))" all$$.nc $infile # hypsometric formula
-	   rm -f tv$$.nc all$$.nc 
-   fi
-
    if [ "$expr" != "none" ] && [ $after != 1 ]; then 
 	  cdo setattribute,$outvar@standard_name="$standard_name" -setattribute,$outvar@long_name="$long_name" -setattribute,$outvar@units="$units" -expr,"$expr" $infile $2
     else
@@ -215,7 +207,7 @@ for var in $invar
 do
 	getvar $infile temp$$.$var.nc $var
 done
-cdo merge temp$$.*.nc temp$$.all.nc &>> burn.log 
+cdo merge temp$$.*.nc temp$$.all.nc 2>> burn.log 
 
-fixvar temp$$.all.nc $outfile $outvar &>> burn.log
+fixvar temp$$.all.nc $outfile $outvar 2>> burn.log
 rm -f temp$$.*.nc

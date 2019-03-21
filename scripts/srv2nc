@@ -3,6 +3,7 @@
 
 function help {
    echo "Convert PLASIM service output file to netcdf format"
+   echo "PlaSIM, ML ocean, ice model and LSG outputs are recognized"
    echo "Usage: srv2nc [-d code1,code2,...] [-m] [-y] infile.nc outfile.nc"
    echo "Options:"
    echo "  -d codelist   remove a comma-separated list of codes from the output"
@@ -31,9 +32,11 @@ fi
 infile=$1
 outfile=$2
 
-cdo="cdo -t ./param$$.tab -s"
-cdonc="cdo -t ./param$$.tab -f nc -s"
-cdozip="cdo -t ./param$$.tab -f nc4 -z zip -s"
+cdo="cdo -s"
+cdonctab="cdo -t ./param$$.tab -f nc -s"
+cdonc="cdo -f nc -s"
+cdozip="cdo -f nc4 -z zip -s"
+cdoziptab="cdo  -t ./param$$.tab -f nc4 -z zip -s"
 
 cat > param$$.tab << EOT
 110 mld		Mixed Layer Depth		[m]
@@ -152,25 +155,125 @@ cat > param$$.tab << EOT
 972 ls		Land-sea mask			[1]
 990 clsst	Climatological SST		[K]
 EOT
+cat > paramlsg$$.tab << EOT
+1 zeta		surface elevation		[m]
+2 t		potential temperature		[K]
+3 utot		zonal velocity component	[m/s]
+4 vtot		meridional velocity component	[m/s] 
+5 s		salinity			[0/00]
+7 w		vertical velocity component	[m/s] 
+13 sice		ice thickness			[m]
+18 fluxhea	heat flux			[W/m2] 
+27 psi		horizontal barotropic stream function	[m3/s] 
+37 ub		zonal component of barotropic velocity	[m/s] 
+38 vb		meridional component of barotropic velocity	[m/s]
+40 wet		land-sea mask for scalar points	[0-1]
+41 wetvec	land-sea mask for vector points	[0-1] 
+52 taux		zonal component of wind stress	[Pa] 
+53 tauy		meridional component of wind stress	[Pa] 
+62 tc		potential temperature		[C]
+65 fluwat	net fresh water flux (P-E)	[m/s] 
+66 convadd	potential energy dissipation due to convection	[mW/m2]
+67 flukwat	fresh water flux due to Newtonian coupling	[m/s] 
+68 flukhea	heat flux due to Newtonian coupling	[W/m2] 
+69 convad	convective adjustment events	[1]
+80 fldsst	sst differences lsg-plasim	[K]
+81 fldice	ice-differences lsg-plasim	[1]
+82 fldpme	pme-differences lsg-plasim	[m/s]
+83 fldtaux	taux-differences lsg-plasim	[Pa]
+84 fldtauy	tauy-differences lsg-plasim	[Pa]
+92 tbound	boundary value of t		[K]
+97 dQ/dt 	coupling coefficient		[W/m2K] 
+98 depp		depth in scalar-points		[m] 
+99 depv		depth in vector-points		[m] 
+EOT
 
 ysize=$($cdo -s griddes $infile | grep ysize | head -1 | cut -d= -f2|sed 's/ //g')
 case $ysize in
-32) spgrid=t21; gpgrid=n16;;
-48) spgrid=t31; gpgrid=n24;;
-64) spgrid=t42; gpgrid=n32;;
-96) spgrid=t63; gpgrid=n48;;
-128) spgrid=t85; gpgrid=n64;;
-160) spgrid=t106; gpgrid=n80;;
+    32) spgrid=t21; gpgrid=n16;;
+    48) spgrid=t31; gpgrid=n24;;
+    64) spgrid=t42; gpgrid=n32;;
+    96) spgrid=t63; gpgrid=n48;;
+    128) spgrid=t85; gpgrid=n64;;
+    160) spgrid=t106; gpgrid=n80;;
+    76)  gpgridt=lsggridt$$.txt; gpgridu=lsggridu$$.txt; flsg=1;;
 esac
 
-# Spectral or not?
-fsp=$($cdo griddes $infile | grep "gridID 2")
+if [ -z "$flsg" ]; then 
+    fsp=$($cdo griddes $infile | grep "gridID 2") # Spectral or not?
+    $cdo zaxisdes  $infile > inzgrid$$.txt
+    f3d=$(grep "zaxisID 2" inzgrid$$.txt) # Vertical sigma axis or not
+else
+
+# vertical axes for LSG
+cat > zaxislsgu$$.txt << EOT
+zaxistype = depth_below_sea
+size = 22
+levels = 25 75 125 175 225 275 350 450 550 650 750 850 950 1100 1300 1500 1800 2250 2750 3500 4500 5500 
+EOT
+cat > zaxislsgc$$.txt << EOT
+zaxistype = depth_below_sea
+size = 21
+levels = 75 125 175 225 275 350 450 550 650 750 850 950 1100 1300 1500 1800 2250 2750 3500 4500 5500 
+EOT
+cat > zaxislsgw$$.txt << EOT
+zaxistype = depth_below_sea
+size = 22
+levels = 50 100 150 200 250 312.5 400 500 600 700 800 900 1025 1200 1400 1650 2025 2500 3125 4000 5000 6000
+EOT
+
+    # Create scalar grid
+    cat > $gpgridt <<EOT
+#
+# gridID 1
+#
+gridtype  = curvilinear
+gridsize  = 5472
+xsize     = 72
+ysize     = 76
+xname     = lon
+xdimname  = west_east
+xlongname = "longitude"
+xunits    = "degrees_east"
+yname     = lat
+ydimname  = south_north
+ylongname = "latitude"
+yunits    = "degrees_north"
+xvals     =
+ $(awk "BEGIN {off=-2.5; for(y=93.75; y>=-93.75; y=y-2.5) {for(x=0.; x<=357.5; x=x+5.0) {printf x-off \" \" }; printf \"\n\"; off=2.5+off}}")
+yvals     = 
+ $(awk "BEGIN {for(y=93.75; y>=-93.75; y=y-2.5) {for(i=1; i<=72; ++i) {printf y \" \" } printf \"\n\"}}")
+scanningMode = 64
+EOT
+
+    # Create vector grid
+    cat > $gpgridu <<EOT
+#
+# gridID 1
+#
+gridtype  = curvilinear
+gridsize  = 5472
+xsize     = 72
+ysize     = 76
+xname     = lon
+xdimname  = west_east
+xlongname = "longitude"
+xunits    = "degrees_east"
+yname     = lat
+ydimname  = south_north
+ylongname = "latitude"
+yunits    = "degrees_north"
+xvals     =
+ $(awk "BEGIN {off=-5.; for(y=93.75; y>=-93.75; y=y-2.5) {for(x=0.; x<=357.5; x=x+5.0) {printf x-off \" \" }; printf \"\n\"; off=2.5+off}}")
+yvals     = 
+ $(awk "BEGIN {for(y=93.75; y>=-93.75; y=y-2.5) {for(i=1; i<=72; ++i) {printf y \" \" } printf \"\n\"}}")
+scanningMode = 64
+EOT
+
+fi
 
 # If 3D Field, adjust vertical grid
-$cdo zaxisdes  $infile > inzgrid$$.txt
-f3d=$(grep "zaxisID 2" inzgrid$$.txt)
 if [ ! -z "$f3d" ]; then
-
 nlev=$( grep size inzgrid$$.txt|tail -1|cut -d= -f2|sed 's/ //g' )
 #sigmas=$($cdo outputf,%19.16f -selindexbox,1,$nlev,1,1  -selcode,333 $infile | awk ' BEGIN{p=0.} {s=($1+p)/2.; p=$1} {printf("%19.16f\n", s)}')
 sigmas=$($cdo outputf,%19.16f -selindexbox,1,$nlev,1,1  -selcode,333 $infile)
@@ -183,26 +286,43 @@ vctsize   = $(( nlev*2 + 2 ))
 vct       = $( printf "%.s0 " $(seq 1 $((nlev + 1)) ) )
             0 $sigmas
 EOT
-fixzgrid="setzaxis,zgrid$$.txt"
+fixzgrid="-setzaxis,zgrid$$.txt"
 delcode333="-delcode,333"
 else
 fixzgrid=""
 delcode333=""
 fi
 
+if [ -z "$flsg" ]; then
+# If not LSG
 # If spectral fix grids
 if [ ! -z "$fsp" ]; then
   $cdo splitgrid ${infile} grid_$$_
-  $cdonc $fixzgrid -setgrid,$spgrid $fmonth $fyear grid_$$_02.srv spectral$$.nc
-  $cdonc $fixzgrid $delcode333 -setgrid,$gpgrid $fmonth $fyear grid_$$_01.srv gaussian$$.nc
+  $cdonctab $fmonth $fyear $fixzgrid -setgrid,$spgrid grid_$$_02.srv spectral$$.nc
+  $cdonctab $fmonth $fyear $fixzgrid $delcode333 -setgrid,$gpgrid grid_$$_01.srv gaussian$$.nc
   $cdozip merge spectral$$.nc gaussian$$.nc tempfile$$.nc
 else
-   $cdozip setgrid,$gpgrid $fmonth $fyear $infile tempfile$$.nc
+   $cdoziptab setgrid,$gpgrid $fmonth $fyear $infile tempfile$$.nc
 fi
+else
+# If LSG
+   #$cdonc copy $fmonth $fyear $infile tempinfile$$.nc
+   $cdonc splitzaxis $infile zaxis$$_
+   $cdonc setzaxis,zaxislsgu$$.txt -delcode,7 zaxis$$_01.nc fixzaxis$$_01u.nc # code 7 is w
+   $cdonc setzaxis,zaxislsgw$$.txt -selcode,7 zaxis$$_01.nc fixzaxis$$_01w.nc
+   $cdonc setzaxis,zaxislsgc$$.txt zaxis$$_03.nc fixzaxis$$_03.nc
+   $cdonc merge fixzaxis$$_01u.nc fixzaxis$$_01w.nc zaxis$$_02.nc fixzaxis$$_03.nc tempin$$.nc
+   $cdonc setpartab,paramlsg$$.tab $fmonth $fyear tempin$$.nc tempinpar$$.nc
+   uvars="taux,tauy,depv,ub,vb,utot,vtot,wetvec"
+   $cdonc setgrid,$gpgridu $fmonth $fyear -selname,$uvars tempinpar$$.nc ufields$$.nc
+   $cdonc setgrid,$gpgridt $fmonth $fyear -delname,$uvars tempinpar$$.nc tfields$$.nc
+   $cdozip merge tfields$$.nc ufields$$.nc tempfile$$.nc
+fi
+
 if [ -z "$delcodes" ]
 then
    mv tempfile$$.nc $outfile
 else
    $cdozip delcode,$delcodes tempfile$$.nc $outfile
 fi
-rm -f spectral$$.nc gaussian$$.nc grid_$$_01.srv grid_$$_02.srv inzgrid$$.txt zgrid$$.txt tempfile$$.nc param$$.tab
+rm -f spectral$$.nc gaussian$$.nc grid_$$_01.srv grid_$$_02.srv inzgrid$$.txt zgrid$$.txt tempfile$$.nc param$$.tab lsggridt$$.txt  lsggridu$$.txt ufields$$.nc tfields$$.nc zaxislsgu$$.txt zaxislsgw$$.txt zaxislsgc$$.txt zaxis$$_* fixzaxis$$_* tempin$$.nc tempinpar$$.nc paramlsg$$.tab

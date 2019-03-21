@@ -1,0 +1,208 @@
+#!/bin/bash
+#set -ex
+
+function help {
+   echo "Convert PLASIM service output file to netcdf format"
+   echo "Usage: srv2nc [-d code1,code2,...] [-m] [-y] infile.nc outfile.nc"
+   echo "Options:"
+   echo "  -d codelist   remove a comma-separated list of codes from the output"
+   echo "  -m            perform monthly means"
+   echo "  -y            perform yearly means"
+   echo "  -h            print this help"
+   exit
+}
+
+fmonth=""
+fyear=""
+while getopts "d:ymh" OPTION; do
+    case $OPTION in
+    d) delcodes=$OPTARG ;;
+    m) fmonth="-monmean" ;;
+    y) fyear="-yearmean" ;;
+    h) help ;;
+    esac
+done
+shift $((OPTIND-1))
+
+if [ $# -lt 2 ]; then
+    help
+fi
+
+infile=$1
+outfile=$2
+
+cdo="cdo -t ./param$$.tab -s"
+cdonc="cdo -t ./param$$.tab -f nc -s"
+cdozip="cdo -t ./param$$.tab -f nc4 -z zip -s"
+
+cat > param$$.tab << EOT
+110 mld		Mixed Layer Depth		[m]
+129 sg		Surf. Geopotential Orography	[m2/s2]
+130 ta		Temperature			[K]
+131 ua		Zonal Wind			[m/s]
+132 va		Meridional Wind			[m/s]
+133 hus		Specific Humidity		[kg/kg]
+134 ps		Surface Pressure		[hPa]
+135 wap		Vertical Pressure Velocity	[Pa/s]
+137 wa		Vertical Wind			[m/s]
+138 zeta	Vorticity			[1/s]
+139 ts		Surface Temperature		[K]
+140 mrso	Soil Wetness			[m]
+141 snd		Snow Depth			[m]
+142 prl		Large Scale Precipitation	[m/s]
+143 prc		Convective Precipitation	[m/s]
+144 prsn	Snow Fall			[m/s]
+145 bld		Boundary Layer Dissipation	[W/m**2]
+146 hfss	Surface Sensible Heat Flux	[W/m**2]
+147 hfls	Surface Latent Heat Flux	[W/m**2]
+148 stf		Streamfunction			[m**2/s]
+149 psi		Velocity Potential		[m**2/s]
+151 psl		Mean Sea Level Pressure		[hPa]
+152 pl		Log Surface Pressure		[1]
+155 d		Divergence			[1/s]
+156 zg		Geopotential Height		[m]
+157 hur		Relative Humidity		[%]
+158 tps		Tendency of Surface Pressure	[Pa/s]
+159 u3		ustar **3			[m**3/s**3]
+160 mrro	Surface Runoff			[m/s]
+161 clw		Liquid Water Content		[kg/kg]
+162 cl		Cloud Cover			[0-1]
+163 tcc		Total Cloud Cover		[0-1]
+164 clt		Total Cloud Cover (Mean)	[0-1]
+165 uas		Eastward Wind 10m		[m/s]
+166 vas		Northward Wind 10m		[m/s]
+167 tas		2m Temperature			[K]
+168 td2m	2m Dew Point Temperature	[K]
+169 tsa		Surface Temperature Accumulated	[K]
+170 tsod	Deep Soil Temperature		[K]
+171 dsw		Deep Soil Wetness		[1]
+172 lsm		Land Sea Mask			[0-1]
+173 z0		Surface Roughness		[m]
+174 alb		Surface Albedo			[1]
+175 as		Surface Albedo			[1]
+176 rss		Surface Solar Radiation		[W/m2]
+177 rls		Surface Thermal Radiation	[W/m2]
+178 rst		Top Solar Radiation		[W/m2]
+179 rlut	Top Thermal Radiation		[W/m2]
+180 tauu	U-Stress			[Pa]
+181 tauv	V-Stress			[Pa]
+182 evap	Evaporation			[m/s]
+183 tso		Soil Temperature		[K]
+184 wsoi	Soil Wetness			[1]
+199 vegc	Vegetation Cover		[0-1]
+201 tasmax	Maximum daily 2m temperature	[K]
+202 tasmin	Minimum daily 2m temperature	[K]
+203 rsut	Top Solar Radiation Upward	[W/m2]
+204 ssru	Surface Solar Radiation Upward	[W/m2]
+205 stru	Surface Therm Radiation Upward	[W/m2]
+207 tso2	Soil Temperature Level 2	[K]
+208 tso3	Soil Temperature Level 3	[K]
+209 tso4	Soil Temperature Level 4	[K]
+210 sic		Sea Ice Cover			[0-1]
+211 sit		Sea Ice Thickness		[m]
+212 vegf	Forest Cover			[0-1]
+218 snm		Snow Melt			[m/s]
+221 sndc	Snow Depth Change		[m/s]
+229 dwmax	Field capacity			[1] 
+230 prw		Vert. Integrated Spec. Hum.	[kg/m2]
+232 glac	Glacier Cover			[0-1]
+238 tsn		Snow temperature		[K]
+259 spd		Wind Speed			[m/s]
+260 pr		Total Precipitation		[m/s]
+261 ntr		Net Top Radiation		[W/m2]
+262 nbr		Net Bottom Radiation		[W/m2]
+263 hfns	Net Heat Flux			[W/m2]
+264 wfn		Net Water Flux			[m/s]
+273 dpdx	d(ps)/dx			[Pa/m]
+273 dpdy	d(ps)/dy			[Pa/m]
+277 hlpr	Half level pressure		[Pa]
+278 flpr	Full level pressure		[Pa]
+701 heata	flux from the atmosphere	[W/m2]
+702 ofluxa	flux from the ocean		[W/m2]
+703 tsfluxa	flux to warm/cool ice/snow	[W/m2]
+704 smelta	flux for snow melt		[W/m2]
+705 imelta	flux used for ice melt		[W/m2]
+706 cfluxa	flux to the ocean		[W/m2]
+707 fluxca	cond. heatflux			[W/m2]
+708 qmelta	res flux to ice			[W/m2]
+709 xflxicea	flux correction			[W/m2]
+710 icec	ice cover			[0-1]
+711 iced	ice thickness			[m]
+712 scflxa	flux from snow -> ice conversion	[W/m2]
+713 cfluxra	flux for limiting ice to xmaxd	[W/m2]
+714 cfluxna	flux due to neg. ice		[W/m2]
+739 ts		surface temperature		[K]
+741 zsnow	snow depth			[m h2o]
+769 sst		sea surface temperature		[K]
+772 ls		land sea mask			[0-1]
+790 clicec2	climatological ice cover	[0-1]
+791 cliced2	climatological ice thickness	[m]
+792 icecc	ice cover computed prognostically	[frac.]
+794 cpmea	fresh water (p-e) for LSG	[m/s]
+795 croffa	runoff for LSG			[m/s]
+796 stoia	snow converted to ice		[m h2o]
+901 heata	Heat flux from atm/ice		[W/m2]
+902 ifluxa	Heat flux into ice		[W/m2]
+903 fssta	Flux correction			[W/m2]
+904 dssta	Vertical diffusion		[m2/s]
+905 qhda	Horizontal diffusion		[m2/s]
+906 fldoa	Flux from deep ocean (LSG)	[W/m2]
+910 icec	Sea ice cover			[0-1]
+939 sst		SST (ML ocean temperature)	[K]
+972 ls		Land-sea mask			[1]
+990 clsst	Climatological SST		[K]
+EOT
+
+ysize=$($cdo -s griddes $infile | grep ysize | head -1 | cut -d= -f2|sed 's/ //g')
+case $ysize in
+32) spgrid=t21; gpgrid=n16;;
+48) spgrid=t31; gpgrid=n24;;
+64) spgrid=t42; gpgrid=n32;;
+96) spgrid=t63; gpgrid=n48;;
+128) spgrid=t85; gpgrid=n64;;
+160) spgrid=t106; gpgrid=n80;;
+esac
+
+# Spectral or not?
+fsp=$($cdo griddes $infile | grep "gridID 2")
+
+# If 3D Field, adjust vertical grid
+$cdo zaxisdes  $infile > inzgrid$$.txt
+f3d=$(grep "zaxisID 2" inzgrid$$.txt)
+if [ ! -z "$f3d" ]; then
+
+nlev=$( grep size inzgrid$$.txt|tail -1|cut -d= -f2|sed 's/ //g' )
+#sigmas=$($cdo outputf,%19.16f -selindexbox,1,$nlev,1,1  -selcode,333 $infile | awk ' BEGIN{p=0.} {s=($1+p)/2.; p=$1} {printf("%19.16f\n", s)}')
+sigmas=$($cdo outputf,%19.16f -selindexbox,1,$nlev,1,1  -selcode,333 $infile)
+grep -m 1 -B 1000 -A 1 "zaxisID 2" inzgrid$$.txt >zgrid$$.txt
+cat >> zgrid$$.txt << EOT
+zaxistype = hybrid
+size      = $nlev
+levels    = $( seq 1 $nlev )
+vctsize   = $(( nlev*2 + 2 ))
+vct       = $( printf "%.s0 " $(seq 1 $((nlev + 1)) ) )
+            0 $sigmas
+EOT
+fixzgrid="setzaxis,zgrid$$.txt"
+delcode333="-delcode,333"
+else
+fixzgrid=""
+delcode333=""
+fi
+
+# If spectral fix grids
+if [ ! -z "$fsp" ]; then
+  $cdo splitgrid ${infile} grid_$$_
+  $cdonc $fixzgrid -setgrid,$spgrid $fmonth $fyear grid_$$_02.srv spectral$$.nc
+  $cdonc $fixzgrid $delcode333 -setgrid,$gpgrid $fmonth $fyear grid_$$_01.srv gaussian$$.nc
+  $cdozip merge spectral$$.nc gaussian$$.nc tempfile$$.nc
+else
+   $cdozip setgrid,$gpgrid $fmonth $fyear $infile tempfile$$.nc
+fi
+if [ -z "$delcodes" ]
+then
+   mv tempfile$$.nc $outfile
+else
+   $cdozip delcode,$delcodes tempfile$$.nc $outfile
+fi
+rm -f spectral$$.nc gaussian$$.nc grid_$$_01.srv grid_$$_02.srv inzgrid$$.txt zgrid$$.txt tempfile$$.nc param$$.tab

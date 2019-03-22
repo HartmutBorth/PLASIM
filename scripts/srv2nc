@@ -4,7 +4,7 @@
 function help {
    echo "Convert PLASIM service output file to netcdf format"
    echo "PlaSIM, ML ocean, ice model and LSG outputs are recognized"
-   echo "Usage: srv2nc [-d code1,code2,...] [-m] [-y] infile.nc outfile.nc"
+   echo "Usage: srv2nc [-d code1,code2,...] [-m] [-y] infile.srv outfile.nc"
    echo "Options:"
    echo "  -d codelist   remove a comma-separated list of codes from the output"
    echo "  -m            perform monthly means"

@@ -1,29 +1,42 @@
 #!/bin/bash
+# PlaSim netcdf postprocessor script
+# (c) 2019 Jost von Hardenberg - ISAC-CNR
+
 #set -ex
 
 function help {
    echo "Convert PLASIM service output file to netcdf format"
    echo "PlaSIM, ML ocean, ice model and LSG outputs are recognized"
-   echo "Usage: srv2nc [-d code1,code2,...] [-m] [-y] infile.srv outfile.nc"
+   echo "Usage: srv2nc [-m] [-y] [-d code1,code2,...] [-f format] infile.srv outfile.nc"
    echo "Options:"
-   echo "  -d codelist   remove a comma-separated list of codes from the output"
    echo "  -m            perform monthly means"
    echo "  -y            perform yearly means"
+   echo "  -d codelist   remove a comma-separated list of codes from the output"
+   echo "  -f format     output format (default is zipped netcdf4 (HDF5))"
+   echo "                Alternatives: nc, nc1, nc4, nc4c, nc5"
    echo "  -h            print this help"
    exit
 }
 
 fmonth=""
 fyear=""
-while getopts "d:ymh" OPTION; do
+format="nc4 -z zip"
+while getopts "d:ymhf:" OPTION; do
     case $OPTION in
     d) delcodes=$OPTARG ;;
     m) fmonth="-monmean" ;;
     y) fyear="-yearmean" ;;
+    f) format=$OPTARG ;;
     h) help ;;
     esac
 done
 shift $((OPTIND-1))
+if [[ ! "nc nc1 nc2 nc4 nc4c nc5 nc4c -z zip nc4 -z zip" == *$format* ]]
+then
+echo "Invalid format: " $format
+echo "Choose one of: nc, nc1, nc2, nc4, nc4c, nc5, nc4c -z zip, nc4 -z zip" 
+exit 1
+fi
 
 if [ $# -lt 2 ]; then
     help
@@ -35,8 +48,8 @@ outfile=$2
 cdo="cdo -s"
 cdonctab="cdo -t ./param$$.tab -f nc -s"
 cdonc="cdo -f nc -s"
-cdozip="cdo -f nc4 -z zip -s"
-cdoziptab="cdo  -t ./param$$.tab -f nc4 -z zip -s"
+cdozip="cdo -f $format -s"
+cdoziptab="cdo  -t ./param$$.tab -f $format -s"
 
 cat > param$$.tab << EOT
 110 mld		Mixed Layer Depth		[m]

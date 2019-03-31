@@ -280,7 +280,7 @@
 !
 !     get process id
 !
-      call mpi_info(nproc,mypid)
+      call get_mpi_info(nproc,mypid)
 !
 !     print version number and read namelist
 !

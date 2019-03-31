@@ -5542,6 +5542,8 @@ void InitAll(void)
    All[183].Init("tso"  ,"climate_deep_soil_temperature"   ,"K"        ,1); // Not standard
    All[184].Init("wsoi" ,"climate_deep_soil_wetness"       ,"1"        ,1);
    All[199].Init("vegc" ,"vegetation_cover"                ,"1"        ,1); // Not standard
+   All[201].Init("tasmax" ,"maximum_air_temperature_2m"     ,"K"    ,1); // Not standard
+   All[202].Init("tasmin" ,"minimum_air_temperature_2m"     ,"K"    ,1); // Not standard
    All[203].Init("rsut" ,"toa_outgoing_shortwave_flux"     ,"W m-2"    ,1); // Not standard
    All[204].Init("ssru" ,"surface_solar_radiation_upward"  ,"W m-2"    ,1); // Not standard
    All[205].Init("stru" ,"surface_thermal_radiation_upward","W m-2"    ,1); // Not standard

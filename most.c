@@ -343,6 +343,7 @@ int Preprocessed;
 int SAMindex;
 int ScreenHeight;
 int Expert = 1;
+int PumaEnabled;
 int CatEnabled;
 int SamEnabled;
 int LsgEnabled;
@@ -1234,6 +1235,13 @@ void InitSelections(void)
    Sel->div  = Sel->iv   =  1;
    SelMod = Sel;
 
+   // Hide PUMA ?
+   if (!PumaEnabled)
+   {
+      Sel->no = 1;
+      Sel->lt = 0;
+   }
+
    // SAM
 
    Sel = NewSel(Sel);
@@ -1799,11 +1807,11 @@ int WriteRunScript(int model)
       if (Multirun > 1) 
       {    
          fprintf(fp,"   %s",mpirun);
-         fprintf(fp," -np 1 %s : -np 1 %s\n",exec_name,exec_nam2);
+         fprintf(fp," -np 1 %s : -np 1 ./%s\n",exec_name,exec_nam2);
       }    
       else 
       {    
-         fprintf(fp,"   %s -np %d %s\n",mpirun,porm,exec_name);
+         fprintf(fp,"   %s -np %d ./%s\n",mpirun,porm,exec_name);
       }    
    }
    fputs("   [ -e Abort_Message ] && exit 1\n",fp);
@@ -4494,6 +4502,13 @@ void InitGUI(void)
    if (xpp)
    {
       CatEnabled = 1;
+      fclose(xpp);
+   }
+
+   xpp = fopen("puma","r"); // Puma enabled
+   if (xpp)
+   {
+      PumaEnabled = 1;
       fclose(xpp);
    }
 

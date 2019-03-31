@@ -1,3 +1,0 @@
-rm -f -r puma/bld/*
-rm -f -r puma/bin/*
-rm -f -r puma/run/*
